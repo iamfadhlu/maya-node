@@ -1,0 +1,92 @@
+{{ template "default-state.yaml" }}
+---
+{{ template "btc-eth-big-pool-state.yaml" }}
+---
+type: state
+genesis:
+  app_state:
+    mayachain:
+      mimirs:
+        - key: PREFERREDASSETOUTBOUNDFEEMULTIPLIER
+          value: "2"
+---
+type: create-blocks
+count: 1
+---
+#######################################################################################
+# MAYAName memo format  ~:name:chain:address:?owner:?preferredAsset:?expiry:?affbps:?subaff:?subaffbps
+########################################################################################
+#######################################################################################
+# create dog MAYAName with 1.5 bps default affiliate fee
+########################################################################################
+type: tx-deposit
+signer: {{ addr_maya_dog }}
+coins:
+  - amount: "200000000000"
+    asset: "cacao"
+memo: "~:dog:MAYA:{{ addr_maya_dog }}::::${BPS=150}"
+---
+type: create-blocks
+count: 1
+---
+########################################################################################
+# Check MAYANames's settgings
+########################################################################################
+type: check
+endpoint: http://localhost:1317/mayachain/mayaname/dog
+asserts:
+  - .aliases[0].address == "{{ addr_maya_dog }}"
+  - .owner == "{{ addr_maya_dog }}"
+  - .affiliate_bps == ${BPS}
+  - 2000000000 == ${GAS=2000000000}
+  - 0 == ${PREV_CAT_BAL=0}
+---
+# get PREV_DOG_BAL
+type: check
+endpoint: http://localhost:1317/cosmos/bank/v1beta1/balances/{{ addr_maya_dog }}
+asserts:
+  - .balances[]|select(.denom=="cacao")|.amount|tonumber == ${PREV_DOG_BAL=499798000000000}
+---
+########################################################################################
+# simple swap using dog as affiliate with default affiliate bps 150 (1.5%) 
+########################################################################################
+type: tx-deposit
+signer: {{ addr_maya_cat }}
+coins:
+  - amount: "${SWAP_AMT=2000000000000}"
+    asset: "cacao"
+memo: "=:BTC.BTC:{{ addr_btc_fox }}::dog"
+---
+type: create-blocks
+count: 2
+---
+# Basic affiliate swap test check (dog gets BPS of SWAP_AMT)
+type: check
+endpoint: http://localhost:1317/cosmos/bank/v1beta1/balances/{{ addr_maya_dog }}
+asserts:
+  - (${SWAP_AMT} * ${BPS} / 10000 - ${GAS}) - (.balances[]|select(.denom == "cacao")|.amount|tonumber - ${PREV_DOG_BAL}) < (${SWAP_AMT} * ${BPS} / 10000 - ${GAS}) * 0.001 # 10 bps tolerance
+---
+# update PREV_DOG_BAL
+type: check
+endpoint: http://localhost:1317/cosmos/bank/v1beta1/balances/{{ addr_maya_dog }}
+asserts:
+  - .balances[]|select(.denom=="cacao")|.amount|tonumber == ${PREV_DOG_BAL=499825997957197}
+---
+########################################################################################
+# simple swap using dog as affiliate with overridden affiliate bps 100 (1%) 
+########################################################################################
+type: tx-deposit
+signer: {{ addr_maya_cat }}
+coins:
+  - amount: "${SWAP_AMT}"
+    asset: "cacao"
+memo: "=:BTC.BTC:{{ addr_btc_fox }}::dog:${BPS=100}"
+---
+type: create-blocks
+count: 2
+---
+# Basic affiliate swap test check (dog gets BPS of SWAP_AMT)
+type: check
+endpoint: http://localhost:1317/cosmos/bank/v1beta1/balances/{{ addr_maya_dog }}
+asserts:
+  - (${SWAP_AMT} * ${BPS} / 10000 - ${GAS}) - (.balances[]|select(.denom == "cacao")|.amount|tonumber - ${PREV_DOG_BAL}) < (${SWAP_AMT} * ${BPS} / 10000 - ${GAS}) * 0.001 # 10 bps tolerance

@@ -1,0 +1,45 @@
+{{ template "default-state.yaml" }}
+---
+type: create-blocks
+count: 1
+---
+type: tx-mimir
+key: RegressionTest
+value: 1
+signer: {{ addr_maya_dog }}
+---
+type: create-blocks
+count: 1
+---
+type: check
+endpoint: http://localhost:1317/auth/accounts/{{ addr_maya_dog }}
+asserts:
+  - .result.value.sequence == "1"
+---
+type: check
+endpoint: http://localhost:1317/mayachain/mimir
+asserts:
+  - .REGRESSIONTEST == 1
+---
+type: check
+endpoint: http://localhost:1317/mayachain/mimir/key/REGRESSIONTEST
+asserts:
+  - . == 1
+---
+type: tx-mimir
+key: FoxTest
+value: 1
+signer: {{ addr_maya_fox }}
+---
+type: create-blocks
+count: 1
+---
+type: check
+endpoint: http://localhost:1317/auth/accounts/{{ addr_maya_fox }}
+asserts:
+  - .result.value.sequence == "1"
+---
+type: check
+endpoint: http://localhost:1317/mayachain/mimir
+asserts:
+  - .FOXTEST|length == 0

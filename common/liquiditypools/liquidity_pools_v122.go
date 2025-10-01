@@ -1,0 +1,25 @@
+//go:build !mocknet && !stagenet
+// +build !mocknet,!stagenet
+
+package liquiditypools
+
+import (
+	"gitlab.com/mayachain/mayanode/common"
+)
+
+var LiquidityPoolsV122 = common.Assets{
+	common.BTCAsset,
+	common.RUNEAsset,
+	common.ETHAsset,
+	common.DASHAsset,
+	common.KUJIAsset,
+	common.USDTAsset,
+	common.USDCAsset,
+	common.WSTETHAsset,
+	common.AETHAsset,
+	common.AWBTCAsset,
+	common.ATGTAsset,
+	common.AUSDTAsset,
+	common.AUSDCAsset,
+	common.XRDAsset,
+}

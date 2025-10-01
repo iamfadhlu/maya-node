@@ -1,0 +1,64 @@
+{
+  "result": {
+    "txid": "b6a599be514dd415e6ce7a2aba2f328dc3b46e7ec1bd1c54274b5a374650e895",
+    "authdigest": "fe0efb3586c8812b24338b96fc46dc86bbd2b56e8c911daae2be6bdd7fbe071e",
+    "size": 241,
+    "overwintered": true,
+    "version": 5,
+    "versiongroupid": "26a7270a",
+    "locktime": 0,
+    "expiryheight": 221,
+    "hex": "050000800a27a7265510e7c800000000dd0000000177855304ef15c02d5ad97db3778451dda15fed5f97aba41da917cd2f05b00530000000006b483045022100abd7f5ae8051984e34b23dfd353a4a7d3a62ac09b9717893ef7da9eb92aca56c02202610eb5ff7965692d35b1f44ad88e5615d8a6c31502809b4102682d72c1bc0e401210390fe79d1719ab60369c9e710739aefb9d7db411733aa711b467b60232f47d81fffffffff0264000000000000001976a9148beeab42389192446176efebc352684fc6a095fa88ac64000000000000001976a91422db56f1d0f603ca56d85c2cb7b65d18c2802d1488ac000000",
+    "vin": [
+      {
+        "txid": "3005b0052fcd17a91da4ab975fed5fa1dd518477b37dd95a2dc015ef04538577",
+        "vout": 0,
+        "scriptSig": {
+          "asm": "3045022100abd7f5ae8051984e34b23dfd353a4a7d3a62ac09b9717893ef7da9eb92aca56c02202610eb5ff7965692d35b1f44ad88e5615d8a6c31502809b4102682d72c1bc0e4[ALL] 0390fe79d1719ab60369c9e710739aefb9d7db411733aa711b467b60232f47d81f",
+          "hex": "483045022100abd7f5ae8051984e34b23dfd353a4a7d3a62ac09b9717893ef7da9eb92aca56c02202610eb5ff7965692d35b1f44ad88e5615d8a6c31502809b4102682d72c1bc0e401210390fe79d1719ab60369c9e710739aefb9d7db411733aa711b467b60232f47d81f"
+        },
+        "sequence": 4294967295
+      }
+    ],
+    "vout": [
+      {
+        "value": 0.000001,
+        "valueZat": 100,
+        "valueSat": 100,
+        "n": 0,
+        "scriptPubKey": {
+          "asm": "OP_DUP OP_HASH160 8beeab42389192446176efebc352684fc6a095fa OP_EQUALVERIFY OP_CHECKSIG",
+          "hex": "76a9148beeab42389192446176efebc352684fc6a095fa88ac",
+          "reqSigs": 1,
+          "type": "pubkeyhash",
+          "addresses": ["tmNUFAr71YAW3eXetm8fhx7k8zpUJYQiKZP"]
+        }
+      },
+      {
+        "value": 0.000001,
+        "valueZat": 100,
+        "valueSat": 100,
+        "n": 1,
+        "scriptPubKey": {
+          "asm": "OP_DUP OP_HASH160 22db56f1d0f603ca56d85c2cb7b65d18c2802d14 OP_EQUALVERIFY OP_CHECKSIG",
+          "hex": "76a91422db56f1d0f603ca56d85c2cb7b65d18c2802d1488ac",
+          "reqSigs": 1,
+          "type": "pubkeyhash",
+          "addresses": ["tmCtf4gJ8eb8mXh7hBk6DVW2byu41wPo1GN"]
+        }
+      }
+    ],
+    "vjoinsplit": [],
+    "valueBalance": 0.0,
+    "valueBalanceZat": 0,
+    "vShieldedSpend": [],
+    "vShieldedOutput": [],
+    "orchard": {
+      "actions": [],
+      "valueBalance": 0.0,
+      "valueBalanceZat": 0
+    }
+  },
+  "error": null,
+  "id": 3
+}

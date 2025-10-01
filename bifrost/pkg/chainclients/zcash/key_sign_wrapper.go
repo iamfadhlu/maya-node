@@ -1,0 +1,78 @@
+package zcash
+
+import (
+	"fmt"
+
+	"github.com/btcsuite/btcd/btcec"
+	"github.com/rs/zerolog"
+	"github.com/rs/zerolog/log"
+	"github.com/tendermint/tendermint/crypto/secp256k1"
+	"gitlab.com/mayachain/mayanode/bifrost/txscript/txscript"
+
+	"gitlab.com/mayachain/mayanode/bifrost/tss"
+	"gitlab.com/mayachain/mayanode/common"
+)
+
+// KeySignWrapper is a wrap of private key and also tss instance
+// it also implement the txscript.Signable interface, and will decide which method to use based on the pubkey
+type KeySignWrapper struct {
+	privateKey    *btcec.PrivateKey
+	pubKey        common.PubKey
+	tssKeyManager tss.ThorchainKeyManager
+	logger        zerolog.Logger
+}
+
+// NewKeySignWrapper create a new instance of Keysign Wrapper
+func NewKeySignWrapper(privateKey *btcec.PrivateKey, tssKeyManager tss.ThorchainKeyManager) (*KeySignWrapper, error) {
+	pubKey, err := GetBech32AccountPubKey(privateKey)
+	if err != nil {
+		return nil, fmt.Errorf("fail to get the pubkey: %w", err)
+	}
+	return &KeySignWrapper{
+		privateKey:    privateKey,
+		pubKey:        pubKey,
+		tssKeyManager: tssKeyManager,
+		logger:        log.With().Str("module", "keysign_wrapper").Logger(),
+	}, nil
+}
+
+// GetBech32AccountPubKey convert the given private key to
+func GetBech32AccountPubKey(key *btcec.PrivateKey) (common.PubKey, error) {
+	buf := key.PubKey().SerializeCompressed()
+	pk := secp256k1.PubKey(buf)
+	return common.NewPubKeyFromCrypto(pk)
+}
+
+// GetSignable based on the given poolPubKey
+func (w *KeySignWrapper) GetSignable(poolPubKey common.PubKey) txscript.Signable {
+	if w.pubKey.Equals(poolPubKey) {
+		return NewPrivateKeySignable(w.privateKey)
+	}
+	s, err := NewTssSignable(poolPubKey, w.tssKeyManager)
+	if err != nil {
+		w.logger.Err(err).Msg("fail to create tss signable")
+		return nil
+	}
+	return s
+}
+
+type PrivateKeySignable struct {
+	privateKey *btcec.PrivateKey
+}
+
+// NewPrivateKeySignable create a new instance of PrivateKeySignable
+func NewPrivateKeySignable(priKey *btcec.PrivateKey) *PrivateKeySignable {
+	return &PrivateKeySignable{
+		privateKey: priKey,
+	}
+}
+
+// Sign the given hash bytes
+func (p *PrivateKeySignable) Sign(hash []byte) (sig *btcec.Signature, err error) {
+	return p.privateKey.Sign(hash)
+}
+
+// GetPubKey return the PubKey
+func (p *PrivateKeySignable) GetPubKey() *btcec.PublicKey {
+	return p.privateKey.PubKey()
+}

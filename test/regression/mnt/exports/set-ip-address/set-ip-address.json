@@ -1,0 +1,429 @@
+{
+  "app_hash": "",
+  "app_state": {
+    "auth": {
+      "accounts": [
+        {
+          "@type": "/cosmos.auth.v1beta1.ModuleAccount",
+          "base_account": {
+            "account_number": "2",
+            "address": "tmaya1zxw7mpq9zc4pe97unf85lljcwnhf4h2ky5dcyf",
+            "pub_key": null,
+            "sequence": "0"
+          },
+          "name": "mayachain",
+          "permissions": [
+            "minter",
+            "burner"
+          ]
+        },
+        {
+          "@type": "/cosmos.auth.v1beta1.BaseAccount",
+          "account_number": "5",
+          "address": "tmaya1zf3gsk7edzwl9syyefvfhle37cjtql35hdgtzt",
+          "pub_key": {
+            "@type": "/cosmos.crypto.secp256k1.PubKey",
+            "key": "AmF4AUTWZEUSBtgqiR5n2Lgic/Yrr1mWupMo5TAubNRO"
+          },
+          "sequence": "1"
+        },
+        {
+          "@type": "/cosmos.auth.v1beta1.ModuleAccount",
+          "base_account": {
+            "account_number": "0",
+            "address": "tmaya1yl6hdjhmkf37639730gffanpzndzdpmhvcqwdf",
+            "pub_key": null,
+            "sequence": "0"
+          },
+          "name": "transfer",
+          "permissions": [
+            "minter",
+            "burner"
+          ]
+        },
+        {
+          "@type": "/cosmos.auth.v1beta1.ModuleAccount",
+          "base_account": {
+            "account_number": "1",
+            "address": "tmaya1g98cy3n9mmjrpn0sxmn63lztelera37nrn4zh6",
+            "pub_key": null,
+            "sequence": "0"
+          },
+          "name": "asgard",
+          "permissions": []
+        },
+        {
+          "@type": "/cosmos.auth.v1beta1.BaseAccount",
+          "account_number": "10",
+          "address": "tmaya1f4l5dlqhaujgkxxqmug4stfvmvt58vx2t8l2rc",
+          "pub_key": null,
+          "sequence": "0"
+        },
+        {
+          "@type": "/cosmos.auth.v1beta1.BaseAccount",
+          "account_number": "9",
+          "address": "tmaya1tqn0l6spm9fukjv6az9nhffm40k0003rmhsylw",
+          "pub_key": null,
+          "sequence": "0"
+        },
+        {
+          "@type": "/cosmos.auth.v1beta1.ModuleAccount",
+          "base_account": {
+            "account_number": "3",
+            "address": "tmaya1dheycdevq39qlkxs2a6wuuzyn4aqxhve3qfhf7",
+            "pub_key": null,
+            "sequence": "0"
+          },
+          "name": "reserve",
+          "permissions": []
+        },
+        {
+          "@type": "/cosmos.auth.v1beta1.BaseAccount",
+          "account_number": "7",
+          "address": "tmaya13wrmhnh2qe98rjse30pl7u6jxszjjwl4fd6gwn",
+          "pub_key": {
+            "@type": "/cosmos.crypto.secp256k1.PubKey",
+            "key": "Aw/2MBvAhnLEifCInxlpTjCXxV0I/nE8pI5jNI+Zblx6"
+          },
+          "sequence": "2"
+        },
+        {
+          "@type": "/cosmos.auth.v1beta1.BaseAccount",
+          "account_number": "6",
+          "address": "tmaya1uuds8pd92qnnq0udw0rpg0szpgcslc9p8gps0z",
+          "pub_key": null,
+          "sequence": "0"
+        },
+        {
+          "@type": "/cosmos.auth.v1beta1.ModuleAccount",
+          "base_account": {
+            "account_number": "8",
+            "address": "tmaya17xpfvakm2amg962yls6f84z3kell8c5lj7483h",
+            "pub_key": null,
+            "sequence": "0"
+          },
+          "name": "fee_collector",
+          "permissions": []
+        },
+        {
+          "@type": "/cosmos.auth.v1beta1.ModuleAccount",
+          "base_account": {
+            "account_number": "4",
+            "address": "tmaya17gw75axcnr8747pkanye45pnrwk7p9c3uquyle",
+            "pub_key": null,
+            "sequence": "0"
+          },
+          "name": "bond",
+          "permissions": []
+        }
+      ],
+      "params": {
+        "max_memo_characters": "256",
+        "sig_verify_cost_ed25519": "590",
+        "sig_verify_cost_secp256k1": "1000",
+        "tx_sig_limit": "7",
+        "tx_size_cost_per_byte": "10"
+      }
+    },
+    "bank": {
+      "balances": [
+        {
+          "address": "tmaya1zf3gsk7edzwl9syyefvfhle37cjtql35hdgtzt",
+          "coins": [
+            {
+              "amount": "499998000000000",
+              "denom": "cacao"
+            },
+            {
+              "amount": "100000000000",
+              "denom": "maya.mimir"
+            }
+          ]
+        },
+        {
+          "address": "tmaya1g98cy3n9mmjrpn0sxmn63lztelera37nrn4zh6",
+          "coins": [
+            {
+              "amount": "1000000000000000",
+              "denom": "cacao"
+            }
+          ]
+        },
+        {
+          "address": "tmaya1f4l5dlqhaujgkxxqmug4stfvmvt58vx2t8l2rc",
+          "coins": [
+            {
+              "amount": "100000000000",
+              "denom": "maya.mimir"
+            }
+          ]
+        },
+        {
+          "address": "tmaya1tqn0l6spm9fukjv6az9nhffm40k0003rmhsylw",
+          "coins": [
+            {
+              "amount": "100000000000",
+              "denom": "maya.mimir"
+            }
+          ]
+        },
+        {
+          "address": "tmaya1dheycdevq39qlkxs2a6wuuzyn4aqxhve3qfhf7",
+          "coins": [
+            {
+              "amount": "3500006000000000",
+              "denom": "cacao"
+            }
+          ]
+        },
+        {
+          "address": "tmaya13wrmhnh2qe98rjse30pl7u6jxszjjwl4fd6gwn",
+          "coins": [
+            {
+              "amount": "2499995999999999",
+              "denom": "cacao"
+            }
+          ]
+        },
+        {
+          "address": "tmaya1uuds8pd92qnnq0udw0rpg0szpgcslc9p8gps0z",
+          "coins": [
+            {
+              "amount": "2500000000000000",
+              "denom": "cacao"
+            }
+          ]
+        },
+        {
+          "address": "tmaya17gw75axcnr8747pkanye45pnrwk7p9c3uquyle",
+          "coins": [
+            {
+              "amount": "1",
+              "denom": "cacao"
+            }
+          ]
+        }
+      ],
+      "denom_metadata": [],
+      "params": {
+        "default_send_enabled": false,
+        "send_enabled": []
+      },
+      "supply": [
+        {
+          "amount": "10000000000000000",
+          "denom": "cacao"
+        },
+        {
+          "amount": "300000000000",
+          "denom": "maya.mimir"
+        }
+      ]
+    },
+    "capability": {
+      "index": "2",
+      "owners": [
+        {
+          "index": "1",
+          "index_owners": {
+            "owners": [
+              {
+                "module": "ibc",
+                "name": "ports/transfer"
+              },
+              {
+                "module": "transfer",
+                "name": "ports/transfer"
+              }
+            ]
+          }
+        }
+      ]
+    },
+    "genutil": {
+      "gen_txs": []
+    },
+    "ibc": {
+      "channel_genesis": {
+        "ack_sequences": [],
+        "acknowledgements": [],
+        "channels": [],
+        "commitments": [],
+        "next_channel_sequence": "0",
+        "receipts": [],
+        "recv_sequences": [],
+        "send_sequences": []
+      },
+      "client_genesis": {
+        "clients": [],
+        "clients_consensus": [],
+        "clients_metadata": [],
+        "create_localhost": false,
+        "next_client_sequence": "0",
+        "params": {
+          "allowed_clients": [
+            "06-solomachine",
+            "07-tendermint"
+          ]
+        }
+      },
+      "connection_genesis": {
+        "client_connection_paths": [],
+        "connections": [],
+        "next_connection_sequence": "0",
+        "params": {
+          "max_expected_time_per_block": "30000000000"
+        }
+      }
+    },
+    "mayachain": {
+      "POL": {
+        "cacao_deposited": "0",
+        "cacao_withdrawn": "0"
+      },
+      "affiliate_collectors": null,
+      "bond_providers": [
+        {
+          "node_address": "tmaya1zf3gsk7edzwl9syyefvfhle37cjtql35hdgtzt",
+          "node_operator_fee": "0",
+          "providers": [
+            {
+              "bond_address": "tmaya1zf3gsk7edzwl9syyefvfhle37cjtql35hdgtzt",
+              "bonded": true,
+              "reward": "0"
+            }
+          ]
+        }
+      ],
+      "cacao_pool": {
+        "cacao_deposited": "0",
+        "cacao_withdrawn": "0",
+        "pool_units": "0",
+        "reserve_units": "0"
+      },
+      "cacao_providers": null,
+      "chain_contracts": [],
+      "last_chain_heights": [],
+      "liquidity_providers": [
+        {
+          "asset": "BTC.BTC",
+          "asset_deposit_value": "0",
+          "bonded_nodes": [
+            {
+              "node_address": "tmaya1zf3gsk7edzwl9syyefvfhle37cjtql35hdgtzt",
+              "units": "1000000000000000"
+            }
+          ],
+          "cacao_address": "tmaya1zf3gsk7edzwl9syyefvfhle37cjtql35hdgtzt",
+          "cacao_deposit_value": "0",
+          "last_add_height": "1",
+          "pending_asset": "0",
+          "pending_cacao": "0",
+          "units": "1000000000000000",
+          "withdraw_counter": "0"
+        }
+      ],
+      "mayanames": [],
+      "mimirs": [],
+      "msg_swaps": [],
+      "network": {
+        "LPIncomeSplit": "10000",
+        "bond_reward_rune": "0",
+        "total_bond_units": "4"
+      },
+      "network_fees": [],
+      "node_accounts": [
+        {
+          "active_block_height": "1",
+          "bond": "0",
+          "bond_address": "tmaya1zf3gsk7edzwl9syyefvfhle37cjtql35hdgtzt",
+          "ip_address": "10.0.0.1",
+          "node_address": "tmaya1zf3gsk7edzwl9syyefvfhle37cjtql35hdgtzt",
+          "pub_key_set": {
+            "ed25519": "tmayapub1addwnpepqfshsq2y6ejy2ysxmq4gj8n8mzuzyulk9wh4n946jv5w2vpwdn2yuz3v0gx",
+            "secp256k1": "tmayapub1addwnpepqfshsq2y6ejy2ysxmq4gj8n8mzuzyulk9wh4n946jv5w2vpwdn2yuz3v0gx"
+          },
+          "reward": "0",
+          "status": "Active",
+          "validator_cons_pub_key": "tmayacpub1zcjduepqq75h7uy6qhesh9d3a9tuk0mzrnc46u8rye44ze6peua3zmpfh23qpj8pe3"
+        }
+      ],
+      "observed_tx_in_voters": null,
+      "observed_tx_out_voters": null,
+      "pools": [
+        {
+          "LP_units": "1000000000000000",
+          "asset": "BTC.BTC",
+          "balance_asset": "0",
+          "balance_cacao": "1000000000000000",
+          "decimals": "8",
+          "pending_inbound_asset": "0",
+          "pending_inbound_cacao": "0",
+          "status": "Available",
+          "synth_units": "0"
+        }
+      ],
+      "reserve_contributors": null,
+      "streaming_swaps": [],
+      "swap_queue_items": [],
+      "trade_accounts": null,
+      "trade_units": null,
+      "tx_outs": null,
+      "vaults": [
+        {
+          "block_height": "2",
+          "chains": [
+            "ARB",
+            "MAYA",
+            "BTC",
+            "DASH",
+            "ETH",
+            "KUJI",
+            "THOR",
+            "XRD",
+            "ZEC"
+          ],
+          "coins": null,
+          "membership": [
+            "tmayapub1addwnpepqfshsq2y6ejy2ysxmq4gj8n8mzuzyulk9wh4n946jv5w2vpwdn2yuz3v0gx"
+          ],
+          "pub_key": "tmayapub1addwnpepqfshsq2y6ejy2ysxmq4gj8n8mzuzyulk9wh4n946jv5w2vpwdn2yuz3v0gx",
+          "pub_key_eddsa": "tmayapub1addwnpepqfshsq2y6ejy2ysxmq4gj8n8mzuzyulk9wh4n946jv5w2vpwdn2yuz3v0gx",
+          "routers": null,
+          "status": "ActiveVault",
+          "type": "AsgardVault"
+        }
+      ]
+    },
+    "params": null,
+    "transfer": {
+      "denom_traces": [],
+      "params": {
+        "receive_enabled": true,
+        "send_enabled": false
+      },
+      "port_id": "transfer"
+    },
+    "upgrade": {}
+  },
+  "chain_id": "mayachain",
+  "consensus_params": {
+    "block": {
+      "max_bytes": "22020096",
+      "max_gas": "-1",
+      "time_iota_ms": "1000"
+    },
+    "evidence": {
+      "max_age_duration": "172800000000000",
+      "max_age_num_blocks": "100000",
+      "max_bytes": "1048576"
+    },
+    "validator": {
+      "pub_key_types": [
+        "ed25519"
+      ]
+    },
+    "version": {}
+  },
+  "initial_height": "5"
+}

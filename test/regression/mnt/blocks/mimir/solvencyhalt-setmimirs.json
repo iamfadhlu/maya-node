@@ -1,0 +1,298 @@
+[
+  {
+    "id": {
+      "hash": "",
+      "parts": {
+        "total": 0,
+        "hash": ""
+      }
+    },
+    "header": {
+      "version": {
+        "block": "11",
+        "app": "0"
+      },
+      "chain_id": "mayachain",
+      "height": 1,
+      "time": "",
+      "last_block_id": {
+        "hash": "",
+        "parts": {
+          "total": 0,
+          "hash": ""
+        }
+      },
+      "last_commit_hash": "",
+      "data_hash": "E3B0C44298FC1C149AFBF4C8996FB92427AE41E4649B934CA495991B7852B855",
+      "validators_hash": "9A0FC1918CDCB81267B61959D511436CC2B19E3A48538EC664B2E46E3D6E61C6",
+      "next_validators_hash": "9A0FC1918CDCB81267B61959D511436CC2B19E3A48538EC664B2E46E3D6E61C6",
+      "consensus_hash": "048091BC7DDC283F77BFBF91D73C44DA58C3DF8A9CBC867405D8B7F3DAADA22F",
+      "app_hash": "E3B0C44298FC1C149AFBF4C8996FB92427AE41E4649B934CA495991B7852B855",
+      "last_results_hash": "E3B0C44298FC1C149AFBF4C8996FB92427AE41E4649B934CA495991B7852B855",
+      "evidence_hash": "E3B0C44298FC1C149AFBF4C8996FB92427AE41E4649B934CA495991B7852B855",
+      "proposer_address": "E557CD61B142A7E76E89BB3020D395A15D97C452"
+    },
+    "begin_block_events": [],
+    "end_block_events": [
+      {
+        "bond_reward": "0",
+        "type": "rewards"
+      }
+    ],
+    "txs": []
+  },
+  {
+    "id": {
+      "hash": "",
+      "parts": {
+        "total": 0,
+        "hash": ""
+      }
+    },
+    "header": {
+      "version": {
+        "block": "11",
+        "app": "0"
+      },
+      "chain_id": "mayachain",
+      "height": 2,
+      "time": "",
+      "last_block_id": {
+        "hash": "",
+        "parts": {
+          "total": 0,
+          "hash": ""
+        }
+      },
+      "last_commit_hash": "",
+      "data_hash": "E599DCEE520C7777C40E2CF6BC971A97FA56F9E1ACD6D009B0C4A8F04EBF49F4",
+      "validators_hash": "9A0FC1918CDCB81267B61959D511436CC2B19E3A48538EC664B2E46E3D6E61C6",
+      "next_validators_hash": "9A0FC1918CDCB81267B61959D511436CC2B19E3A48538EC664B2E46E3D6E61C6",
+      "consensus_hash": "048091BC7DDC283F77BFBF91D73C44DA58C3DF8A9CBC867405D8B7F3DAADA22F",
+      "app_hash": "1CAFD9C64C74660C645C4321DF513F39404464FE8563609C6109D25B320148FA",
+      "last_results_hash": "E3B0C44298FC1C149AFBF4C8996FB92427AE41E4649B934CA495991B7852B855",
+      "evidence_hash": "E3B0C44298FC1C149AFBF4C8996FB92427AE41E4649B934CA495991B7852B855",
+      "proposer_address": "E557CD61B142A7E76E89BB3020D395A15D97C452"
+    },
+    "begin_block_events": [],
+    "end_block_events": [
+      {
+        "bond_reward": "0",
+        "type": "rewards"
+      }
+    ],
+    "txs": [
+      {
+        "hash": "C1271E64CE0E17DF15868C9A2FD0A86CFE5C9135A116A499B6747BE8F7443B8F",
+        "tx": {
+          "auth_info": {
+            "fee": {
+              "amount": [],
+              "gas_limit": "2000000",
+              "granter": "",
+              "payer": ""
+            },
+            "signer_infos": [
+              {
+                "mode_info": {
+                  "single": {
+                    "mode": "SIGN_MODE_DIRECT"
+                  }
+                },
+                "public_key": {
+                  "@type": "/cosmos.crypto.secp256k1.PubKey",
+                  "key": "AmF4AUTWZEUSBtgqiR5n2Lgic/Yrr1mWupMo5TAubNRO"
+                },
+                "sequence": "0"
+              }
+            ]
+          },
+          "body": {
+            "extension_options": [],
+            "memo": "",
+            "messages": [
+              {
+                "@type": "/types.MsgSolvency",
+                "chain": "BTC",
+                "coins": [
+                  {
+                    "amount": "20000000",
+                    "asset": "BTC.BTC",
+                    "decimals": "0"
+                  }
+                ],
+                "height": "1",
+                "id": "F7E32C88EA3E2AC67F80A3912D2A9C5042EC1E3E85C3A4A600073D7806E78CFE",
+                "pub_key": "tmayapub1addwnpepqv8lvvqmczr893yf7zyf7xtffccf032aprl8z09y3e3nfruedew854pe9l8",
+                "signer": "tmaya1zf3gsk7edzwl9syyefvfhle37cjtql35hdgtzt"
+              }
+            ],
+            "non_critical_extension_options": [],
+            "timeout_height": "0"
+          },
+          "signatures": [
+            "BE0nPD9mYPUBIH7MtHhYdfLGtDd7Bv3JVYllQ2XhuyYQBuEtcKecjUrwd7BdP3IS8VeZzuw66d3kUb7qEQ0vdQ=="
+          ]
+        },
+        "result": {
+          "code": 0,
+          "data": "\n\u0014\n\u0012/types.MsgSolvency",
+          "log": "[{\"events\":[{\"type\":\"message\",\"attributes\":[{\"key\":\"action\",\"value\":\"solvency\"}]},{\"type\":\"set_mimir\",\"attributes\":[{\"key\":\"key\",\"value\":\"SOLVENCYHALTBTCCHAIN\"},{\"key\":\"value\",\"value\":\"2\"}]}]}]",
+          "gas_wanted": "2000000",
+          "gas_used": "105760",
+          "events": [
+            {
+              "fee": "",
+              "fee_payer": "tmaya1zf3gsk7edzwl9syyefvfhle37cjtql35hdgtzt",
+              "type": "tx"
+            },
+            {
+              "acc_seq": "tmaya1zf3gsk7edzwl9syyefvfhle37cjtql35hdgtzt/0",
+              "type": "tx"
+            },
+            {
+              "signature": "BE0nPD9mYPUBIH7MtHhYdfLGtDd7Bv3JVYllQ2XhuyYQBuEtcKecjUrwd7BdP3IS8VeZzuw66d3kUb7qEQ0vdQ==",
+              "type": "tx"
+            },
+            {
+              "action": "solvency",
+              "type": "message"
+            },
+            {
+              "key": "SOLVENCYHALTBTCCHAIN",
+              "type": "set_mimir",
+              "value": "2"
+            }
+          ]
+        }
+      }
+    ]
+  },
+  {
+    "id": {
+      "hash": "",
+      "parts": {
+        "total": 0,
+        "hash": ""
+      }
+    },
+    "header": {
+      "version": {
+        "block": "11",
+        "app": "0"
+      },
+      "chain_id": "mayachain",
+      "height": 3,
+      "time": "",
+      "last_block_id": {
+        "hash": "",
+        "parts": {
+          "total": 0,
+          "hash": ""
+        }
+      },
+      "last_commit_hash": "",
+      "data_hash": "B7437D37A7C73CB6E3EC6F96A6B9BBFDD2DBF17DB8BF1A0CCA8234AAF30F164C",
+      "validators_hash": "9A0FC1918CDCB81267B61959D511436CC2B19E3A48538EC664B2E46E3D6E61C6",
+      "next_validators_hash": "9A0FC1918CDCB81267B61959D511436CC2B19E3A48538EC664B2E46E3D6E61C6",
+      "consensus_hash": "048091BC7DDC283F77BFBF91D73C44DA58C3DF8A9CBC867405D8B7F3DAADA22F",
+      "app_hash": "4A57592A7008EBEBCD52C3C5D4EBF311D3DAF4EB01F8D1B46924CCDDC451A5EE",
+      "last_results_hash": "535190A45E71E283B83DB5805FFEF6A3349446B429A98E058F9DDEA0AD8E51B5",
+      "evidence_hash": "E3B0C44298FC1C149AFBF4C8996FB92427AE41E4649B934CA495991B7852B855",
+      "proposer_address": "E557CD61B142A7E76E89BB3020D395A15D97C452"
+    },
+    "begin_block_events": [],
+    "end_block_events": [
+      {
+        "bond_reward": "0",
+        "type": "rewards"
+      }
+    ],
+    "txs": [
+      {
+        "hash": "180C65D40C5D97FCD1318F3DE4574BF800E7D438DDBE9DD47FDD5F70B2BE1068",
+        "tx": {
+          "auth_info": {
+            "fee": {
+              "amount": [],
+              "gas_limit": "2000000",
+              "granter": "",
+              "payer": ""
+            },
+            "signer_infos": [
+              {
+                "mode_info": {
+                  "single": {
+                    "mode": "SIGN_MODE_DIRECT"
+                  }
+                },
+                "public_key": {
+                  "@type": "/cosmos.crypto.secp256k1.PubKey",
+                  "key": "AmF4AUTWZEUSBtgqiR5n2Lgic/Yrr1mWupMo5TAubNRO"
+                },
+                "sequence": "1"
+              }
+            ]
+          },
+          "body": {
+            "extension_options": [],
+            "memo": "",
+            "messages": [
+              {
+                "@type": "/types.MsgSolvency",
+                "chain": "BTC",
+                "coins": [
+                  {
+                    "amount": "70000000",
+                    "asset": "BTC.BTC",
+                    "decimals": "0"
+                  }
+                ],
+                "height": "2",
+                "id": "97EBD1B9EA03DE2597501EB390757E995F824E2CF5CF8DEF998F72D621349264",
+                "pub_key": "tmayapub1addwnpepqfshsq2y6ejy2ysxmq4gj8n8mzuzyulk9wh4n946jv5w2vpwdn2yuz3v0gx",
+                "signer": "tmaya1zf3gsk7edzwl9syyefvfhle37cjtql35hdgtzt"
+              }
+            ],
+            "non_critical_extension_options": [],
+            "timeout_height": "0"
+          },
+          "signatures": [
+            "JTOCN3KVEbtuboI3owYuVrmZd91YOZsHh36eiqTIUAhMflY0/2m0NOFO1n2Ce6H9/7eINCyLHvWbXabqfNk4lQ=="
+          ]
+        },
+        "result": {
+          "code": 0,
+          "data": "\n\u0014\n\u0012/types.MsgSolvency",
+          "log": "[{\"events\":[{\"type\":\"message\",\"attributes\":[{\"key\":\"action\",\"value\":\"solvency\"}]},{\"type\":\"set_mimir\",\"attributes\":[{\"key\":\"key\",\"value\":\"SOLVENCYHALTBTCCHAIN\"},{\"key\":\"value\",\"value\":\"0\"}]}]}]",
+          "gas_wanted": "2000000",
+          "gas_used": "102118",
+          "events": [
+            {
+              "fee": "",
+              "fee_payer": "tmaya1zf3gsk7edzwl9syyefvfhle37cjtql35hdgtzt",
+              "type": "tx"
+            },
+            {
+              "acc_seq": "tmaya1zf3gsk7edzwl9syyefvfhle37cjtql35hdgtzt/1",
+              "type": "tx"
+            },
+            {
+              "signature": "JTOCN3KVEbtuboI3owYuVrmZd91YOZsHh36eiqTIUAhMflY0/2m0NOFO1n2Ce6H9/7eINCyLHvWbXabqfNk4lQ==",
+              "type": "tx"
+            },
+            {
+              "action": "solvency",
+              "type": "message"
+            },
+            {
+              "key": "SOLVENCYHALTBTCCHAIN",
+              "type": "set_mimir",
+              "value": "0"
+            }
+          ]
+        }
+      }
+    ]
+  }
+]

@@ -1,0 +1,366 @@
+########################################################################################
+# Bifrost
+########################################################################################
+
+bifrost:
+  # leveldb defaults to start, plus 10 bit per key filter
+  observer_leveldb: &default-leveldb
+    filter_bits_per_key: 10
+    compaction_table_size_multiplier: 1
+    write_buffer: 4194304
+    block_cache_capacity: 8388608
+    compact_on_init: true
+
+  metrics:
+    enabled: true
+    pprof_enabled: false
+    listen_port: 9000
+    read_timeout: 30s
+    write_timeout: 30s
+    chains:
+      - ARB
+      - BTC
+      - DASH
+      - ETH
+      - KUJI
+      - THOR
+      - XRD
+      - ZEC
+  mayachain:
+    chain_id: mayachain
+    chain_host: localhost:1317
+    chain_rpc: ""
+    chain_home_folder: ""
+    signer_name: ""
+  signer:
+    backup_keyshares: true
+    signer_db_path: /var/data/bifrost/signer_db
+    retry_interval: 2s
+    reschedule_buffer_blocks: 150 # 15 minutes
+    block_scanner:
+      chain_id: MAYA
+      rpc_host: 127.0.0.1:26657
+      start_block_height: 0
+      block_retry_interval: 10s
+      block_height_discover_back_off: 5s
+      block_scan_processors: 1
+      start_block: "0"
+      http_request_timeout: 30s
+      http_request_read_timeout: 30s
+      http_request_write_timeout: 30s
+      max_http_request_retry: "10"
+    leveldb: *default-leveldb
+    auto_observe: false
+    keygen_timeout: 5m
+    keysign_timeout: 45s
+    party_timeout: 45s
+    pre_param_timeout: 5m
+  tss:
+    rendezvous: asgard
+    p2p_port: 5040
+    info_address: ":6040"
+    bootstrap_peers: ""
+    external_ip: ""
+    max_keyshare_recover_scan_blocks: 100
+  chains:
+    btc: &default-chain
+      disabled: false
+      chain_id: BTC
+      username: mayachain
+      password: password
+      http_post_mode: 1
+      disable_tls: 1
+      parallel_mempool_scan: 5
+      mempool_tx_id_cache_size: 1_000_000
+      scanner_leveldb:
+        <<: *default-leveldb
+        compaction_table_size_multiplier: 10
+        write_buffer: 20971520 # 20mb
+        block_cache_capacity: 536870912 # 512mb
+
+      # the following defaults must be defined to override with environment
+      chain_host: ""
+      chain_network: ""
+      rpc_host: ""
+      cosmos_grpc_host: ""
+      cosmos_grpc_tls: ""
+      opt_to_retire: false
+      solvency_blocks: 0
+      max_gas_tip_percentage: 0
+      max_pending_nonces: 0
+      fixed_outbound_gas_rate: false
+      token_max_gas_multiplier: 0
+      aggregator_max_gas_multiplier: 0
+
+      block_scanner: &default-block-scanner
+        max_reorg_rescan_blocks: 72 # 12h
+        chain_id: BTC
+        chain_api: ""
+        enforce_block_height: false
+        block_scan_processors: 1
+        block_height_discover_back_off: 5s
+        block_retry_interval: 10s
+        http_request_timeout: 30s
+        http_request_read_timeout: 30s
+        http_request_write_timeout: 30s
+        max_http_request_retry: 10
+        db_path: /var/data/bifrost/observer
+        max_contract_tx_logs: 0
+
+        # the following defaults must be defined to override with environment
+        rpc_host: ""
+        start_block_height: 0
+        cosmos_grpc_host: ""
+        cosmos_grpc_tls: false
+        gas_cache_blocks: 0
+        whitelist_tokens: []
+        concurrency: 0
+        max_gas_limit: 0
+        gas_price_resolution: 10_000_000_000 # 10 gwei
+        max_resume_block_lag: 24h
+        max_healthy_lag: 30m
+        transaction_batch_size: 500
+        fixed_gas_rate: 0
+        observation_flexibility_blocks: 3
+
+    bnb:
+      <<: *default-chain
+      chain_id: BNB
+      disabled: true
+      max_pending_nonces: 0
+      block_scanner:
+        <<: *default-block-scanner
+        max_reorg_rescan_blocks: 0 # BNB has instant finality
+        chain_id: BNB
+        chain_api: ""
+        block_height_discover_back_off: 0.3s
+        observation_flexibility_blocks: 2
+      mempool_tx_id_cache_size: 0
+      scanner_leveldb: *default-leveldb
+
+    eth:
+      <<: *default-chain
+      chain_id: ETH
+      max_gas_tip_percentage: 20
+      token_max_gas_multiplier: 3
+      aggregator_max_gas_multiplier: 10
+      max_pending_nonces: 3
+      block_scanner:
+        <<: *default-block-scanner
+        max_reorg_rescan_blocks: 96 # 3 epochs
+        gas_cache_blocks: 40
+        concurrency: 1
+        chain_id: ETH
+        chain_api: ""
+        max_gas_limit: 100000
+        max_contract_tx_logs: 50
+      mempool_tx_id_cache_size: 0
+      scanner_leveldb: *default-leveldb
+
+    avax:
+      <<: *default-chain
+      chain_id: AVAX
+      solvency_blocks: 100
+      disabled: true
+      token_max_gas_multiplier: 3
+      aggregator_max_gas_multiplier: 10
+      max_pending_nonces: 0
+      block_scanner:
+        <<: *default-block-scanner
+        max_reorg_rescan_blocks: 0 # avax has guaranteed finality
+        concurrency: 1
+        chain_id: AVAX
+        chain_api: ""
+        gas_cache_blocks: 40
+        gas_price_resolution: 50_000_000_000 # 50 navax
+        max_gas_limit: 100000
+        max_contract_tx_logs: 50
+        whitelist_tokens: # stable coins only
+          - 0x9702230A8Ea53601f5cD2dc00fDBc13d4dF4A8c7 # USDT
+          - 0xB97EF9Ef8734C71904D8002F8b6Bc66Dd9c48a6E # USDC
+      mempool_tx_id_cache_size: 0
+      scanner_leveldb: *default-leveldb
+    arb:
+      <<: *default-chain
+      chain_id: ARB
+      solvency_blocks: 800
+      token_max_gas_multiplier: 3
+      aggregator_max_gas_multiplier: 10
+      max_pending_nonces: 3
+
+      block_scanner:
+        <<: *default-block-scanner
+        max_reorg_rescan_blocks: 0 # ARB finality via optimistic rollup
+        concurrency: 1
+        chain_id: ARB
+        chain_api: ""
+        gas_cache_blocks: 40
+        gas_price_resolution: 10_000_000 # 0.1 gwei
+        observation_flexibility_blocks: 960 # 4 minutes
+        max_gas_limit: 500000
+        max_contract_tx_logs: 50
+        whitelist_tokens: # stable coins only
+          - 0xFD086BC7CD5C481DCC9C85EBE478A1C0B69FCBB9 # Tether USD
+          - 0xAF88D065E77C8CC2239327C5EDB3A432268E5831 # Circle USD Coin
+          - 0x429FED88F10285E61B12BDF00848315FBDFCC341 # THORWallet Governance Token
+          - 0x5979d7b546e38e414f7e9822514be443a4800529 # Wrapped liquid staked Ether 2.0
+          - 0xAFD091F140C21770F4E5D53D26B2859AE97555AA # Mayan Gold
+          - 0x912CE59144191C1204E64559FE8253A0E49E6548 # Arbitrum
+          - 0xFC5A1A6EB076A2C7AD06ED22C90D7E710E35AD0A # GMX
+          - 0x2F2A2543B76A4166549F7AAB2E75BEF0AEFC5B0F # Wrapped Bitcoin
+          - 0x18C11FD286C5EC11C3B683CAA813B77F5163A122 # Gains Network
+          - 0xFA7F8980B0F1E64A2062791CC3B0871572F1F7F0 # Uniswap
+          - 0xF97F4DF75117A78C1A5A0DBB814AF92458539FB4 # Chainlink
+          - 0xDA10009CBD5D07DD0CECC66161FC93D7C9000DA1 # Dai
+          - 0xD4D42F0B6DEF4CE0383636770EF773390D85C61A # Sushi
+          - 0x25D887CE7A35172C62FEBFD67A1856F20FAEBB00 # Pepe
+          - 0x93864d81175095DD93360FFA2A529b8642F76A6E # LEO
+          - 0x180F7cF38805d1be95C7632F653E26B0838e2969 # XDEFI
+          - 0x9F41b34f42058a7b74672055a5fae22c4b113Fd1 # Yum
+          - 0xe6d40F7a705BD83Ae0E52f8628A8C8f2E6E8b5B3 # FORTUN
+          - 0x82aF49447D8a07e3bd95BD0d56f35241523fBab1 # WETH
+          - 0x0c880f6761F1af8d9Aa9C466984b80DAb9a8c9e8 # PENDLE
+          - 0x11cDb42B0EB46D95f990BeDD4695A6e3fA034978 # Curve DAO
+          - 0x498Bf2B1e120FeD3ad3D42EA2165E9b73f99C1e5 # crvUSD
+          - 0x17FC002b466eEc40DaE837Fc4bE5c67993ddBd6F # Frax
+          - 0x680447595e8b7b3Aa1B43beB9f6098C79ac2Ab3f # USDD
+          - 0x354A6dA3fcde098F8389cad84b0182725c6C91dE # Compound
+          - 0x9623063377AD1B27544C965cCd7342f7EA7e88C7 # The Graph
+          - 0x7787bfD77E1caac0A6AcADA87f4CF97031569824 # WEWE
+          - 0xf0cb2dc0db5e6c66b9a70ac27b06b878da017028 # OHM
+          - 0x53312F85Bba24C8cb99CFFc13BF82420157230d3 # Moca
+      mempool_tx_id_cache_size: 0
+      scanner_leveldb: *default-leveldb
+
+    dash:
+      <<: *default-chain
+      chain_id: DASH
+      block_scanner:
+        <<: *default-block-scanner
+        max_reorg_rescan_blocks: 288 # 12h
+        chain_id: DASH
+        chain_api: ""
+      mempool_tx_id_cache_size: 1_000_000
+      scanner_leveldb: *default-leveldb
+    kuji:
+      <<: *default-chain
+      chain_id: KUJI
+      block_scanner:
+        <<: *default-block-scanner
+        max_reorg_rescan_blocks: 0 # instant finality
+        chain_id: KUJI
+        chain_api: ""
+        observation_flexibility_blocks: 80
+      mempool_tx_id_cache_size: 0
+      scanner_leveldb: *default-leveldb
+
+    thor:
+      <<: *default-chain
+      chain_id: THOR
+      block_scanner:
+        <<: *default-block-scanner
+        max_reorg_rescan_blocks: 0 # instant finality
+        chain_id: THOR
+        chain_api: ""
+        observation_flexibility_blocks: 40
+      mempool_tx_id_cache_size: 0
+      scanner_leveldb: *default-leveldb
+    zec:
+      <<: *default-chain
+      chain_id: ZEC
+      block_scanner:
+        <<: *default-block-scanner
+        chain_id: ZEC
+      mempool_tx_id_cache_size: 1_000_000
+      scanner_leveldb: *default-leveldb
+    xrd:
+      <<: *default-chain
+      chain_id: XRD
+      disabled: false
+      block_scanner:
+        <<: *default-block-scanner
+        max_reorg_rescan_blocks: 0 # instant finality
+        chain_id: XRD
+        chain_api: ""
+      mempool_tx_id_cache_size: 0
+      scanner_leveldb: *default-leveldb
+
+########################################################################################
+# Maya
+########################################################################################
+
+maya:
+  vault_pubkeys_cutoff_blocks: 1_000_000
+
+  log_filter:
+    modules:
+      - api-server
+      - consensus
+      - evidence
+      - mempool
+      - p2p
+      - pex
+      - rpc
+      - rpc-server
+      - txindex
+      - x/bank
+    messages:
+      - executed block
+      - commit synced
+
+  auto_state_sync:
+    enabled: false
+    block_buffer: 150_000
+    peers: ""
+  api:
+    limit_count: 60
+    limit_duration: 1m
+  cosmos:
+    pruning: nothing
+    halt_height: 0
+    min_retain_blocks: 0
+    telemetry:
+      enabled: false
+      prometheus_retention_time: 600
+    api:
+      enable: true
+      enabled_unsafe_cors: true
+      address: tcp://0.0.0.0:1317
+    grpc:
+      enable: false
+      address: 0.0.0.0:9090
+    state_sync:
+      snapshot_interval: 0
+      snapshot_keep_recent: 2
+  tendermint:
+    log:
+      level: info
+      format: plain
+    rpc:
+      listen_address: "" # set dynamically
+      cors_allowed_origin: "*"
+      experimental_subscription_buffer_size: 200
+      experimental_websocket_write_buffer_size: 200
+    p2p:
+      listen_address: "" # set dynamically
+      seeds: "" # set dynamically
+      external_address: ""
+      persistent_peers: ""
+      addr_book_strict: false
+      max_num_inbound_peers: 40
+      max_num_outbound_peers: 10
+      allow_duplicate_ip: true
+    consensus:
+      timeout_commit: 5s
+      # these are temporarily set to recover from consensus failure
+      timeout_propose_delta: 500ms
+      timeout_prevote_delta: 500ms
+      timeout_precommit_delta: 500ms
+    state_sync:
+      enable: false
+      rpc_servers: ""
+      trust_height: 0
+      trust_hash: ""
+      trust_period: "360h0m0s"
+    instrumentation:
+      prometheus: true

@@ -1,0 +1,67 @@
+{{ template "default-state.yaml" }}
+---
+{{ template "btc-eth-pool-state.yaml" }}
+---
+type: create-blocks
+count: 1
+---
+type: check
+endpoint: http://localhost:1317//mayachain/pools
+asserts:
+  - .|length == 2
+  - .[0].asset == "BTC.BTC"
+  - .[1].asset == "ETH.ETH"
+---
+type: tx-mimir
+key: PendingLiquidityAgeLimit
+value: 2
+signer: {{ addr_maya_dog }}
+---
+type: create-blocks
+count: 1
+---
+type: check
+endpoint: http://localhost:1317//mayachain/pools
+asserts:
+  - .|length == 2
+  - .[0].asset == "BTC.BTC"
+  - .[1].asset == "ETH.ETH"
+---
+type: tx-deposit
+signer: {{ addr_maya_cat }}
+coins:
+  - amount: "200000000"
+    asset: "cacao"
+memo: "+:BTC.BTC:{{ addr_btc_cat }}"
+---
+type: create-blocks
+count: 1
+---
+type: check
+endpoint: http://localhost:1317//mayachain/pool/BTC.BTC/liquidity_providers
+asserts:
+  - .|length == 2
+  - .[0].pending_cacao | tonumber == 200000000
+  - .[0].units | tonumber == 0
+---
+type: check
+endpoint: http://localhost:1317//mayachain/pool/BTC.BTC
+asserts:
+  - .pending_inbound_cacao | tonumber == 200000000
+  - .LP_units | tonumber == 10000000000000
+---
+type: create-blocks
+count: 3
+---
+type: check
+endpoint: http://localhost:1317//mayachain/pool/BTC.BTC/liquidity_providers
+asserts:
+  - .|length == 2
+  - .[0].pending_cacao | tonumber == 0
+  - .[0].units | tonumber == 99998000
+---
+type: check
+endpoint: http://localhost:1317//mayachain/pool/BTC.BTC
+asserts:
+  - .pending_inbound_cacao | tonumber == 0
+  - .LP_units | tonumber == 10000099998000

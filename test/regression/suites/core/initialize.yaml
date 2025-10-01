@@ -1,0 +1,31 @@
+{{ template "default-state.yaml" }}
+---
+type: create-blocks
+count: 1
+---
+type: check
+endpoint: http://localhost:1317/mayachain/pools
+asserts:
+  - .|length == 1
+  - .[0].asset == "BTC.BTC" # genesis pool
+---
+type: check
+endpoint: http://localhost:1317/cosmos/bank/v1beta1/supply
+asserts:
+  - .supply[]|select(.denom == "cacao")|.amount|tonumber == 1000000e10
+---
+type: check
+endpoint: http://localhost:1317/mayachain/inbound_addresses
+asserts:
+  - .|length == 8
+  # all addresses should be for the dog mnemonic
+  - .[]|select(.chain == "ARB")|.address == "{{ addr_arb_dog }}"
+  - .[]|select(.chain == "BTC")|.address == "{{ addr_btc_dog }}"
+  - .[]|select(.chain == "DASH")|.address == "{{ addr_dash_dog }}"
+  - .[]|select(.chain == "ETH")|.address == "{{ addr_eth_dog }}"
+  - .[]|select(.chain == "KUJI")|.address == "{{ addr_kuji_dog }}"
+  - .[]|select(.chain == "THOR")|.address == "{{ addr_thor_dog }}"
+  - .[]|select(.chain == "XRD")|.address == "{{ addr_xrd_dog }}"
+  - .[]|select(.chain == "ZEC")|.address == "{{ addr_zec_dog }}"
+  # the pubkey on all inbound addresses should be the dog public key
+  - '[.[]|select(.pub_key == "{{ pubkey_dog }}")]|length == 8'

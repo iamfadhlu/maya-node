@@ -1,0 +1,25 @@
+
+# Base image for running thornode.
+FROM registry.gitlab.com/mayachain/mayanode:builder-v8@sha256:9d39b645cda9368857c8ca0845396b5dd5f01a548ab3df9f396f34cb9687d36e
+
+ENV GOBIN=/go/bin
+ENV GOPATH=/go
+# Enable CGO and specify the Radix library path
+ENV CGO_ENABLED=1
+ENV CGO_LDFLAGS="-L/usr/lib -lradix_engine_toolkit_uniffi -lzec"
+ENV GOOS=linux
+
+RUN mkdir /simtest
+
+WORKDIR /app
+# Copy Radix Engine Toolkit (RET) native lib
+COPY ./lib/libradix_engine_toolkit_uniffi.so /usr/lib
+# Copy zec lib
+COPY ./lib/libzec.so /usr/lib
+# Note the use of musl-gcc here. See the comments above.
+COPY go.mod go.sum ./
+RUN go mod download
+
+COPY . .
+
+RUN --mount=type=cache,target=/root/.cache/go-build make _build-test-simulation

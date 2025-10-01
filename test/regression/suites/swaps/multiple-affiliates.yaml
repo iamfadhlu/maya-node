@@ -1,0 +1,437 @@
+{{ template "default-state.yaml" }}
+---
+# larger pools to ensure more precise affiliate fees
+{{ template "btc-eth-big-pool-state.yaml" }}
+---
+type: create-blocks
+count: 1
+---
+type: check
+endpoint: http://localhost:1317/mayachain/pools
+asserts:
+  - .|length == 2
+---
+type: tx-mimir
+key: PreferredAssetOutboundFeeMultiplier
+value: 3
+signer: {{ addr_maya_dog }}
+---
+type: create-blocks
+count: 1
+---
+########################################################################################
+# TEST MULTIPLE AFFILIATES - Swaps from CACAO
+########################################################################################
+########################################################################################
+# swap cacao to btc with affiliate fees over 1000bps, should fail
+########################################################################################
+type: tx-deposit
+signer: {{ addr_maya_fox }}
+coins:
+  - amount: "10000000000"
+    asset: "cacao"
+memo: "=:BTC.BTC:{{ addr_btc_fox }}::{{ addr_maya_pig }}/{{ addr_maya_cat }}/{{ addr_maya_fish }}:500"
+---
+type: create-blocks
+count: 1
+---
+type: check
+endpoint: http://localhost:1317/mayachain/block
+asserts:
+  - .txs|length == 1
+  - .txs[0]|.result.log|contains("affiliate fee basis points must not exceed 500")
+---
+########################################################################################
+# swap cacao to btc with 3 affiliates, should all get 100 bps
+########################################################################################
+type: check
+endpoint: http://localhost:1317/cosmos/bank/v1beta1/balances/{{ addr_maya_pig }}
+asserts:
+  - .balances|length == 0
+---
+type: check
+endpoint: http://localhost:1317/cosmos/bank/v1beta1/balances/{{ addr_maya_cat }}
+asserts:
+  - .balances|length == 1
+  - .balances[]|select(.denom == "cacao")|.amount|tonumber == ${PREV_CAT_BAL=2500000000000000}
+---
+type: check
+endpoint: http://localhost:1317/cosmos/bank/v1beta1/balances/{{ addr_maya_fish }}
+asserts:
+  - .balances|length == 0
+---
+type: tx-deposit
+signer: {{ addr_maya_fox }}
+coins:
+  - amount: "${SWAP_AMT=1000000000000}"
+    asset: "cacao"
+memo: "=:BTC.BTC:{{ addr_btc_fox }}::{{ addr_maya_pig }}/{{ addr_maya_cat }}/{{ addr_maya_fish }}:${BPS=100}"
+---
+type: create-blocks
+count: 2
+---
+type: check
+endpoint: http://localhost:1317/mayachain/queue/outbound
+asserts:
+  - .|length == 1
+  - .[0]|.in_hash == "{{ native_txid -1 }}"
+---
+type: check
+endpoint: http://localhost:1317/cosmos/bank/v1beta1/balances/{{ addr_maya_pig }}
+asserts:
+  - 2000000000 == ${GAS=2000000000}
+  - .balances|length == 1
+  - (${SWAP_AMT} * ${BPS} / 10000 - ${GAS}) - (.balances[]|select(.denom == "cacao")|.amount|tonumber) < (${SWAP_AMT} * ${BPS} / 10000 - ${GAS}) * 0.001 # 10 bps tolerance
+---
+type: check
+endpoint: http://localhost:1317/cosmos/bank/v1beta1/balances/{{ addr_maya_cat }}
+asserts:
+  - .balances|length == 1
+  - (${SWAP_AMT} * ${BPS} / 10000 - ${GAS}) - (.balances[]|select(.denom == "cacao")|.amount|tonumber - ${PREV_CAT_BAL}) < (${SWAP_AMT} * ${BPS} / 10000 - ${GAS}) * 0.001 # 10 bps tolerance
+---
+type: check
+endpoint: http://localhost:1317/cosmos/bank/v1beta1/balances/{{ addr_maya_fish }}
+asserts:
+  - .balances|length == 1
+  - (${SWAP_AMT} * ${BPS} / 10000 - ${GAS}) - (.balances[]|select(.denom == "cacao")|.amount|tonumber) < (${SWAP_AMT} * ${BPS} / 10000 - ${GAS}) * 0.001 # 10 bps tolerance
+---
+type: tx-observed-out
+signer: {{ addr_maya_dog }}
+txs:
+- tx:
+    id: '{{ observe_txid 1 }}'
+    chain: BTC
+    from_address: {{ addr_btc_dog }}
+    to_address: {{ addr_btc_fox }}
+    coins:
+      - amount: "96792290"
+        asset: "BTC.BTC"
+        decimals: 8
+    gas:
+      - amount: "10500"
+        asset: "BTC.BTC"
+    memo: "OUT:{{ native_txid -1 }}"
+  block_height: 1
+  finalise_height: 1
+  observed_pub_key: {{ pubkey_dog }}
+---
+type: create-blocks
+count: 1
+---
+type: check
+endpoint: http://localhost:1317/mayachain/queue/outbound
+asserts:
+  - .|length == 0
+---
+########################################################################################
+# swap cacao to btc with 3 affiliates, should all get different bps
+########################################################################################
+# save current balances
+type: check
+endpoint: http://localhost:1317/cosmos/bank/v1beta1/balances/{{ addr_maya_pig }}
+asserts:
+  - .balances[]|select(.denom == "cacao")|.amount|tonumber == ${PREV_PIG_BAL=7999777480}
+---
+type: check
+endpoint: http://localhost:1317/cosmos/bank/v1beta1/balances/{{ addr_maya_cat }}
+asserts:
+  - .balances|length == 1
+  - .balances[]|select(.denom == "cacao")|.amount|tonumber == ${PREV_CAT_BAL=2500007999577691}
+---
+type: check
+endpoint: http://localhost:1317/cosmos/bank/v1beta1/balances/{{ addr_maya_fish }}
+asserts:
+  - .balances|length == 1
+  - .balances[]|select(.denom == "cacao")|.amount|tonumber == ${PREV_FISH_BAL=7999377907}
+---
+# now perform the swap
+type: tx-deposit
+signer: {{ addr_maya_fox }}
+coins:
+  - amount: "${SWAP_AMT=10000000000000}"
+    asset: "cacao"
+memo: "=:BTC.BTC:{{ addr_btc_fox }}::{{ addr_maya_pig }}/{{ addr_maya_cat }}/{{ addr_maya_fish }}:${PIG_BPS=50}/${CAT_BPS=10}/${FISH_BPS=20}"
+---
+type: create-blocks
+count: 2
+---
+type: check
+endpoint: http://localhost:1317/mayachain/queue/outbound
+asserts:
+  - .|length == 1
+  - .[0]|.in_hash == "{{ native_txid -1 }}"
+---
+type: check
+endpoint: http://localhost:1317/cosmos/bank/v1beta1/balances/{{ addr_maya_pig }}
+asserts:
+  - (${SWAP_AMT} * ${PIG_BPS} / 10000 - ${GAS}) - (.balances[]|select(.denom == "cacao")|.amount|tonumber - ${PREV_PIG_BAL}) < (${SWAP_AMT} * ${PIG_BPS} / 10000 - ${GAS}) * 0.001 # 10 bps tolerance
+---
+type: check
+endpoint: http://localhost:1317/cosmos/bank/v1beta1/balances/{{ addr_maya_cat }}
+asserts:
+  - (${SWAP_AMT} * ${CAT_BPS} / 10000 - ${GAS}) - (.balances[]|select(.denom == "cacao")|.amount|tonumber - ${PREV_CAT_BAL}) < (${SWAP_AMT} * ${CAT_BPS} / 10000 - ${GAS}) * 0.001 # 10 bps tolerance
+---
+type: check
+endpoint: http://localhost:1317/cosmos/bank/v1beta1/balances/{{ addr_maya_fish }}
+asserts:
+  - (${SWAP_AMT} * ${FISH_BPS} / 10000 - ${GAS}) - (.balances[]|select(.denom == "cacao")|.amount|tonumber - ${PREV_FISH_BAL}) < (${SWAP_AMT} * ${FISH_BPS} / 10000 - ${GAS}) * 0.001 # 10 bps tolerance
+---
+type: tx-observed-out
+signer: {{ addr_maya_dog }}
+txs:
+- tx:
+    id: '{{ observe_txid 2 }}'
+    chain: BTC
+    from_address: {{ addr_btc_dog }}
+    to_address: {{ addr_btc_fox }}
+    coins:
+      - amount: "970576470"
+        asset: "BTC.BTC"
+        decimals: 8
+    gas:
+      - amount: "10500"
+        asset: "BTC.BTC"
+    memo: "OUT:{{ native_txid -1 }}"
+  block_height: 1
+  finalise_height: 1
+  observed_pub_key: {{ pubkey_dog }}
+---
+type: create-blocks
+count: 1
+---
+type: check
+endpoint: http://localhost:1317/mayachain/queue/outbound
+asserts:
+  - .|length == 0
+---
+########################################################################################
+# create two affiliates, one with preferred asset, one without
+########################################################################################
+type: tx-send
+from_address: {{ addr_maya_dog }}
+to_address: {{ addr_maya_pig }}
+amount:
+  - amount: "2000000000000"
+    denom: "cacao"
+---
+type: tx-deposit
+signer: {{ addr_maya_pig }}
+coins:
+  - amount: "200000000000"
+    asset: "cacao"
+memo: "~:t:MAYA:{{ addr_maya_pig }}:{{ addr_maya_pig }}"
+---
+type: create-blocks
+count: 1
+---
+type: tx-deposit
+signer: {{ addr_maya_cat }}
+coins:
+  - amount: "200000000000"
+    asset: "cacao"
+memo: "~:a:ETH:{{ addr_eth_cat }}:{{ addr_maya_cat }}:ETH.ETH"
+---
+type: create-blocks
+count: 1
+---
+type: check
+endpoint: http://localhost:1317/mayachain/mayaname/t
+asserts:
+  - .aliases[0].address == "{{ addr_maya_pig }}"
+  - .owner == "{{ addr_maya_pig }}"
+  - .affiliate_collector_cacao == "0"
+  - .preferred_asset == "."
+---
+type: check
+endpoint: http://localhost:1317/mayachain/mayaname/a
+asserts:
+  - .aliases[0].address == "{{ addr_eth_cat }}"
+  - .owner == "{{ addr_maya_cat }}"
+  - .preferred_asset == "ETH.ETH"
+  - .affiliate_collector_cacao == "0"
+---
+########################################################################################
+# swap cacao to btc with 3 affiliates, one mayaname, one mayaname w/ preferred asset, one cacao address
+########################################################################################
+type: check
+endpoint: http://localhost:1317/cosmos/bank/v1beta1/balances/{{ addr_maya_pig }}
+asserts:
+  - .balances[]|select(.denom == "cacao")|.amount|tonumber == ${PREV_PIG_BAL=1853985035029}
+---
+type: check
+endpoint: http://localhost:1317/cosmos/bank/v1beta1/balances/{{ addr_maya_cat }}
+asserts:
+  - .balances[]|select(.denom == "cacao")|.amount|tonumber == ${PREV_CAT_BAL=2499813996038072}
+---
+type: check
+endpoint: http://localhost:1317/cosmos/bank/v1beta1/balances/{{ addr_maya_fish }}
+asserts:
+  - .balances[]|select(.denom == "cacao")|.amount|tonumber == ${PREV_FISH_BAL=25992694116}
+---
+type: tx-deposit
+signer: {{ addr_maya_fox }}
+coins:
+  - amount: "${SWAP_AMT=4000000000000}"
+    asset: "cacao"
+memo: "=:BTC.BTC:{{ addr_btc_fox }}::t/a/{{ addr_maya_fish }}:${BPS=10}"
+---
+type: create-blocks
+count: 2
+---
+type: check
+endpoint: http://localhost:1317/cosmos/bank/v1beta1/balances/{{ addr_maya_pig }}
+asserts:
+  - (${SWAP_AMT} * ${BPS} / 10000 - ${GAS}) - (.balances[]|select(.denom == "cacao")|.amount|tonumber - ${PREV_PIG_BAL}) < (${SWAP_AMT} * ${BPS} / 10000 - ${GAS}) * 0.001 # 10 bps tolerance
+---
+type: check
+endpoint: http://localhost:1317/cosmos/bank/v1beta1/balances/{{ addr_maya_cat }}
+asserts:
+  - .balances|length == 1
+  - .balances[]|select(.denom == "cacao")|.amount|tonumber == ${PREV_CAT_BAL} # 'a' / {cat} is in affiliate collector for now
+---
+type: check
+endpoint: http://localhost:1317/mayachain/mayaname/a
+asserts:
+  - .aliases[0].address == "{{ addr_eth_cat }}"
+  - .owner == "{{ addr_maya_cat }}"
+  - .preferred_asset == "ETH.ETH"
+  - (${SWAP_AMT} * ${BPS} / 10000 - ${GAS}) - (.affiliate_collector_cacao|tonumber) < (${SWAP_AMT} * ${BPS} / 10000 - ${GAS}) * 0.001 # 10 bps tolerance
+  - .affiliate_collector_cacao|tonumber == ${PREV_AFF_COLLECTOR_BAL=1999807547}
+---
+type: check
+endpoint: http://localhost:1317/cosmos/bank/v1beta1/balances/{{ addr_maya_fish }}
+asserts:
+  - (${SWAP_AMT} * ${BPS} / 10000 - ${GAS}) - (.balances[]|select(.denom == "cacao")|.amount|tonumber - ${PREV_FISH_BAL}) < (${SWAP_AMT} * ${BPS} / 10000 - ${GAS}) * 0.001 # 10 bps tolerance
+---
+type: tx-observed-out
+signer: {{ addr_maya_dog }}
+txs:
+- tx:
+    id: '{{ observe_txid 3 }}'
+    chain: BTC
+    from_address: {{ addr_btc_dog }}
+    to_address: {{ addr_btc_fox }}
+    coins:
+      - amount: "387246109"
+        asset: "BTC.BTC"
+        decimals: 8
+    gas:
+      - amount: "10500"
+        asset: "BTC.BTC"
+    memo: "OUT:{{ native_txid -1 }}"
+  block_height: 1
+  finalise_height: 1
+  observed_pub_key: {{ pubkey_dog }}
+---
+type: create-blocks
+count: 1
+---
+type: check
+endpoint: http://localhost:1317/mayachain/queue/outbound
+asserts:
+  - .|length == 0
+---
+########################################################################################
+# swap BTC -> CACAO with 3 affiliates, one mayaname, one mayaname w/ preferred asset, one cacao address
+########################################################################################
+type: check
+endpoint: http://localhost:1317/cosmos/bank/v1beta1/balances/{{ addr_maya_pig }}
+asserts:
+  - .balances[]|select(.denom == "cacao")|.amount|tonumber == ${PREV_PIG_BAL=1855984874108}
+---
+type: check
+endpoint: http://localhost:1317/cosmos/bank/v1beta1/balances/{{ addr_maya_cat }}
+asserts:
+  - .balances[]|select(.denom == "cacao")|.amount|tonumber == ${PREV_CAT_BAL=2499813996038072}
+---
+type: check
+endpoint: http://localhost:1317/cosmos/bank/v1beta1/balances/{{ addr_maya_fish }}
+asserts:
+  - .balances[]|select(.denom == "cacao")|.amount|tonumber == ${PREV_FISH_BAL=27992470132}
+---
+type: tx-observed-in
+signer: {{ addr_maya_dog }}
+txs:
+- tx:
+    id: '{{ observe_txid 4 }}'
+    chain: BTC
+    from_address: {{ addr_btc_fox }}
+    to_address: {{ addr_btc_dog }}
+    coins:
+      - amount: "100000000"
+        asset: "BTC.BTC"
+        decimals: 8
+    gas:
+      - amount: "10500"
+        asset: "BTC.BTC"
+    memo: "=:MAYA.CACAO:{{ addr_maya_fox }}::t/{{ addr_maya_fish }}/a:${PIG_BPS=10}/${FISH_BPS=20}/${CAT_BPS=50}"
+  block_height: 2
+  finalise_height: 2
+  observed_pub_key: {{ pubkey_dog }}
+---
+type: create-blocks
+count: 2
+---
+type: check
+endpoint: http://localhost:1317/cosmos/bank/v1beta1/balances/{{ addr_maya_pig }}
+asserts:
+  - 1000000000000 == ${SWAP_AMT=1000000000000} # amt in cacao = amt in btc * pool ratio (1:10000)
+  - (${SWAP_AMT} * ${PIG_BPS} / 10000 - ${GAS}) - (.balances[]|select(.denom == "cacao")|.amount|tonumber - ${PREV_PIG_BAL}) < (${SWAP_AMT} * ${PIG_BPS} / 10000 - ${GAS}) * 0.001 # 10 bps tolerance
+---
+type: check
+endpoint: http://localhost:1317/cosmos/bank/v1beta1/balances/{{ addr_maya_fish }}
+asserts:
+  - (${SWAP_AMT} * ${FISH_BPS} / 10000 - ${GAS}) - (.balances[]|select(.denom == "cacao")|.amount|tonumber - ${PREV_FISH_BAL}) < (${SWAP_AMT} * ${FISH_BPS} / 10000 - ${GAS}) * 0.001 # 10 bps tolerance
+---
+type: check
+endpoint: http://localhost:1317/cosmos/bank/v1beta1/balances/{{ addr_maya_cat }}
+asserts:
+  - .balances[]|select(.denom == "cacao")|.amount|tonumber == ${PREV_CAT_BAL} # no change in 'a' / cat wallet, fee went to affiliate collector
+---
+type: check
+endpoint: http://localhost:1317/mayachain/mayaname/a
+asserts:
+  - .aliases[0].address == "{{ addr_eth_cat }}"
+  - .owner == "{{ addr_maya_cat }}"
+  - .preferred_asset == "ETH.ETH"
+  - (${SWAP_AMT} * ${BPS} / 10000 - ${GAS}) - (.affiliate_collector_cacao|tonumber - ${PREV_AFF_COLLECTOR_BAL}) < (${SWAP_AMT} * ${BPS} / 10000 - ${GAS}) * 0.001 # 10 bps tolerance
+---
+########################################################################################
+# swap BTC -> CACAO with affiliate mayaname 'a' to trigger preferred asset swap 
+########################################################################################
+type: tx-observed-in
+signer: {{ addr_maya_dog }}
+txs:
+- tx:
+    id: '{{ observe_txid 5 }}'
+    chain: BTC
+    from_address: {{ addr_btc_fox }}
+    to_address: {{ addr_btc_dog }}
+    coins:
+      - amount: "300000000"
+        asset: "BTC.BTC"
+        decimals: 8
+    gas:
+      - amount: "10500"
+        asset: "BTC.BTC"
+    memo: "=:MAYA.CACAO:{{ addr_maya_fox }}::a:150"
+  block_height: 2
+  finalise_height: 2
+  observed_pub_key: {{ pubkey_dog }}
+---
+type: create-blocks
+count: 2
+---
+type: check
+endpoint: http://localhost:1317/mayachain/mayaname/a
+asserts:
+  - .aliases[0].address == "{{ addr_eth_cat }}"
+  - .owner == "{{ addr_maya_cat }}"
+  - .preferred_asset == "ETH.ETH"
+  - .affiliate_collector_cacao|tonumber == 0
+---
+# preferred asset swap in outbound queue
+type: check
+endpoint: http://localhost:1317/mayachain/queue/outbound
+asserts:
+  - .|length == 1

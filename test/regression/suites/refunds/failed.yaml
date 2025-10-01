@@ -1,0 +1,129 @@
+{{ template "default-state.yaml" }}
+---
+{{ template "btc-eth-pool-state.yaml" }}
+---
+type: create-blocks
+count: 1
+---
+type: check
+endpoint: http://localhost:1317/mayachain/pools
+asserts:
+  - .|length == 2
+---
+########################################################################################
+# valid swap cacao to synth
+########################################################################################
+type: tx-deposit
+signer: {{ addr_maya_fox }}
+coins:
+  - amount: "100000000000"
+    asset: "cacao"
+memo: "=:BTC/BTC:{{ addr_maya_fox }}"
+---
+type: create-blocks
+count: 1
+---
+type: check
+endpoint: http://localhost:1317/cosmos/bank/v1beta1/balances/{{ addr_maya_fox }}
+asserts:
+  - .balances|length == 2
+  - .balances[]|select(.denom == "cacao")|.amount|tonumber == 2499898000000000
+  - .balances[]|select(.denom == "btc/btc")|.amount|tonumber == 970272
+---
+########################################################################################
+# swap insufficient cacao for refund (cacao sent to reserve)
+########################################################################################
+type: tx-deposit
+signer: {{ addr_maya_fox }}
+coins:
+  - amount: "1000000"
+    asset: "cacao"
+memo: "=:BTC.BTC:{{ addr_btc_fox }}"
+---
+type: create-blocks
+count: 1
+---
+type: check
+endpoint: http://localhost:1317/cosmos/bank/v1beta1/balances/{{ addr_maya_fox }}
+asserts:
+  - .balances|length == 2
+  - .balances[]|select(.denom == "cacao")|.amount|tonumber == 2499898000000000-2000000000-1000000
+---
+type: check
+endpoint: http://localhost:1317/mayachain/block
+asserts:
+  - '[.end_block_events[]|select(.type=="reserve")]|length == 1'
+  - .end_block_events[]|select(.type=="reserve")|.coin == "1000000 MAYA.CACAO"
+---
+########################################################################################
+# swap insufficient synth for refund (synth sent to reserve)
+########################################################################################
+type: tx-deposit
+signer: {{ addr_maya_fox }}
+coins:
+  - amount: "100"
+    asset: "btc/btc"
+memo: "=:MAYA.CACAO:{{ addr_maya_fox }}"
+---
+type: create-blocks
+count: 1
+---
+type: check
+endpoint: http://localhost:1317/cosmos/bank/v1beta1/balances/{{ addr_maya_fox }}
+asserts:
+  - .balances|length == 2
+  - .balances[]|select(.denom == "cacao")|.amount|tonumber == 2499898000000000-4000000000-1000000
+---
+type: check
+endpoint: http://localhost:1317/mayachain/block
+asserts:
+  - '[.end_block_events[]|select(.type=="reserve")]|length == 1'
+  - .end_block_events[]|select(.type=="reserve")|.coin == "100 BTC/BTC"
+---
+########################################################################################
+# swap l1 to cacao failed limit (l1 left in vault, removed from pool)
+########################################################################################
+type: tx-observed-in
+signer: {{ addr_maya_dog }}
+txs:
+  - tx:
+      id: "{{ observe_txid 1 }}"
+      chain: BTC
+      from_address: {{ addr_btc_fox }}
+      to_address: {{ addr_btc_dog }}
+      coins:
+        - amount: "1000"
+          asset: "BTC.BTC"
+          decimals: 8
+      gas:
+        - amount: "10000"
+          asset: "BTC.BTC"
+      memo: "=:MAYA.CACAO:{{ addr_maya_fox }}"
+    block_height: 1
+    finalise_height: 1
+    observed_pub_key: {{ pubkey_dog }}
+---
+type: create-blocks
+count: 2
+---
+type: check
+endpoint: http://localhost:1317/mayachain/vaults/asgard
+asserts:
+  - .[]|.coins[]|select(.asset=="BTC.BTC")|.amount|tonumber == 100001000
+---
+type: check
+endpoint: http://localhost:1317/mayachain/pool/btc.btc
+asserts:
+  - .balance_asset|tonumber == 100000000
+---
+type: check
+endpoint: http://localhost:1317/mayachain/queue/outbound
+asserts:
+  - length == 0
+---
+type: check
+endpoint: http://localhost:1317/mayachain/queue/scheduled
+asserts:
+  - length == 0
+---
+type: fail-export-invariants

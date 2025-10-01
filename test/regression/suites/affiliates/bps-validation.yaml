@@ -1,0 +1,377 @@
+{{ template "default-state.yaml" }}
+---
+{{ template "btc-eth-pool-state.yaml" }}
+---
+type: state
+genesis:
+  app_state:
+    auth:
+      accounts:
+        - "@type": /cosmos.auth.v1beta1.BaseAccount
+          address: {{ addr_maya_pig }}
+          pub_key: null
+          account_number: "9"
+          sequence: "0"
+        - "@type": /cosmos.auth.v1beta1.BaseAccount
+          address: {{ addr_maya_frog }}
+          pub_key: null
+          account_number: "10"
+          sequence: "0"
+        - "@type": /cosmos.auth.v1beta1.BaseAccount
+          address: {{ addr_maya_goat }}
+          pub_key: null
+          account_number: "11"
+          sequence: "0"
+        - "@type": /cosmos.auth.v1beta1.BaseAccount
+          address: "tmaya1csl8dvpyrcpr2r0qrz5pzx85r9akr2yfjxl2yh"
+          pub_key: null
+          account_number: "12"
+          sequence: "0"
+        - "@type": /cosmos.auth.v1beta1.BaseAccount
+          address: "tmaya17xpyg3033swl7y6wvplpapqhwrm9g2scu33ymp"
+          pub_key: null
+          account_number: "13"
+          sequence: "0"
+        - "@type": /cosmos.auth.v1beta1.BaseAccount
+          address: "tmaya143gxxhrxn9p7zec7240m7ry6sct8ad82jq83ph"
+          pub_key: null
+          account_number: "14"
+          sequence: "0"
+        - "@type": /cosmos.auth.v1beta1.BaseAccount
+          address: "tmaya12yvzh8lnzz2ns2v2vv6cm4l8z64hw47fvzpg7d"
+          pub_key: null
+          account_number: "15"
+          sequence: "0"
+    bank:
+      balances:
+        - address: {{ addr_maya_pig }}
+          coins:
+            - denom: cacao
+              amount: "2500000000000"
+        - address: {{ addr_maya_frog }}
+          coins:
+            - denom: cacao
+              amount: "2500000000000"
+        - address: {{ addr_maya_goat }}
+          coins:
+            - denom: cacao
+              amount: "2500000000000"
+        - address: "tmaya1csl8dvpyrcpr2r0qrz5pzx85r9akr2yfjxl2yh"
+          coins:
+            - denom: cacao
+              amount: "2500000000000"
+        - address: "tmaya17xpyg3033swl7y6wvplpapqhwrm9g2scu33ymp"
+          coins:
+            - denom: cacao
+              amount: "2500000000000"
+        - address: "tmaya143gxxhrxn9p7zec7240m7ry6sct8ad82jq83ph"
+          coins:
+            - denom: cacao
+              amount: "2500000000000"
+        - address: "tmaya12yvzh8lnzz2ns2v2vv6cm4l8z64hw47fvzpg7d"
+          coins:
+            - denom: cacao
+              amount: "2500000000000"
+    mayachain:
+      mimirs:
+        - key: PREFERREDASSETOUTBOUNDFEEMULTIPLIER
+          value: "5"
+---
+type: create-blocks
+count: 1
+---
+# check mimir and set address variables
+type: check
+endpoint: http://localhost:1317/mayachain/mimir
+asserts:
+  - .PREFERREDASSETOUTBOUNDFEEMULTIPLIER == 5
+  - ("tmaya1csl8dvpyrcpr2r0qrz5pzx85r9akr2yfjxl2yh" == "${ADDR_MAYA_BAT=tmaya1csl8dvpyrcpr2r0qrz5pzx85r9akr2yfjxl2yh}")
+  - ("tmaya17xpyg3033swl7y6wvplpapqhwrm9g2scu33ymp" == "${ADDR_MAYA_BEE=tmaya17xpyg3033swl7y6wvplpapqhwrm9g2scu33ymp}")
+  - ("tmaya143gxxhrxn9p7zec7240m7ry6sct8ad82jq83ph" == "${ADDR_MAYA_OWL=tmaya143gxxhrxn9p7zec7240m7ry6sct8ad82jq83ph}")
+  - ("tmaya12yvzh8lnzz2ns2v2vv6cm4l8z64hw47fvzpg7d" == "${ADDR_MAYA_ANT=tmaya12yvzh8lnzz2ns2v2vv6cm4l8z64hw47fvzpg7d}")
+---
+#######################################################################################
+# MAYAName memo format:  ~:name:chain:address:?owner:?preferredAsset:?expiry:?affbps:?subaff:?subaffbps
+########################################################################################
+type: tx-deposit
+signer: {{ addr_maya_cat }}
+coins:
+  - amount: ${REGFEE="110000000000"}
+    asset: "cacao"
+memo: "~:cat:MAYA:{{ addr_maya_cat }}"
+---
+type: create-blocks
+count: 1
+---
+type: tx-deposit
+signer: {{ addr_maya_fox }}
+coins:
+  - amount: ${REGFEE}
+    asset: "cacao"
+memo: "~:fox:MAYA:{{ addr_maya_fox }}"
+---
+type: create-blocks
+count: 1
+---
+type: tx-deposit
+signer: {{ addr_maya_pig }}
+coins:
+  - amount: ${REGFEE}
+    asset: "cacao"
+memo: "~:pig:MAYA:{{ addr_maya_pig }}"
+---
+type: create-blocks
+count: 1
+---
+type: tx-deposit
+signer: {{ addr_maya_frog }}
+coins:
+  - amount: ${REGFEE}
+    asset: "cacao"
+memo: "~:frog:MAYA:{{ addr_maya_frog }}"
+---
+type: create-blocks
+count: 1
+---
+#######################################################################################
+# invalid attempts, all should fail
+#######################################################################################
+# too big affiliate fee bps
+type: tx-deposit
+signer: {{ addr_maya_dog }}
+coins:
+  - amount: ${REGFEE}
+    asset: "cacao"
+memo: "~:dog:MAYA:{{ addr_maya_dog }}::::600"
+---
+type: create-blocks
+count: 1
+---
+type: check
+endpoint: http://localhost:1317/mayachain/block
+asserts:
+  - .txs|length == 1
+  - .txs[0]|.result.log|contains("600 cannot exceed '500'")
+---
+# too big total sub-affiliate fee bps
+type: tx-deposit
+signer: {{ addr_maya_dog }}
+coins:
+  - amount: "2"
+    asset: "cacao"
+memo: "~:dog:::::::cat/${ADDR_MAYA_BAT}:6000/6000"
+---
+type: create-blocks
+count: 1
+---
+type: check
+endpoint: http://localhost:1317/mayachain/block
+asserts:
+  - .txs|length == 1
+  - .txs[0]|.result.log|contains("affiliate fee basis points must not exceed 10000")
+---
+# first set fox & pig as cat's sub-affiliates with 40%/50% fee shares and then try to add another one with additional 20% 
+type: tx-deposit
+signer: {{ addr_maya_cat }}
+coins:
+  - amount: "2"
+    asset: "cacao"
+memo: "~:cat:::::::fox/pig:4000/5000"
+---
+type: create-blocks
+count: 1
+---
+type: tx-deposit
+signer: {{ addr_maya_cat }}
+coins:
+  - amount: "2"
+    asset: "cacao"
+memo: "~:cat:::::::${ADDR_MAYA_BAT}:2000"
+---
+type: create-blocks
+count: 1
+---
+type: check
+endpoint: http://localhost:1317/mayachain/block
+asserts:
+  - .txs|length == 1
+  - .txs[0]|.result.log|contains("the total basis points for subaffiliates must not exceed 10000")
+---
+# subaffiliate bps must be provided
+type: tx-deposit
+signer: {{ addr_maya_cat }}
+coins:
+  - amount: "2"
+    asset: "cacao"
+memo: "~:cat:::::::fox"
+---
+type: create-blocks
+count: 1
+---
+type: check
+endpoint: http://localhost:1317/mayachain/block
+asserts:
+  - .txs|length == 1
+  - .txs[0]|.result.log|contains("affiliate mayanames and affiliate fee bps count mismatch (1 / 0)")
+---
+# subaffiliate bps must be provided
+type: tx-deposit
+signer: {{ addr_maya_cat }}
+coins:
+  - amount: "2"
+    asset: "cacao"
+memo: "~:cat:::::::fox:"
+---
+type: create-blocks
+count: 1
+---
+type: check
+endpoint: http://localhost:1317/mayachain/block
+asserts:
+  - .txs|length == 1
+  - .txs[0]|.result.log|contains("affiliate mayanames and affiliate fee bps count mismatch (1 / 0)")
+---
+# subaffiliate bps must be provided
+type: tx-deposit
+signer: {{ addr_maya_cat }}
+coins:
+  - amount: "2"
+    asset: "cacao"
+memo: "~:cat:::::::fox/frog"
+---
+type: create-blocks
+count: 1
+---
+type: check
+endpoint: http://localhost:1317/mayachain/block
+asserts:
+  - .txs|length == 1
+  - .txs[0]|.result.log|contains("affiliate mayanames and affiliate fee bps count mismatch (2 / 0)")
+---
+# subaffiliate bps must be provided
+type: tx-deposit
+signer: {{ addr_maya_cat }}
+coins:
+  - amount: "2"
+    asset: "cacao"
+memo: "~:cat:::::::fox/frog:"
+---
+type: create-blocks
+count: 1
+---
+type: check
+endpoint: http://localhost:1317/mayachain/block
+asserts:
+  - .txs|length == 1
+  - .txs[0]|.result.log|contains("affiliate mayanames and affiliate fee bps count mismatch (2 / 0)")
+---
+# subaffiliate bps must be provided
+type: tx-deposit
+signer: {{ addr_maya_cat }}
+coins:
+  - amount: "2"
+    asset: "cacao"
+memo: "~:cat:::::::fox/frog:/"
+---
+type: create-blocks
+count: 1
+---
+type: check
+endpoint: http://localhost:1317/mayachain/block
+asserts:
+  - .txs|length == 1
+  - .txs[0]|.result.log|contains("cannot parse '' as an uint")
+---
+# subaffiliate bps must be provided
+type: tx-deposit
+signer: {{ addr_maya_cat }}
+coins:
+  - amount: "2"
+    asset: "cacao"
+memo: "~:cat:::::::fox/frog:/10"
+---
+type: create-blocks
+count: 1
+---
+type: check
+endpoint: http://localhost:1317/mayachain/block
+asserts:
+  - .txs|length == 1
+  - .txs[0]|.result.log|contains("cannot parse '' as an uint")
+---
+# remove fox add frog
+type: tx-deposit
+signer: {{ addr_maya_cat }}
+coins:
+  - amount: "2"
+    asset: "cacao"
+memo: "~:cat:::::::fox/frog:0/10"
+---
+type: create-blocks
+count: 1
+---
+type: check
+endpoint: http://localhost:1317/mayachain/mayaname/cat
+asserts:
+  - .aliases[0].address == "{{ addr_maya_cat }}"
+  - .owner == "{{ addr_maya_cat }}"
+  - .preferred_asset == "."
+  - .subaffiliates|length == 2
+  - .subaffiliates[0].name == "pig"
+  - .subaffiliates[0].bps == 5000
+  - .subaffiliates[1].name == "frog"
+  - .subaffiliates[1].bps == 10
+---
+# try to add another one with additional 20% again - should be ok now
+type: tx-deposit
+signer: {{ addr_maya_cat }}
+coins:
+  - amount: "2"
+    asset: "cacao"
+memo: "~:cat:::::::${ADDR_MAYA_BAT}:2000"
+---
+type: create-blocks
+count: 1
+---
+type: check
+endpoint: http://localhost:1317/mayachain/mayaname/cat
+asserts:
+  - .aliases[0].address == "{{ addr_maya_cat }}"
+  - .owner == "{{ addr_maya_cat }}"
+  - .preferred_asset == "."
+  - .subaffiliates|length == 3
+  - .subaffiliates[0].name == "pig"
+  - .subaffiliates[0].bps == 5000
+  - .subaffiliates[1].name == "frog"
+  - .subaffiliates[1].bps == 10
+  - .subaffiliates[2].name == "${ADDR_MAYA_BAT}"
+  - .subaffiliates[2].bps == 2000
+---
+# attempt to add another one with an additional 70%, which would make the total exceed 100%.
+# however, since we’re changing pig to 20% at the same time, it should be fine
+# the total will then be 70% (frog) + 10% (pig) + 10% (BAT).
+type: tx-deposit
+signer: {{ addr_maya_cat }}
+coins:
+  - amount: "2"
+    asset: "cacao"
+memo: "~:cat:::::::${ADDR_MAYA_BEE}/pig:7000/10"
+---
+type: create-blocks
+count: 1
+---
+type: check
+endpoint: http://localhost:1317/mayachain/mayaname/cat
+asserts:
+  - .aliases[0].address == "{{ addr_maya_cat }}"
+  - .owner == "{{ addr_maya_cat }}"
+  - .preferred_asset == "."
+  - .subaffiliates|length == 4
+  - .subaffiliates[0].name == "pig"
+  - .subaffiliates[0].bps == 10
+  - .subaffiliates[1].name == "frog"
+  - .subaffiliates[1].bps == 10
+  - .subaffiliates[2].name == "${ADDR_MAYA_BAT}"
+  - .subaffiliates[2].bps == 2000
+  - .subaffiliates[3].name == "${ADDR_MAYA_BEE}"
+  - .subaffiliates[3].bps == 7000

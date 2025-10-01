@@ -1,0 +1,951 @@
+[
+  {
+    "chain": "KUJI",
+    "from_address": "MASTER",
+    "to_address": "USER-1",
+    "memo": "SEED",
+    "coins": [
+      {
+        "asset": "KUJI.KUJI",
+        "amount": 50000000000000
+      }
+    ],
+    "gas": null
+  },
+  {
+    "chain": "KUJI",
+    "from_address": "MASTER",
+    "to_address": "PROVIDER-1",
+    "memo": "SEED",
+    "coins": [
+      {
+        "asset": "KUJI.KUJI",
+        "amount": 50000000000000
+      }
+    ],
+    "gas": null
+  },
+  {
+    "chain": "KUJI",
+    "from_address": "MASTER",
+    "to_address": "USER-1",
+    "memo": "SEED",
+    "coins": [
+      {
+        "asset": "KUJI.USK",
+        "amount": 50000000000000
+      }
+    ],
+    "gas": null
+  },
+  {
+    "chain": "KUJI",
+    "from_address": "MASTER",
+    "to_address": "PROVIDER-1",
+    "memo": "SEED",
+    "coins": [
+      {
+        "asset": "KUJI.USK",
+        "amount": 50000000000000
+      }
+    ],
+    "gas": null
+  },
+  {
+    "chain": "DASH",
+    "from_address": "MASTER",
+    "to_address": "USER-1",
+    "memo": "SEED",
+    "coins": [
+      {
+        "asset": "DASH.DASH",
+        "amount": 4000000000
+      }
+    ],
+    "gas": null
+  },
+  {
+    "chain": "DASH",
+    "from_address": "MASTER",
+    "to_address": "PROVIDER-1",
+    "memo": "SEED",
+    "coins": [
+      {
+        "asset": "DASH.DASH",
+        "amount": 40000000000
+      }
+    ],
+    "gas": null
+  },
+  {
+    "chain": "THOR",
+    "from_address": "MASTER",
+    "to_address": "USER-1",
+    "memo": "SEED",
+    "coins": [
+      {
+        "asset": "THOR.RUNE",
+        "amount": 2000000000
+      }
+    ],
+    "gas": null
+  },
+  {
+    "chain": "THOR",
+    "from_address": "MASTER",
+    "to_address": "PROVIDER-1",
+    "memo": "SEED",
+    "coins": [
+      {
+        "asset": "THOR.RUNE",
+        "amount": 20000000000
+      }
+    ],
+    "gas": null
+  },
+  {
+    "chain": "ETH",
+    "from_address": "MASTER",
+    "to_address": "USER-1",
+    "memo": "SEED",
+    "coins": [
+      {
+        "asset": "ETH.ETH",
+        "amount": 40000000000000000000
+      }
+    ],
+    "gas": null
+  },
+  {
+    "chain": "ETH",
+    "from_address": "MASTER",
+    "to_address": "PROVIDER-1",
+    "memo": "SEED",
+    "coins": [
+      {
+        "asset": "ETH.ETH",
+        "amount": 40000000000000000000
+      }
+    ],
+    "gas": null
+  },
+  {
+    "chain": "ARB",
+    "from_address": "MASTER",
+    "to_address": "USER-1",
+    "memo": "SEED",
+    "coins": [
+      {
+        "asset": "ARB.ETH",
+        "amount": 40000000000000000000
+      }
+    ],
+    "gas": null
+  },
+  {
+    "chain": "ARB",
+    "from_address": "MASTER",
+    "to_address": "PROVIDER-1",
+    "memo": "SEED",
+    "coins": [
+      {
+        "asset": "ARB.ETH",
+        "amount": 40000000000000000000
+      }
+    ],
+    "gas": null
+  },
+  {
+    "chain": "XRD",
+    "from_address": "MASTER",
+    "to_address": "PROVIDER-1",
+    "memo": "SEED",
+    "coins": [
+      {
+        "asset": "XRD.XRD",
+        "amount": 100000000000
+      }
+    ],
+    "gas": null
+  },
+  {
+    "chain": "XRD",
+    "from_address": "MASTER",
+    "to_address": "USER-1",
+    "memo": "SEED",
+    "coins": [
+      {
+        "asset": "XRD.XRD",
+        "amount": 100000000000
+      }
+    ],
+    "gas": null
+  },
+  {
+    "chain": "XRD",
+    "from_address": "MASTER",
+    "to_address": "PROVIDER-1",
+    "memo": "SEED",
+    "coins": [
+      {
+        "asset": "XRD.TEST-RESOURCE_LOC1TH5R2TN083J0WJ8PQS2Y44A39HVXN6GCYGFELH97YFF69SJA08U0RC",
+        "amount": 100000000000
+      }
+    ],
+    "gas": null
+  },
+  {
+    "chain": "XRD",
+    "from_address": "MASTER",
+    "to_address": "USER-1",
+    "memo": "SEED",
+    "coins": [
+      {
+        "asset": "XRD.TEST-RESOURCE_LOC1TH5R2TN083J0WJ8PQS2Y44A39HVXN6GCYGFELH97YFF69SJA08U0RC",
+        "amount": 100000000000
+      }
+    ],
+    "gas": null
+  },
+  {
+    "chain": "ETH",
+    "from_address": "MASTER",
+    "to_address": "USER-1",
+    "memo": "SEED",
+    "coins": [
+      {
+        "asset": "ETH.TKN-0X52C84043CD9C865236F11D9FC9F56AA003C1F922",
+        "amount": 400000000000000000000
+      }
+    ],
+    "gas": null
+  },
+  {
+    "chain": "ETH",
+    "from_address": "MASTER",
+    "to_address": "PROVIDER-1",
+    "memo": "SEED",
+    "coins": [
+      {
+        "asset": "ETH.TKN-0X52C84043CD9C865236F11D9FC9F56AA003C1F922",
+        "amount": 400000000000000000000
+      }
+    ],
+    "gas": null
+  },
+  {
+    "chain": "MAYA",
+    "from_address": "PROVIDER-1",
+    "to_address": "VAULT",
+    "memo": "ADD:KUJI.KUJI:PROVIDER-1",
+    "coins": [
+      {
+        "asset": "MAYA.CACAO",
+        "amount": 100000000000
+      }
+    ],
+    "gas": null
+  },
+  {
+    "chain": "KUJI",
+    "from_address": "PROVIDER-1",
+    "to_address": "VAULT",
+    "memo": "ADD:KUJI.KUJI:PROVIDER-1",
+    "coins": [
+      {
+        "asset": "KUJI.KUJI",
+        "amount": 150000000000
+      }
+    ],
+    "gas": null
+  },
+  {
+    "chain": "MAYA",
+    "from_address": "PROVIDER-1",
+    "to_address": "VAULT",
+    "memo": "ADD:KUJI.USK:PROVIDER-1",
+    "coins": [
+      {
+        "asset": "MAYA.CACAO",
+        "amount": 100000000000
+      }
+    ],
+    "gas": null
+  },
+  {
+    "chain": "KUJI",
+    "from_address": "PROVIDER-1",
+    "to_address": "VAULT",
+    "memo": "ADD:KUJI.USK:PROVIDER-1",
+    "coins": [
+      {
+        "asset": "KUJI.USK",
+        "amount": 150000000000
+      }
+    ],
+    "gas": null
+  },
+  {
+    "chain": "MAYA",
+    "from_address": "PROVIDER-1",
+    "to_address": "VAULT",
+    "memo": "ADD:DASH.DASH:PROVIDER-1",
+    "coins": [
+      {
+        "asset": "MAYA.CACAO",
+        "amount": 300000000000
+      }
+    ],
+    "gas": null
+  },
+  {
+    "chain": "DASH",
+    "from_address": "PROVIDER-1",
+    "to_address": "VAULT",
+    "memo": "ADD:DASH.DASH:PROVIDER-1",
+    "coins": [
+      {
+        "asset": "DASH.DASH",
+        "amount": 35000000000
+      }
+    ],
+    "gas": null
+  },
+  {
+    "chain": "MAYA",
+    "from_address": "PROVIDER-1",
+    "to_address": "VAULT",
+    "memo": "ADD:XRD.XRD:PROVIDER-1",
+    "coins": [
+      {
+        "asset": "MAYA.CACAO",
+        "amount": 100000000000
+      }
+    ],
+    "gas": null
+  },
+  {
+    "chain": "XRD",
+    "from_address": "PROVIDER-1",
+    "to_address": "VAULT",
+    "memo": "ADD:XRD.XRD:PROVIDER-1",
+    "coins": [
+      {
+        "asset": "XRD.XRD",
+        "amount": 100000000000
+      }
+    ],
+    "gas": null
+  },
+  {
+    "chain": "XRD",
+    "from_address": "USER-1",
+    "to_address": "VAULT",
+    "memo": "SWAP:MAYA.CACAO:USER-1",
+    "coins": [
+      {
+        "asset": "XRD.XRD",
+        "amount": 100000000000
+      }
+    ],
+    "gas": null
+  },
+  {
+    "chain": "MAYA",
+    "from_address": "USER-1",
+    "to_address": "VAULT",
+    "memo": "SWAP:XRD.XRD:USER-1",
+    "coins": [
+      {
+        "asset": "MAYA.CACAO",
+        "amount": 100000000000
+      }
+    ],
+    "gas": null
+  },
+  {
+    "chain": "MAYA",
+    "from_address": "PROVIDER-1",
+    "to_address": "VAULT",
+    "memo": "WITHDRAW:XRD.XRD:1000",
+    "coins": [
+      {
+        "asset": "MAYA.CACAO",
+        "amount": 1
+      }
+    ],
+    "gas": null
+  },
+  {
+    "chain": "MAYA",
+    "from_address": "PROVIDER-1",
+    "to_address": "VAULT",
+    "memo": "ADD:XRD.TEST-RESOURCE_LOC1TH5R2TN083J0WJ8PQS2Y44A39HVXN6GCYGFELH97YFF69SJA08U0RC:PROVIDER-1",
+    "coins": [
+      {
+        "asset": "MAYA.CACAO",
+        "amount": 100000000000
+      }
+    ],
+    "gas": null
+  },
+  {
+    "chain": "XRD",
+    "from_address": "PROVIDER-1",
+    "to_address": "VAULT",
+    "memo": "ADD:XRD.TEST-RESOURCE_LOC1TH5R2TN083J0WJ8PQS2Y44A39HVXN6GCYGFELH97YFF69SJA08U0RC:PROVIDER-1",
+    "coins": [
+      {
+        "asset": "XRD.TEST-RESOURCE_LOC1TH5R2TN083J0WJ8PQS2Y44A39HVXN6GCYGFELH97YFF69SJA08U0RC",
+        "amount": 100000000000
+      }
+    ],
+    "gas": null
+  },
+  {
+    "chain": "XRD",
+    "from_address": "USER-1",
+    "to_address": "VAULT",
+    "memo": "SWAP:MAYA.CACAO:USER-1",
+    "coins": [
+      {
+        "asset": "XRD.TEST-RESOURCE_LOC1TH5R2TN083J0WJ8PQS2Y44A39HVXN6GCYGFELH97YFF69SJA08U0RC",
+        "amount": 100000000000
+      }
+    ],
+    "gas": null
+  },
+  {
+    "chain": "MAYA",
+    "from_address": "USER-1",
+    "to_address": "VAULT",
+    "memo": "SWAP:XRD.TEST-RESOURCE_LOC1TH5R2TN083J0WJ8PQS2Y44A39HVXN6GCYGFELH97YFF69SJA08U0RC:USER-1",
+    "coins": [
+      {
+        "asset": "MAYA.CACAO",
+        "amount": 100000000000
+      }
+    ],
+    "gas": null
+  },
+  {
+    "chain": "MAYA",
+    "from_address": "PROVIDER-1",
+    "to_address": "VAULT",
+    "memo": "WITHDRAW:XRD.TEST-RESOURCE_LOC1TH5R2TN083J0WJ8PQS2Y44A39HVXN6GCYGFELH97YFF69SJA08U0RC:1000",
+    "coins": [
+      {
+        "asset": "MAYA.CACAO",
+        "amount": 1
+      }
+    ],
+    "gas": null
+  },
+  {
+    "chain": "MAYA",
+    "from_address": "PROVIDER-1",
+    "to_address": "VAULT",
+    "memo": "WITHDRAW:XRD.TEST-RESOURCE_LOC1TH5R2TN083J0WJ8PQS2Y44A39HVXN6GCYGFELH97YFF69SJA08U0RC",
+    "coins": [
+      {
+        "asset": "MAYA.CACAO",
+        "amount": 1
+      }
+    ],
+    "gas": null
+  },
+  {
+    "chain": "MAYA",
+    "from_address": "PROVIDER-1",
+    "to_address": "VAULT",
+    "memo": "WITHDRAW:XRD.XRD",
+    "coins": [
+      {
+        "asset": "MAYA.CACAO",
+        "amount": 1
+      }
+    ],
+    "gas": null
+  },
+  {
+    "chain": "MAYA",
+    "from_address": "PROVIDER-1",
+    "to_address": "VAULT",
+    "memo": "ADD:THOR.RUNE:PROVIDER-1",
+    "coins": [
+      {
+        "asset": "MAYA.CACAO",
+        "amount": 100000000000
+      }
+    ],
+    "gas": null
+  },
+  {
+    "chain": "THOR",
+    "from_address": "PROVIDER-1",
+    "to_address": "VAULT",
+    "memo": "ADD:THOR.RUNE:PROVIDER-1",
+    "coins": [
+      {
+        "asset": "THOR.RUNE",
+        "amount": 20000000000
+      }
+    ],
+    "gas": null
+  },
+  {
+    "chain": "MAYA",
+    "from_address": "USER-1",
+    "to_address": "VAULT",
+    "memo": "SWAP:THOR.RUNE:USER-1",
+    "coins": [
+      {
+        "asset": "MAYA.CACAO",
+        "amount": 100000000000
+      }
+    ],
+    "gas": null
+  },
+  {
+    "chain": "THOR",
+    "from_address": "USER-1",
+    "to_address": "VAULT",
+    "memo": "SWAP:MAYA.CACAO:USER-1",
+    "coins": [
+      {
+        "asset": "THOR.RUNE",
+        "amount": 1000000000
+      }
+    ],
+    "gas": null
+  },
+  {
+    "chain": "MAYA",
+    "from_address": "PROVIDER-1",
+    "to_address": "VAULT",
+    "memo": "ADD:ETH.ETH:PROVIDER-1",
+    "coins": [
+      {
+        "asset": "MAYA.CACAO",
+        "amount": 5000000000000
+      }
+    ],
+    "gas": null
+  },
+  {
+    "chain": "ETH",
+    "from_address": "PROVIDER-1",
+    "to_address": "VAULT",
+    "memo": "ADD:ETH.ETH:PROVIDER-1",
+    "coins": [
+      {
+        "asset": "ETH.ETH",
+        "amount": 200000000000000000
+      }
+    ],
+    "gas": null
+  },
+  {
+    "chain": "MAYA",
+    "from_address": "PROVIDER-1",
+    "to_address": "VAULT",
+    "memo": "ADD:ARB.ETH:PROVIDER-1",
+    "coins": [
+      {
+        "asset": "MAYA.CACAO",
+        "amount": 50000000000000
+      }
+    ],
+    "gas": null
+  },
+  {
+    "chain": "ARB",
+    "from_address": "PROVIDER-1",
+    "to_address": "VAULT",
+    "memo": "ADD:ARB.ETH:PROVIDER-1",
+    "coins": [
+      {
+        "asset": "ARB.ETH",
+        "amount": 2000000000000000000
+      }
+    ],
+    "gas": null
+  },
+  {
+    "chain": "MAYA",
+    "from_address": "PROVIDER-1",
+    "to_address": "VAULT",
+    "memo": "ADD:ETH.TKN-0X52C84043CD9C865236F11D9FC9F56AA003C1F922:PROVIDER-1",
+    "coins": [
+      {
+        "asset": "MAYA.CACAO",
+        "amount": 5000000000000
+      }
+    ],
+    "gas": null
+  },
+  {
+    "chain": "ETH",
+    "from_address": "PROVIDER-1",
+    "to_address": "VAULT",
+    "memo": "ADD:ETH.TKN-0X52C84043CD9C865236F11D9FC9F56AA003C1F922:PROVIDER-1",
+    "coins": [
+      {
+        "asset": "ETH.TKN-0X52C84043CD9C865236F11D9FC9F56AA003C1F922",
+        "amount": 4000000000000000000
+      }
+    ],
+    "gas": null
+  },
+  {
+    "chain": "MAYA",
+    "from_address": "PROVIDER-2",
+    "to_address": "VAULT",
+    "memo": "ADD:MAYA.CACAO",
+    "coins": [
+      {
+        "asset": "MAYA.CACAO",
+        "amount": 5000000000000
+      }
+    ],
+    "gas": null
+  },
+  {
+    "chain": "MAYA",
+    "from_address": "USER-1",
+    "to_address": "VAULT",
+    "memo": " ",
+    "coins": [
+      {
+        "asset": "MAYA.CACAO",
+        "amount": 20000000000
+      }
+    ],
+    "gas": null
+  },
+  {
+    "chain": "MAYA",
+    "from_address": "USER-1",
+    "to_address": "VAULT",
+    "memo": "ABDG?",
+    "coins": [
+      {
+        "asset": "MAYA.CACAO",
+        "amount": 20000000000
+      }
+    ],
+    "gas": null
+  },
+  {
+    "chain": "KUJI",
+    "from_address": "USER-1",
+    "to_address": "VAULT",
+    "memo": "SWAP:MAYA.CACAO:USER-1",
+    "coins": [
+      {
+        "asset": "KUJI.KUJI",
+        "amount": 10000000000
+      }
+    ],
+    "gas": null
+  },
+  {
+    "chain": "KUJI",
+    "from_address": "USER-1",
+    "to_address": "VAULT",
+    "memo": "SWAP:MAYA.CACAO:USER-1",
+    "coins": [
+      {
+        "asset": "KUJI.USK",
+        "amount": 10000000000
+      }
+    ],
+    "gas": null
+  },
+  {
+    "chain": "DASH",
+    "from_address": "USER-1",
+    "to_address": "VAULT",
+    "memo": "SWAP:MAYA.CACAO:USER-1",
+    "coins": [
+      {
+        "asset": "DASH.DASH",
+        "amount": 1000000000
+      }
+    ],
+    "gas": null
+  },
+  {
+    "chain": "THOR",
+    "from_address": "USER-1",
+    "to_address": "VAULT",
+    "memo": "SWAP:MAYA.CACAO:USER-1",
+    "coins": [
+      {
+        "asset": "THOR.RUNE",
+        "amount": 1000000000
+      }
+    ],
+    "gas": null
+  },
+  {
+    "chain": "MAYA",
+    "from_address": "USER-1",
+    "to_address": "VAULT",
+    "memo": "SWAP:ETH.ETH:USER-1",
+    "coins": [
+      {
+        "asset": "MAYA.CACAO",
+        "amount": 5000000000000
+      }
+    ],
+    "gas": null
+  },
+  {
+    "chain": "ETH",
+    "from_address": "USER-1",
+    "to_address": "VAULT",
+    "memo": "SWAP:MAYA.CACAO:USER-1",
+    "coins": [
+      {
+        "asset": "ETH.ETH",
+        "amount": 150000000000000000
+      }
+    ],
+    "gas": null
+  },
+  {
+    "chain": "MAYA",
+    "from_address": "USER-1",
+    "to_address": "VAULT",
+    "memo": "SWAP:ARB.ETH:USER-1",
+    "coins": [
+      {
+        "asset": "MAYA.CACAO",
+        "amount": 5000000000000
+      }
+    ],
+    "gas": null
+  },
+  {
+    "chain": "ARB",
+    "from_address": "USER-1",
+    "to_address": "VAULT",
+    "memo": "SWAP:MAYA.CACAO:USER-1",
+    "coins": [
+      {
+        "asset": "ARB.ETH",
+        "amount": 150000000000000000
+      }
+    ],
+    "gas": null
+  },
+  {
+    "chain": "MAYA",
+    "from_address": "USER-1",
+    "to_address": "VAULT",
+    "memo": "SWAP:ETH.TKN-0X52C84043CD9C865236F11D9FC9F56AA003C1F922:USER-1",
+    "coins": [
+      {
+        "asset": "MAYA.CACAO",
+        "amount": 5000000000000
+      }
+    ],
+    "gas": null
+  },
+  {
+    "chain": "ETH",
+    "from_address": "USER-1",
+    "to_address": "VAULT",
+    "memo": "SWAP:MAYA.CACAO:USER-1",
+    "coins": [
+      {
+        "asset": "ETH.TKN-0X52C84043CD9C865236F11D9FC9F56AA003C1F922",
+        "amount": 150000000000000000
+      }
+    ],
+    "gas": null
+  },
+  {
+    "chain": "MAYA",
+    "from_address": "PROVIDER-1",
+    "to_address": "VAULT",
+    "memo": "WITHDRAW:ETH.ETH:1000",
+    "coins": [
+      {
+        "asset": "MAYA.CACAO",
+        "amount": 1
+      }
+    ],
+    "gas": null
+  },
+  {
+    "chain": "MAYA",
+    "from_address": "PROVIDER-1",
+    "to_address": "VAULT",
+    "memo": "WITHDRAW:ARB.ETH:1000",
+    "coins": [
+      {
+        "asset": "MAYA.CACAO",
+        "amount": 1
+      }
+    ],
+    "gas": null
+  },
+  {
+    "chain": "MAYA",
+    "from_address": "PROVIDER-1",
+    "to_address": "VAULT",
+    "memo": "WITHDRAW:ETH.TKN-0X52C84043CD9C865236F11D9FC9F56AA003C1F922:1000",
+    "coins": [
+      {
+        "asset": "MAYA.CACAO",
+        "amount": 1
+      }
+    ],
+    "gas": null
+  },
+  {
+    "chain": "MAYA",
+    "from_address": "PROVIDER-1",
+    "to_address": "VAULT",
+    "memo": "WITHDRAW:DASH.DASH:1000",
+    "coins": [
+      {
+        "asset": "MAYA.CACAO",
+        "amount": 1
+      }
+    ],
+    "gas": null
+  },
+  {
+    "chain": "MAYA",
+    "from_address": "PROVIDER-1",
+    "to_address": "VAULT",
+    "memo": "WITHDRAW:THOR.RUNE:1000",
+    "coins": [
+      {
+        "asset": "MAYA.CACAO",
+        "amount": 1
+      }
+    ],
+    "gas": null
+  },
+  {
+    "chain": "MAYA",
+    "from_address": "PROVIDER-1",
+    "to_address": "VAULT",
+    "memo": "WITHDRAW:KUJI.KUJI:1000",
+    "coins": [
+      {
+        "asset": "MAYA.CACAO",
+        "amount": 1
+      }
+    ],
+    "gas": null
+  },
+  {
+    "chain": "MAYA",
+    "from_address": "PROVIDER-1",
+    "to_address": "VAULT",
+    "memo": "WITHDRAW:KUJI.USK:1000",
+    "coins": [
+      {
+        "asset": "MAYA.CACAO",
+        "amount": 1
+      }
+    ],
+    "gas": null
+  },
+  {
+    "chain": "MAYA",
+    "from_address": "PROVIDER-1",
+    "to_address": "VAULT",
+    "memo": "WITHDRAW:ETH.TKN-0X52C84043CD9C865236F11D9FC9F56AA003C1F922",
+    "coins": [
+      {
+        "asset": "MAYA.CACAO",
+        "amount": 1
+      }
+    ],
+    "gas": null
+  },
+  {
+    "chain": "MAYA",
+    "from_address": "PROVIDER-1",
+    "to_address": "VAULT",
+    "memo": "WITHDRAW:ETH.ETH",
+    "coins": [
+      {
+        "asset": "MAYA.CACAO",
+        "amount": 1
+      }
+    ],
+    "gas": null
+  },
+  {
+    "chain": "MAYA",
+    "from_address": "PROVIDER-1",
+    "to_address": "VAULT",
+    "memo": "WITHDRAW:ARB.ETH",
+    "coins": [
+      {
+        "asset": "MAYA.CACAO",
+        "amount": 1
+      }
+    ],
+    "gas": null
+  },
+  {
+    "chain": "MAYA",
+    "from_address": "PROVIDER-1",
+    "to_address": "VAULT",
+    "memo": "WITHDRAW:DASH.DASH",
+    "coins": [
+      {
+        "asset": "MAYA.CACAO",
+        "amount": 1
+      }
+    ],
+    "gas": null
+  },
+  {
+    "chain": "MAYA",
+    "from_address": "PROVIDER-1",
+    "to_address": "VAULT",
+    "memo": "WITHDRAW:KUJI.USK",
+    "coins": [
+      {
+        "asset": "MAYA.CACAO",
+        "amount": 1
+      }
+    ],
+    "gas": null
+  },
+  {
+    "chain": "MAYA",
+    "from_address": "PROVIDER-1",
+    "to_address": "VAULT",
+    "memo": "WITHDRAW:KUJI.KUJI",
+    "coins": [
+      {
+        "asset": "MAYA.CACAO",
+        "amount": 1
+      }
+    ],
+    "gas": null
+  },
+  {
+    "chain": "MAYA",
+    "from_address": "PROVIDER-1",
+    "to_address": "VAULT",
+    "memo": "WITHDRAW:THOR.RUNE",
+    "coins": [
+      {
+        "asset": "MAYA.CACAO",
+        "amount": 1
+      }
+    ],
+    "gas": null
+  }
+]

@@ -1,0 +1,48 @@
+{{ template "default-state.yaml" }}
+---
+{{ template "btc-eth-zec-pool-state.yaml" }}
+---
+type: create-blocks
+count: 1
+---
+type: check
+endpoint: http://localhost:1317/mayachain/pools
+asserts:
+  - .|length == 3
+---
+########################################################################################
+# quote and swap cacao to zec
+########################################################################################
+type: check
+endpoint: http://localhost:1317/mayachain/quote/swap
+params:
+  from_asset: MAYA.CACAO
+  to_asset: ZEC.ZEC
+  amount: 10000000000
+  destination: "tmPqRmAf3fPtBBCbHigHbXCt4dP9B9LA5ua"
+asserts:
+  - .expected_amount_out|tonumber == 898002
+  - .memo == "=:ZEC.ZEC:tmPqRmAf3fPtBBCbHigHbXCt4dP9B9LA5ua"
+  - .inbound_address == null
+  - .recommended_min_amount_in == "8000000000"
+  - .fees.liquidity == "998"
+  - .fees.outbound == "100000"
+  - (.fees.total|tonumber) == (.fees.liquidity|tonumber)+(.fees.outbound|tonumber)
+  - .fees.slippage_bps == 9
+  - .fees.total_bps == 918
+  - has("recommended_gas_rate")|not
+  - has("gas_rate_units")|not
+---
+########################################################################################
+# quote and swap cacao to zec
+########################################################################################
+type: check
+endpoint: http://localhost:1317/mayachain/quote/swap
+params:
+  from_asset: MAYA.CACAO
+  to_asset: ZEC.ZEC
+  amount: 10000000000
+  destination: "uregtest177ng78krqe8mz8qhme9lj6jndp58m6z459ve4w08gekk5098y4yeskaghjgt9ruz6da60875z0hr4k8cftdszhqgxyzwmuse9rqn2f540rnch6ud93lzt5nqv74evamnry726exlyle7wfjwy3ucf4t0tz85vgrpv276sjh5lj7r79qjjd7a8fxrh3s2cpejj8l2m26mr3v7xdy2e04"
+asserts:
+  - .error | contains("bad destination address")
+  - .error | contains("unable to parse address")

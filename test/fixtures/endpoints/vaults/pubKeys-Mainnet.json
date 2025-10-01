@@ -1,0 +1,21 @@
+{
+  "asgard": [
+    {
+      "pub_key": "mayapub1addwnpepqw0anseu8gqs52equc5phn980d78p2c8q7t2pwl92eg4lflr92hmu9xl2za",
+      "routers": [
+        {
+          "chain": "ARB",
+          "router": "0x700E97ef07219440487840Dc472E7120A7FF11F4"
+        },
+        {
+          "chain": "ETH",
+          "router": "0xe3985E6b61b814F7Cdb188766562ba71b446B46d"
+        },
+        {
+          "chain": "XRD",
+          "router": "component_rdx1cp7hrk7k0pjavnpt5h6dsel096kzlj96r8ukw2ywqgdc5tlvpvn0as"
+        }
+      ]
+    }
+  ]
+}

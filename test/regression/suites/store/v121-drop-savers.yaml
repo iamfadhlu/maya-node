@@ -1,0 +1,777 @@
+type: state
+genesis:
+  initial_height: "0"
+  app_state:
+    auth:
+      accounts:
+        - "@type": /cosmos.auth.v1beta1.ModuleAccount
+          base_account:
+            account_number: "0"
+            address: {{ addr_module_transfer }}
+            pub_key: ~
+            sequence: "0"
+          name: transfer
+          permissions:
+            - minter
+            - burner
+        - "@type": /cosmos.auth.v1beta1.ModuleAccount
+          base_account:
+            account_number: "1"
+            address: {{ addr_module_asgard }}
+            pub_key: ~
+            sequence: "0"
+          name: asgard
+          permissions: []
+        - "@type": /cosmos.auth.v1beta1.ModuleAccount
+          base_account:
+            account_number: "2"
+            address: {{ addr_module_mayachain }}
+            pub_key: ~
+            sequence: "0"
+          name: mayachain
+          permissions:
+            - minter
+            - burner
+        - "@type": /cosmos.auth.v1beta1.ModuleAccount
+          base_account:
+            account_number: "3"
+            address: {{ addr_module_reserve }}
+            pub_key: ~
+            sequence: "0"
+          name: reserve
+          permissions: []
+        - "@type": /cosmos.auth.v1beta1.ModuleAccount
+          base_account:
+            account_number: "5"
+            address: {{ addr_module_bond }}
+            pub_key: ~
+            sequence: "0"
+          name: bond
+          permissions: []
+        - "@type": /cosmos.auth.v1beta1.BaseAccount
+          address: {{ addr_maya_dog }}
+          pub_key: null
+          account_number: "6"
+          sequence: "0"
+        - "@type": /cosmos.auth.v1beta1.BaseAccount
+          address: {{ addr_maya_cat }}
+          pub_key: null
+          account_number: "7"
+          sequence: "0"
+        - "@type": /cosmos.auth.v1beta1.BaseAccount
+          address: {{ addr_maya_fox }}
+          pub_key: null
+          account_number: "8"
+          sequence: "0"
+    bank:
+      balances:
+        - address: {{ addr_maya_dog }}
+          coins:
+            - denom: cacao
+              amount: "500000000000000"
+        - address: {{ addr_maya_cat }}
+          coins:
+            - denom: cacao
+              amount: "2500000000000000"
+        - address: {{ addr_maya_fox }}
+          coins:
+            - denom: cacao
+              amount: "2500000000000000"
+        - address: {{ addr_module_reserve }}
+          coins:
+            - amount: "3500000000000000"
+              denom: cacao
+        - address: {{ addr_module_asgard }}
+          coins:
+            - amount: "100000000000000"
+              denom: arb/eth
+            - amount: "${SYNTH_BAL=1000000000000000}"
+              denom: arb/usdt-0xfd086bc7cd5c481dcc9c85ebe478a1c0b69fcbb9
+            - amount: "${BTC_SYNTH_BAL=100000000000}"
+              denom: btc/btc
+            - amount: "1000000000000000"
+              denom: cacao
+            - amount: "${SYNTH_BAL}"
+              denom: dash/dash
+            - amount: "${SYNTH_BAL}"
+              denom: eth/eth
+            - amount: "${SYNTH_BAL}"
+              denom: thor/rune
+      params:
+        default_send_enabled: false
+    transfer:
+      params:
+        send_enabled: false
+    mayachain:
+      store_version: "120"
+      node_accounts:
+        - active_block_height: "0"
+          bond: "5000000000000"
+          ip_address: 1.1.1.1
+          node_address: {{ addr_maya_dog }}
+          bond_address: {{ addr_maya_dog }}
+          pub_key_set:
+            secp256k1: {{ pubkey_dog }}
+            ed25519: "tmayapub1addwnpepqfshsq2y6ejy2ysxmq4gj8n8mzuzyulk9wh4n946jv5w2vpwdn2yuz3v0gx"
+          signer_membership: []
+          status: Active
+          # matches the priv_validator_key.json mounted in the test container
+          validator_cons_pub_key: tmayacpub1zcjduepqq75h7uy6qhesh9d3a9tuk0mzrnc46u8rye44ze6peua3zmpfh23qpj8pe3
+          version: "1.120.0"
+      pools:
+        - LP_units: "10000000000000"
+          asset: THOR.RUNE
+          balance_asset: "10000000000000"
+          balance_cacao: "10000000000000"
+          decimals: "8"
+          pending_inbound_asset: "0"
+          pending_inbound_cacao: "0"
+          status: Available
+          synth_units: "0"
+        - LP_units: "10000000000000"
+          asset: THOR/RUNE
+          balance_asset: "10000000000000"
+          balance_cacao: "0"
+          decimals: "8"
+          pending_inbound_asset: "0"
+          pending_inbound_cacao: "0"
+          status: Available
+          synth_units: "0"
+        - LP_units: "10000000000000"
+          asset: ETH.ETH
+          balance_asset: "10000000000000"
+          balance_cacao: "10000000000000"
+          decimals: "6"
+          pending_inbound_asset: "0"
+          pending_inbound_cacao: "0"
+          status: Available
+          synth_units: "0"
+        - LP_units: "10000000000000"
+          asset: ETH/ETH
+          balance_asset: "10000000000000"
+          balance_cacao: "0"
+          decimals: "6"
+          pending_inbound_asset: "0"
+          pending_inbound_cacao: "0"
+          status: Available
+          synth_units: "0"
+        - LP_units: "10000000000000"
+          asset: ARB.ETH
+          balance_asset: "10000000000000"
+          balance_cacao: "10000000000000"
+          decimals: "6"
+          pending_inbound_asset: "0"
+          pending_inbound_cacao: "0"
+          status: Available
+          synth_units: "0"
+        - LP_units: "100000000000000"
+          asset: ARB/ETH
+          balance_asset: "100000000000000"
+          balance_cacao: "0"
+          decimals: "6"
+          pending_inbound_asset: "0"
+          pending_inbound_cacao: "0"
+          status: Available
+          synth_units: "0"
+        - LP_units: "10000000000000"
+          asset: ARB.USDT-0XFD086BC7CD5C481DCC9C85EBE478A1C0B69FCBB9
+          balance_asset: "10000000000000"
+          balance_cacao: "10000000000000"
+          decimals: "6"
+          pending_inbound_asset: "0"
+          pending_inbound_cacao: "0"
+          status: Available
+          synth_units: "0"
+        - LP_units: "10000000000000"
+          asset: ARB/USDT-0XFD086BC7CD5C481DCC9C85EBE478A1C0B69FCBB9
+          balance_asset: "10000000000000"
+          balance_cacao: "0"
+          decimals: "6"
+          pending_inbound_asset: "0"
+          pending_inbound_cacao: "0"
+          status: Available
+          synth_units: "0"
+        - LP_units: "10000000000000"
+          asset: BTC.BTC
+          balance_asset: "10000000000000"
+          balance_cacao: "10000000000000"
+          decimals: "8"
+          pending_inbound_asset: "0"
+          pending_inbound_cacao: "0"
+          status: Available
+          synth_units: "0"
+        - LP_units: "10000000000000"
+          asset: BTC/BTC
+          balance_asset: "10000000000000"
+          balance_cacao: "0"
+          decimals: "8"
+          pending_inbound_asset: "0"
+          pending_inbound_cacao: "0"
+          status: Available
+          synth_units: "0"
+      liquidity_providers:
+        - asset: THOR.RUNE
+          cacao_address: {{ addr_maya_dog }}
+          asset_address: ""
+          last_add_height: "1"
+          last_withdraw_height: "0"
+          units: "10000000000000"
+          pending_cacao: "0"
+          pending_asset: "0"
+          pending_tx_Id: ""
+          cacao_deposit_value: "10000000000000"
+          asset_deposit_value: "10000000000000"
+          node_bond_address: null
+          withdraw_counter: "0"
+          last_withdraw_counter_height: "0"
+          bonded_nodes:
+            - node_address: {{ addr_maya_dog }}
+              units: "10000000000000"
+        - asset: THOR/RUNE
+          cacao_address: ""
+          asset_address: {{ addr_thor_cat }}
+          last_add_height: "1"
+          last_withdraw_height: "0"
+          units: "750000000000"
+          pending_cacao: "0"
+          pending_asset: "0"
+          pending_tx_Id: ""
+          cacao_deposit_value: "0"
+          asset_deposit_value: "750000000000"
+          node_bond_address: null
+          withdraw_counter: "0"
+          last_withdraw_counter_height: "0"
+        - asset: THOR/RUNE
+          cacao_address: ""
+          asset_address: {{ addr_thor_fox }}
+          last_add_height: "1"
+          last_withdraw_height: "0"
+          units: "250000000000"
+          pending_cacao: "0"
+          pending_asset: "0"
+          pending_tx_Id: ""
+          cacao_deposit_value: "0"
+          asset_deposit_value: "250000000000"
+          node_bond_address: null
+          withdraw_counter: "0"
+          last_withdraw_counter_height: "0"
+          bonded_nodes: []
+        - asset: ETH.ETH
+          cacao_address: {{ addr_maya_dog }}
+          asset_address: ""
+          last_add_height: "1"
+          last_withdraw_height: "0"
+          units: "10000000000000"
+          pending_cacao: "0"
+          pending_asset: "0"
+          pending_tx_Id: ""
+          cacao_deposit_value: "10000000000000"
+          asset_deposit_value: "10000000000000"
+          node_bond_address: null
+          withdraw_counter: "0"
+          last_withdraw_counter_height: "0"
+          bonded_nodes:
+            - node_address: {{ addr_maya_dog }}
+              units: "10000000000000"
+        - asset: ETH/ETH
+          cacao_address: ""
+          asset_address: {{ addr_eth_cat }}
+          last_add_height: "1"
+          last_withdraw_height: "0"
+          units: "400000000000"
+          pending_cacao: "0"
+          pending_asset: "0"
+          pending_tx_Id: ""
+          cacao_deposit_value: "0"
+          asset_deposit_value: "400000000000"
+          node_bond_address: null
+          withdraw_counter: "0"
+          last_withdraw_counter_height: "0"
+          bonded_nodes: []
+        - asset: ETH/ETH
+          cacao_address: ""
+          asset_address: {{ addr_eth_fox }}
+          last_add_height: "1"
+          last_withdraw_height: "0"
+          units: "600000000000"
+          pending_cacao: "0"
+          pending_asset: "0"
+          pending_tx_Id: ""
+          cacao_deposit_value: "0"
+          asset_deposit_value: "600000000000"
+          node_bond_address: null
+          withdraw_counter: "0"
+          last_withdraw_counter_height: "0"
+          bonded_nodes: []
+        - asset: ARB.ETH
+          cacao_address: {{ addr_maya_dog }}
+          asset_address: ""
+          last_add_height: "1"
+          last_withdraw_height: "0"
+          units: "10000000000000"
+          pending_cacao: "0"
+          pending_asset: "0"
+          pending_tx_Id: ""
+          cacao_deposit_value: "10000000000000"
+          asset_deposit_value: "10000000000000"
+          node_bond_address: null
+          withdraw_counter: "0"
+          last_withdraw_counter_height: "0"
+          bonded_nodes:
+            - node_address: {{ addr_maya_dog }}
+              units: "10000000000000"
+        - asset: ARB/ETH
+          cacao_address: ""
+          asset_address: {{ addr_eth_cat }}
+          last_add_height: "1"
+          last_withdraw_height: "0"
+          units: "950000000000000"
+          pending_cacao: "0"
+          pending_asset: "0"
+          pending_tx_Id: ""
+          cacao_deposit_value: "0"
+          asset_deposit_value: "950000000000000"
+          node_bond_address: null
+          withdraw_counter: "0"
+          last_withdraw_counter_height: "0"
+          bonded_nodes: []
+        - asset: ARB.USDT-0XFD086BC7CD5C481DCC9C85EBE478A1C0B69FCBB9
+          cacao_address: {{ addr_maya_dog }}
+          asset_address: ""
+          last_add_height: "1"
+          last_withdraw_height: "0"
+          units: "10000000000000"
+          pending_cacao: "0"
+          pending_asset: "0"
+          pending_tx_Id: ""
+          cacao_deposit_value: "10000000000000"
+          asset_deposit_value: "10000000000000"
+          node_bond_address: null
+          withdraw_counter: "0"
+          last_withdraw_counter_height: "0"
+          bonded_nodes:
+            - node_address: {{ addr_maya_dog }}
+              units: "10000000000000"
+        - asset: ARB/USDT-0XFD086BC7CD5C481DCC9C85EBE478A1C0B69FCBB9
+          cacao_address: ""
+          asset_address: {{ addr_eth_cat }}
+          last_add_height: "1"
+          last_withdraw_height: "0"
+          units: "400000000000"
+          pending_cacao: "0"
+          pending_asset: "0"
+          pending_tx_Id: ""
+          cacao_deposit_value: "0"
+          asset_deposit_value: "400000000000"
+          node_bond_address: null
+          withdraw_counter: "0"
+          last_withdraw_counter_height: "0"
+          bonded_nodes: []
+        - asset: ARB/USDT-0XFD086BC7CD5C481DCC9C85EBE478A1C0B69FCBB9
+          cacao_address: ""
+          asset_address: {{ addr_eth_fox }}
+          last_add_height: "1"
+          last_withdraw_height: "0"
+          units: "600000000000"
+          pending_cacao: "0"
+          pending_asset: "0"
+          pending_tx_Id: ""
+          cacao_deposit_value: "0"
+          asset_deposit_value: "600000000000"
+          node_bond_address: null
+          withdraw_counter: "0"
+          last_withdraw_counter_height: "0"
+          bonded_nodes: []
+        - asset: BTC.BTC
+          cacao_address: {{ addr_btc_dog }}
+          asset_address: ""
+          last_add_height: "1"
+          last_withdraw_height: "0"
+          units: "10000000000000"
+          pending_cacao: "0"
+          pending_asset: "0"
+          pending_tx_Id: ""
+          cacao_deposit_value: "10000000000000"
+          asset_deposit_value: "10000000000000"
+          node_bond_address: null
+          withdraw_counter: "0"
+          last_withdraw_counter_height: "0"
+          bonded_nodes:
+            - node_address: {{ addr_maya_dog }}
+              units: "10000000000000"
+        - asset: BTC/BTC
+          cacao_address: ""
+          asset_address: {{ addr_btc_cat }}
+          last_add_height: "1"
+          last_withdraw_height: "0"
+          units: "1000000000000"
+          pending_cacao: "0"
+          pending_asset: "0"
+          pending_tx_Id: ""
+          cacao_deposit_value: "0"
+          asset_deposit_value: "1000000000000"
+          node_bond_address: null
+          withdraw_counter: "0"
+          last_withdraw_counter_height: "0"
+          bonded_nodes: []
+      network_fees:
+        - chain: THOR
+          transaction_fee_rate: "2374800"
+          transaction_size: "1"
+        - chain: ETH
+          transaction_fee_rate: "8"
+          transaction_size: "80000"
+        - chain: BTC
+          transaction_fee_rate: "7"
+          transaction_size: "1000"
+        - chain: ARB
+          transaction_fee_rate: "1000"
+          transaction_size: "1000"
+      vaults:
+        - block_height: "0"
+          chains:
+            - MAYA
+            - THOR
+            - ETH
+            - BTC
+          coins:
+            - amount: "10000000000000"
+              asset: THOR.RUNE
+              decimals: "8"
+            - amount: "10000000000000"
+              asset: ETH.ETH
+              decimals: "6"
+            - amount: "10000000000000"
+              asset: BTC.BTC
+              decimals: "8"
+            - amount: "10000000000000"
+              asset: ARB.USDT-0XFD086BC7CD5C481DCC9C85EBE478A1C0B69FCBB9
+              decimals: "6"
+            - amount: "10000000000000"
+              asset: ARB.ETH
+              decimals: "6"
+          inbound_tx_count: "1"
+          membership:
+            - tmayapub1addwnpepqfshsq2y6ejy2ysxmq4gj8n8mzuzyulk9wh4n946jv5w2vpwdn2yuz3v0gx
+          pub_key: tmayapub1addwnpepqfshsq2y6ejy2ysxmq4gj8n8mzuzyulk9wh4n946jv5w2vpwdn2yuz3v0gx
+          status: ActiveVault
+          type: AsgardVault
+---
+type: create-blocks
+count: 1
+---
+type: check
+endpoint: http://localhost:1317/mayachain/vaults/asgard
+asserts:
+  - .[0].coins|length == 5
+  - .[0].coins[]|select(.asset=="THOR.RUNE")|.amount|tonumber == 10000000000000
+  - .[0].coins[]|select(.asset=="ETH.ETH")|.amount|tonumber == 10000000000000
+  - .[0].coins[]|select(.asset=="BTC.BTC")|.amount|tonumber == 10000000000000
+  - .[0].coins[]|select(.asset=="ARB.USDT-0XFD086BC7CD5C481DCC9C85EBE478A1C0B69FCBB9")|.amount|tonumber == 10000000000000
+  - .[0].coins[]|select(.asset=="ARB.ETH")|.amount|tonumber == 10000000000000
+---
+type: check
+endpoint: http://localhost:1317/mayachain/balance/module/asgard
+asserts:
+  - .name == "asgard"
+  - .address == "{{ addr_module_asgard }}"
+  - .coins|length == 7
+  - .coins[0].amount|tonumber == 100000000000000
+  - .coins[0].denom == "arb/eth"
+  - .coins[1].amount|tonumber == ${SYNTH_BAL}
+  - .coins[1].denom == "arb/usdt-0xfd086bc7cd5c481dcc9c85ebe478a1c0b69fcbb9"
+  - .coins[2].amount|tonumber == ${BTC_SYNTH_BAL}
+  - .coins[2].denom == "btc/btc"
+  - .coins[3].amount|tonumber == ${SYNTH_BAL}
+  - .coins[3].denom == "cacao"
+  - .coins[4].amount|tonumber == ${SYNTH_BAL}
+  - .coins[4].denom == "dash/dash"
+  - .coins[5].amount|tonumber == ${SYNTH_BAL}
+  - .coins[5].denom == "eth/eth"
+  - .coins[6].amount|tonumber == ${SYNTH_BAL}
+  - .coins[6].denom == "thor/rune"
+---
+type: check
+endpoint: http://localhost:1317/mayachain/pool/THOR.RUNE/savers
+asserts:
+  - .|length == 2
+  - .[0].asset == "THOR.RUNE"
+  - .[0].asset_redeem_value|tonumber == 250000000000
+  - .[1].asset == "THOR.RUNE"
+  - .[1].asset_redeem_value|tonumber == 750000000000
+---
+type: check
+endpoint: http://localhost:1317/mayachain/pool/ETH.ETH/savers
+asserts:
+  - .|length == 2
+  - .[0].asset == "ETH.ETH"
+  - .[0].asset_redeem_value|tonumber == 400000000000
+  - .[1].asset == "ETH.ETH"
+  - .[1].asset_redeem_value|tonumber == 600000000000
+---
+type: check
+endpoint: http://localhost:1317/mayachain/pool/BTC.BTC/savers
+asserts:
+  - .|length == 1
+  - .[0].asset == "BTC.BTC"
+  - .[0].asset_redeem_value|tonumber == 1000000000000
+---
+type: check
+endpoint: http://localhost:1317/mayachain/pool/THOR.RUNE
+asserts:
+  - .asset == "THOR.RUNE"
+  - .balance_asset|tonumber == 10000000000000
+---
+type: check
+endpoint: http://localhost:1317/mayachain/pool/THOR.RUNE/liquidity_providers
+asserts:
+  - .|length == 1
+  - .[0].asset == "THOR.RUNE"
+  - .[0].cacao_address == "{{ addr_maya_dog }}"
+  - .[0].cacao_deposit_value|tonumber == 10000000000000
+---
+# no savers for dash
+type: check
+endpoint: http://localhost:1317/mayachain/pool/DASH.DASH/savers
+asserts:
+  - .|length == 0
+---
+type: tx-version
+signer: {{ addr_maya_dog }}
+version: "1.121.0"
+---
+type: create-blocks
+count: 2
+---
+type: check
+endpoint: http://localhost:1317/mayachain/block
+asserts:
+  - .header.height == 3
+---
+type: check
+endpoint: http://localhost:1317/mayachain/queue/outbound
+asserts:
+  - .|length == 7 # 2 for thor, 2 for eth, 1 for btc
+  - .[0].to_address == "{{ addr_eth_cat }}"
+  - .[0].coin.amount|tonumber == 369685983600
+  - .[0].coin.asset == "ARB.USDT-0XFD086BC7CD5C481DCC9C85EBE478A1C0B69FCBB9"
+  - .[1].to_address == "{{ addr_eth_fox }}"
+  - .[1].coin.amount|tonumber == 531229715400
+  - .[1].coin.asset == "ARB.USDT-0XFD086BC7CD5C481DCC9C85EBE478A1C0B69FCBB9"
+  - .[2].to_address == "{{ addr_btc_cat }}"
+  - .[2].coin.amount|tonumber == 824759216978
+  - .[2].coin.asset == "BTC.BTC"
+  - .[3].to_address == "{{ addr_eth_cat }}"
+  - .[3].coin.amount|tonumber == 369684705500
+  - .[3].coin.asset == "ETH.ETH"
+  - .[4].to_address == "{{ addr_eth_fox }}"
+  - .[4].coin.amount|tonumber == 531228445600
+  - .[4].coin.asset == "ETH.ETH"
+  - .[5].to_address == "{{ addr_thor_fox }}"
+  - .[5].coin.amount|tonumber == 237913488120
+  - .[5].coin.asset == "THOR.RUNE"
+  - .[6].to_address == "{{ addr_thor_cat }}"
+  - .[6].coin.amount|tonumber == 645976103142
+  - .[6].coin.asset == "THOR.RUNE"
+---
+type: create-blocks
+count: 1
+---
+type: tx-observed-out
+signer: {{ addr_maya_dog }}
+txs:
+  - tx:
+      id: '{{ observe_txid 1}}'
+      chain: ARB
+      from_address: {{ addr_eth_dog }}
+      to_address: {{ addr_eth_cat }}
+      coins:
+        - amount: "369685983600"
+          asset: "ARB.USDT-0XFD086BC7CD5C481DCC9C85EBE478A1C0B69FCBB9"
+      gas:
+        - amount: "1500"
+          asset: "ARB.USDT-0XFD086BC7CD5C481DCC9C85EBE478A1C0B69FCBB9"
+          decimals: 6
+      memo: "OUT:DFA5140AC397457CECA3F47D838CA277615035FE3A7F2D8E1D11F39191B0DF84"
+    block_height: 5
+    finalise_height: 5
+    observed_pub_key: {{ pubkey_dog }}
+---
+type: create-blocks
+count: 1
+---
+type: tx-observed-out
+signer: {{ addr_maya_dog }}
+txs:
+  - tx:
+      id: '{{ observe_txid 2}}'
+      chain: ARB
+      from_address: {{ addr_eth_dog }}
+      to_address: {{ addr_eth_fox }}
+      coins:
+        - amount: "531229715400"
+          asset: "ARB.USDT-0XFD086BC7CD5C481DCC9C85EBE478A1C0B69FCBB9"
+      gas:
+        - amount: "1500"
+          asset: "ARB.USDT-0XFD086BC7CD5C481DCC9C85EBE478A1C0B69FCBB9"
+          decimals: 6
+      memo: "OUT:6D5071A6B59242FC977BCCA3943045E853E38FF27E4CEF2EDB6E8FAEC43EEF50"
+    block_height: 6
+    finalise_height: 6
+    observed_pub_key: {{ pubkey_dog }}
+---
+type: create-blocks
+count: 1
+---
+type: tx-observed-out
+signer: {{ addr_maya_dog }}
+txs:
+  - tx:
+      id: '{{ observe_txid 3}}'
+      chain: BTC
+      from_address: {{ addr_btc_dog }}
+      to_address: {{ addr_btc_cat }}
+      coins:
+        - amount: "824759216978"
+          asset: "BTC.BTC"
+          decimals: 8
+      gas:
+        - amount: "1000"
+          asset: "BTC.BTC"
+      memo: "OUT:86AB9F01F42DDD70F3E547188375C033F952C844237F50EC3EC40BE2BFCD358D"
+    block_height: 7
+    finalise_height: 7
+    observed_pub_key: {{ pubkey_dog }}
+---
+type: create-blocks
+count: 1
+---
+type: tx-observed-out
+signer: {{ addr_maya_dog }}
+txs:
+  - tx:
+      id: '{{ observe_txid 4}}'
+      chain: ETH
+      from_address: {{ addr_eth_dog }}
+      to_address: {{ addr_eth_cat }}
+      coins:
+        - amount: "369684705500"
+          asset: "ETH.ETH"
+      gas:
+        - amount: "960000"
+          asset: "ETH.ETH"
+          decimals: 8
+      memo: "OUT:8BCD87AF850D783DF399D5DF873736B1469E5B98DC58DCEB25F221FF00B8F6AE"
+    block_height: 8
+    finalise_height: 8
+    observed_pub_key: {{ pubkey_dog }}
+---
+type: create-blocks
+count: 1
+---
+type: tx-observed-out
+signer: {{ addr_maya_dog }}
+txs:
+  - tx:
+      id: '{{ observe_txid 5}}'
+      chain: ETH
+      from_address: {{ addr_eth_dog }}
+      to_address: {{ addr_eth_fox }}
+      coins:
+        - amount: "531228445600"
+          asset: "ETH.ETH"
+      gas:
+        - amount: "960000"
+          asset: "ETH.ETH"
+          decimals: 8
+      memo: "OUT:A0B799F8BA2D69DF79F2A18275F2EA3D8F4869843708B9B77C22DB132C36A803"
+    block_height: 9
+    finalise_height: 9
+    observed_pub_key: {{ pubkey_dog }}
+---
+type: create-blocks
+count: 1
+---
+type: tx-observed-out
+signer: {{ addr_maya_dog }}
+txs:
+  - tx:
+      id: '{{ observe_txid 6}}'
+      chain: THOR
+      from_address: {{ addr_thor_dog }}
+      to_address: {{ addr_thor_fox }}
+      coins:
+        - amount: "237913488120"
+          asset: "THOR.RUNE"
+          decimals: 8
+      gas:
+        - amount: "2374800"
+          asset: "THOR.RUNE"
+      memo: "OUT:4CA90A7D0B19DD8EF95181AD973F9550B3E038D527B5815577F46C259A617C84"
+    block_height: 10
+    finalise_height: 10
+    observed_pub_key: {{ pubkey_dog }}
+---
+type: create-blocks
+count: 1
+---
+type: tx-observed-out
+signer: {{ addr_maya_dog }}
+txs:
+  - tx:
+      id: '{{ observe_txid 7}}'
+      chain: THOR
+      from_address: {{ addr_thor_dog }}
+      to_address: {{ addr_thor_cat }}
+      coins:
+        - amount: "645976103142"
+          asset: "THOR.RUNE"
+          decimals: 8
+      gas:
+        - amount: "2374800"
+          asset: "THOR.RUNE"
+      memo: "OUT:33C1B38C7F2EB73401E4BD331CA1C0114F8C8639E845E158DC8B109240571D6A"
+    block_height: 11
+    finalise_height: 11
+    observed_pub_key: {{ pubkey_dog }}
+---
+type: create-blocks
+count: 1
+---
+type: check
+endpoint: http://localhost:1317/mayachain/queue/outbound
+asserts:
+  - .|length == 0
+---
+# the synths should be removed from the asgard module
+type: check
+endpoint: http://localhost:1317/mayachain/balance/module/asgard
+asserts:
+  - .name == "asgard"
+  - .address == "{{ addr_module_asgard }}"
+  - .coins|length == 1
+  - .coins[0].denom == "cacao"
+---
+# lps should be removed
+type: check
+endpoint: http://localhost:1317/mayachain/pool/ETH.ETH/savers
+asserts:
+  - .|length == 0
+---
+type: check
+endpoint: http://localhost:1317/mayachain/pool/THOR.RUNE/savers
+asserts:
+  - .|length == 0
+---
+type: check
+endpoint: http://localhost:1317/mayachain/pool/BTC.BTC/savers
+asserts:
+  - .|length == 0
+---
+type: check
+endpoint: http://localhost:1317/mayachain/pool/THOR.RUNE/liquidity_providers
+asserts:
+  - .|length == 1
+  - .[0].asset == "THOR.RUNE"
+  - .[0].cacao_address == "{{ addr_maya_dog }}"
+  - .[0].cacao_deposit_value|tonumber == 10000000000000

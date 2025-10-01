@@ -1,0 +1,610 @@
+########################################################################################
+# Config
+########################################################################################
+
+# trunk-ignore-all(yamllint/empty-values)
+
+volumes:
+  cli:
+  mayanode:
+  mayanode-cat:
+  mayanode-dog:
+  mayanode-fox:
+  mayanode-pig:
+  bifrost:
+  bifrost-cat:
+  bifrost-dog:
+  bifrost-fox:
+  bifrost-pig:
+  l1data:
+  l1keystore:
+  seqdata:
+  config:
+  tokenbridge-data:
+
+########################################################################################
+# Services
+########################################################################################
+
+services:
+  _mayachain: &mayachain-defaults
+    profiles:
+      - _
+    restart: unless-stopped
+    image: registry.gitlab.com/mayachain/mayanode:mocknet
+    build:
+      context: ../..
+      dockerfile: ./build/docker/Dockerfile
+      args:
+        TAG: mocknet
+    environment: &mayachain-environment
+      NET: mocknet
+      CHAIN_ID: mayachain
+      SIGNER_NAME: mayachain
+      SIGNER_PASSWD: 1passw0rd1
+    logging: &logging
+      driver: "json-file"
+      options:
+        max-size: "256m"
+        max-file: "3"
+
+  ######################################################################################
+  # BASEChain
+  ######################################################################################
+
+  # ------------------------------ cli ------------------------------
+
+  cli:
+    profiles:
+      - _
+    build:
+      context: ../..
+      dockerfile: ./build/docker/cli/Dockerfile
+    environment:
+      <<: *mayachain-environment
+      CHAIN_API: mayanode:1317
+      CHAIN_RPC: mayanode:26657
+      BTC_HOST: ${BTC_HOST:-bitcoin:18443}
+      ETH_HOST: ${ETH_HOST:-http://ethereum:8545}
+      ARB_HOST: ${ARB_HOST:-http://arbitrum:8547}
+      XRD_HOST: ${XRD_HOST:-http://radix:3333/core}
+      THOR_HOST: ${THOR_HOST:-http://thorchain:26657}
+      THOR_GRPC_HOST: ${THOR_GRPC_HOST:-thorchain:9090}
+      THOR_GRPC_TLS: false
+      KUJI_HOST: ${KUJI_HOST:-http://kuji:26657}
+    entrypoint: /bin/bash
+    command:
+      - --init-file
+      - /cli/bashrc
+    working_dir: /root
+    volumes:
+      - cli:/root
+      - "./cli/:/cli"
+
+  # ------------------------------ mayanode ------------------------------
+
+  mayanode: &mayanode
+    container_name: mayanode
+    <<: *mayachain-defaults
+    hostname: mayanode # required for genesis.sh
+    profiles:
+      - mayanode
+      - mocknet
+      - mocknet-cluster
+    depends_on:
+      - ethereum
+      - arbitrum
+    environment: &mayanode-environment
+      <<: *mayachain-environment
+      NODES: 1
+      SEED: mayanode
+      SIGNER_SEED_PHRASE: "dog dog dog dog dog dog dog dog dog dog dog dog dog dog dog dog dog dog dog dog dog dog dog fossil"
+      THOR_BLOCK_TIME: ${THOR_BLOCK_TIME:-5s}
+      THOR_API_LIMIT_COUNT: 100
+      THOR_API_LIMIT_DURATION: 1s
+      THORNODE_API_ENABLE: "true"
+      HARDFORK_BLOCK_HEIGHT: ${HARDFORK_BLOCK_HEIGHT:-}
+      NEW_GENESIS_TIME: ${NEW_GENESIS_TIME:-}
+      CHURN_MIGRATION_ROUNDS: 2
+      FUND_MIGRATION_INTERVAL: 10
+    ports:
+      - 26657:26657
+      - 26656:26656
+      - 1317:1317
+      - 6060:6060
+    volumes:
+      - "../scripts:/docker/scripts"
+      - "./mocknet/xrd:/docker/mocknet/xrd"
+      - mayanode:/root/.mayanode
+    entrypoint: /docker/scripts/genesis.sh
+    command:
+      - mayanode
+      - start
+
+  # ------------------------------ bifrost ------------------------------
+
+  bifrost: &bifrost
+    container_name: bifrost
+    <<: *mayachain-defaults
+    profiles:
+      - mayanode
+      - mocknet
+      - mocknet-cluster
+      - bifrost
+      - validator
+    depends_on:
+      - bitcoin
+      - dash1
+      - ethereum
+    extra_hosts:
+      - "host.docker.internal:host-gateway"
+    environment: &bifrost-environment
+      <<: *mayachain-environment
+      CHAIN_API: mayanode:1317
+      CHAIN_RPC: mayanode:26657
+      MAYANODE_SERVICE_PORT_RPC: 26657
+      BNB_DISABLED: true
+      BTC_HOST: ${BTC_HOST:-bitcoin:18443}
+      DASH_HOST: ${DASH_HOST:-dash1:19898}
+      ZCASH_HOST: ${ZCASH_HOST:-zcash:18232}
+      ETH_HOST: ${ETH_HOST:-http://ethereum:8545}
+      ARB_HOST: ${ARB_HOST:-http://arbitrum:8547}
+      XRD_HOST: ${XRD_HOST:-http://radix:3333/core}
+      KUJI_HOST: ${KUJI_HOST:-http://kuji:26657}
+      KUJI_GRPC_HOST: ${KUJI_GRPC_HOST:-kuji:9090}
+      KUJI_GRPC_TLS: false
+      THOR_API: thorchain:1317
+      THOR_HOST: ${THOR_HOST:-http://thorchain:26657}
+      THOR_GRPC_HOST: ${THOR_GRPC_HOST:-thorchain:9090}
+      THOR_GRPC_TLS: false
+      THOR_BLOCK_TIME: ${THOR_BLOCK_TIME:-5s}
+      BLOCK_SCANNER_BACKOFF: ${BLOCK_SCANNER_BACKOFF:-5s}
+      PEER: ${PEER:-}
+      BIFROST_METRICS_PPROF_ENABLED: "true"
+      BIFROST_SIGNER_BACKUP_KEYSHARES: "true"
+      BIFROST_SIGNER_AUTO_OBSERVE: "false"
+      BIFROST_SIGNER_KEYGEN_TIMEOUT: 30s
+      BIFROST_SIGNER_KEYSIGN_TIMEOUT: 30s
+
+      # set fixed gas rate for evm chains
+      BIFROST_CHAINS_ETH_BLOCK_SCANNER_FIXED_GAS_RATE: 20_000_000_000 # 20 gwei
+      BIFROST_CHAINS_ARB_BLOCK_SCANNER_FIXED_GAS_RATE: 100_000_000
+      BIFROST_CHAINS_ARB_BLOCK_SCANNER_MAX_GAS_LIMIT: 5_000_000
+      # so we can read the asgard noop for btc pool
+      BIFROST_CHAINS_BTC_BLOCK_SCANNER_START_BLOCK_HEIGHT: 1
+    ports:
+      - 5040:5040
+      - 6040:6040
+      - 9000:9000
+    entrypoint: "bash /docker/scripts/bifrost.sh"
+    volumes:
+      - "../scripts:/docker/scripts"
+      - bifrost:/var/data/bifrost
+      - mayanode:/root/.mayanode
+    command: ["bifrost", "-p", "--log-level=info"]
+
+  # ------------------------------ midgard ------------------------------
+
+  midgard:
+    container_name: midgard
+    profiles:
+      - midgard
+    depends_on:
+      - midgard-db
+      - mayanode
+    image: registry.gitlab.com/mayachain/midgard:develop
+    restart: unless-stopped
+    environment:
+      MIDGARD_THORCHAIN_THOR_NODE_URL: http://mayanode:1317/mayachain
+      MIDGARD_THORCHAIN_TENDERMINT_URL: http://mayanode:26657/websocket
+      MIDGARD_TIMESCALE_HOST: midgard-db
+      MIDGARD_THORCHAIN_LAST_CHAIN_BACKOFF: ${THOR_BLOCK_TIME:-5s}
+    ports:
+      - 8080:8080
+    logging: *logging
+
+  midgard-db:
+    container_name: midgard-db
+    profiles:
+      - midgard
+    image: timescale/timescaledb:2.2.0-pg13
+    restart: unless-stopped
+    environment:
+      - POSTGRES_USER=midgard
+      - POSTGRES_PASSWORD=password
+    command: postgres -c 'max_connections=250'
+    logging: *logging
+
+  ######################################################################################
+  # BASEChain Cluster
+  ######################################################################################
+
+  # ------------------------------ mayanodes ------------------------------
+
+  mayanode-cat:
+    <<: *mayanode
+    profiles:
+      - mayanode-cluster
+      - mocknet-cluster
+    ports: []
+    hostname: mayanode-cat
+    environment:
+      <<: *mayanode-environment
+      PEER: mayanode
+      SEED: mayanode-cat
+      SEEDS: mayanode,mayanode-fox,mayanode-pig
+      SIGNER_SEED_PHRASE: "cat cat cat cat cat cat cat cat cat cat cat cat cat cat cat cat cat cat cat cat cat cat cat crawl"
+    volumes:
+      - "../scripts:/docker/scripts"
+      - mayanode-cat:/root/.mayanode
+    entrypoint: /docker/scripts/validator.sh
+
+  mayanode-dog:
+    <<: *mayanode
+    profiles:
+      - mayanode-cluster
+      - mocknet-cluster
+    ports: []
+    hostname: mayanode-dog
+    environment:
+      <<: *mayanode-environment
+      PEER: mayanode
+      SEED: mayanode-dog
+      SEEDS: mayanode,mayanode-fox,mayanode-pig
+      SIGNER_SEED_PHRASE: "dog dog dog dog dog dog dog dog dog dog dog dog dog dog dog dog dog dog dog dog dog dog dog fossil"
+    volumes:
+      - "../scripts:/docker/scripts"
+      - mayanode-dog:/root/.mayanode
+    entrypoint: /docker/scripts/validator.sh
+
+  mayanode-fox:
+    <<: *mayanode
+    profiles:
+      - mayanode-cluster
+      - mocknet-cluster
+    ports: []
+    hostname: mayanode-fox
+    environment:
+      <<: *mayanode-environment
+      PEER: mayanode
+      SEED: mayanode-fox
+      SEEDS: mayanode,mayanode-cat,mayanode-pig
+      SIGNER_SEED_PHRASE: "fox fox fox fox fox fox fox fox fox fox fox fox fox fox fox fox fox fox fox fox fox fox fox filter"
+    volumes:
+      - "../scripts:/docker/scripts"
+      - mayanode-fox:/root/.mayanode
+    entrypoint: /docker/scripts/validator.sh
+
+  mayanode-pig:
+    <<: *mayanode
+    profiles:
+      - mayanode-cluster
+      - mocknet-cluster
+    ports: []
+    hostname: mayanode-pig
+    environment:
+      <<: *mayanode-environment
+      PEER: mayanode
+      SEED: mayanode-pig
+      SEEDS: mayanode,mayanode-cat,mayanode-fox
+      SIGNER_SEED_PHRASE: "pig pig pig pig pig pig pig pig pig pig pig pig pig pig pig pig pig pig pig pig pig pig pig quick"
+    volumes:
+      - "../scripts:/docker/scripts"
+      - mayanode-pig:/root/.mayanode
+    entrypoint: /docker/scripts/validator.sh
+
+  # ------------------------------ bifrosts ------------------------------
+
+  bifrost-cat:
+    <<: *bifrost
+    profiles:
+      - mayanode-cluster
+      - mocknet-cluster
+    environment:
+      <<: *bifrost-environment
+      PEER: bifrost
+      CHAIN_API: mayanode-cat:1317
+      CHAIN_RPC: mayanode-cat:26657
+      SIGNER_SEED_PHRASE: "cat cat cat cat cat cat cat cat cat cat cat cat cat cat cat cat cat cat cat cat cat cat cat crawl"
+
+    ports:
+      - 5040
+      - 6040
+    volumes:
+      - "../scripts:/docker/scripts"
+      - bifrost-cat:/var/data/bifrost
+      - mayanode-cat:/root/.mayanode
+    command: ["bifrost"]
+
+  bifrost-dog:
+    <<: *bifrost
+    profiles:
+      - mayanode-cluster
+      - mocknet-cluster
+    environment:
+      <<: *bifrost-environment
+      PEER: bifrost
+      CHAIN_API: mayanode-dog:1317
+      CHAIN_RPC: mayanode-dog:26657
+      SIGNER_SEED_PHRASE: "dog dog dog dog dog dog dog dog dog dog dog dog dog dog dog dog dog dog dog dog dog dog dog fossil"
+
+    ports:
+      - 5040
+      - 6040
+    volumes:
+      - "../scripts:/docker/scripts"
+      - bifrost-dog:/var/data/bifrost
+      - mayanode-dog:/root/.mayanode
+    command: ["bifrost"]
+
+  bifrost-fox:
+    <<: *bifrost
+    profiles:
+      - mayanode-cluster
+      - mocknet-cluster
+    environment:
+      <<: *bifrost-environment
+      PEER: bifrost
+      CHAIN_API: mayanode-fox:1317
+      CHAIN_RPC: mayanode-fox:26657
+      SIGNER_SEED_PHRASE: "fox fox fox fox fox fox fox fox fox fox fox fox fox fox fox fox fox fox fox fox fox fox fox filter"
+
+    ports:
+      - 5040
+      - 6040
+    volumes:
+      - "../scripts:/docker/scripts"
+      - bifrost-fox:/var/data/bifrost
+      - mayanode-fox:/root/.mayanode
+    command: ["bifrost"]
+
+  bifrost-pig:
+    <<: *bifrost
+    profiles:
+      - mayanode-cluster
+      - mocknet-cluster
+    environment:
+      <<: *bifrost-environment
+      PEER: bifrost
+      CHAIN_API: mayanode-pig:1317
+      CHAIN_RPC: mayanode-pig:26657
+      SIGNER_SEED_PHRASE: "pig pig pig pig pig pig pig pig pig pig pig pig pig pig pig pig pig pig pig pig pig pig pig quick"
+
+    ports:
+      - 5040
+      - 6040
+    volumes:
+      - "../scripts:/docker/scripts"
+      - bifrost-pig:/var/data/bifrost
+      - mayanode-pig:/root/.mayanode
+    command: ["bifrost"]
+
+  ######################################################################################
+  # Mock Clients
+  ######################################################################################
+
+  # ------------------------------ binance ------------------------------
+
+  binance:
+    container_name: bnb
+    profiles:
+      - mocknet
+      - mocknet-cluster
+    image: registry.gitlab.com/mayachain/binance/mock-binance:latest
+    ports:
+      - 26660:26660
+
+  # ------------------------------ kuji ------------------------------
+
+  kuji:
+    container_name: kuji
+    profiles:
+      - mocknet
+      - mocknet-cluster
+    image: registry.gitlab.com/mayachain/devops/node-launcher:kuji-daemon-1.1.0
+    volumes:
+      - "./mocknet:/mocknet"
+    environment:
+      BLOCK_TIME: ${BLOCK_TIME:-1s}
+    ports:
+      - "22257:26657"
+      - "9092:9090"
+      - "31317:1317"
+    entrypoint: /mocknet/kuji/init-kuji.sh
+
+  # ------------------------------ thorchain ------------------------------
+
+  thorchain:
+    container_name: thor
+    image: registry.gitlab.com/mayachain/devops/node-launcher:thornode-daemon-mocknet-3.9.0
+    restart: unless-stopped
+    hostname: thorchain # required for genesis.sh
+    profiles:
+      - mocknet
+      - mocknet-cluster
+    volumes:
+      - "./mocknet:/mocknet"
+    environment:
+      NET: mocknet
+      CHAIN_ID: thorchain
+      NODES: 1
+      SEED: thorchain
+      THOR_BLOCK_TIME: 5s
+      THORNODE_API_ENABLE: "true"
+      THOR_COSMOS_GRPC_ENABLE: "true"
+      SIGNER_NAME: thorchain
+      SIGNER_PASSWD: password
+    ports:
+      - 26659:26657
+      - 26658:26656
+      - 1318:1317
+      - 6061:6060
+      - 9090:9090
+    entrypoint: /mocknet/thor/genesis.sh
+    command:
+      - thornode
+      - start
+      - --log_level
+      - info
+      - --log_format
+      - plain
+      - --rpc.laddr
+      - tcp://0.0.0.0:26657
+      - --p2p.laddr
+      - tcp://0.0.0.0:26656
+
+  # ------------------------------ bitcoin ------------------------------
+
+  bitcoin:
+    container_name: btc
+    user: root
+    profiles:
+      - mocknet
+      - mocknet-cluster
+    image: registry.gitlab.com/mayachain/devops/node-launcher:bitcoin-daemon-26.2
+    restart: unless-stopped
+    environment:
+      BTC_MASTER_ADDR: ${BTC_MASTER_ADDR:-bcrt1qf4l5dlqhaujgkxxqmug4stfvmvt58vx2h44c39}
+      BLOCK_TIME: ${BLOCK_TIME:-1}
+    volumes:
+      - "./mocknet:/mocknet"
+    ports:
+      - 18443:18443
+      - 18444:18444
+    entrypoint: /mocknet/btc/start-btc.sh
+
+  # ------------------------------ zcash ------------------------------
+
+  zcash:
+    container_name: zcash
+    user: root
+    profiles:
+      - mocknet
+      - mocknet-cluster
+    image: electriccoinco/zcashd:v6.3.0
+    restart: unless-stopped
+    environment:
+      ZCASH_MASTER_ADDR: ${ZCASH_MASTER_ADDR:-tmGn7qKhnpbnwZPsaPt9XXAQz1Q3HAUCrwh}
+      BLOCK_TIME: ${BLOCK_TIME:-1}
+    volumes:
+      - "./mocknet/zec/zcash.conf:/srv/zcashd/.zcash/zcash.conf"
+      - "./mocknet/zec/start-zcash.sh:/srv/zcashd/start-zcash.sh"
+    ports:
+      - 18232:18232
+    entrypoint: /srv/zcashd/start-zcash.sh
+
+  # ------------------------------ dash ------------------------------
+
+  dash1:
+    container_name: dash-1
+    profiles:
+      - dash
+      - mocknet
+      - mocknet-cluster
+    hostname: dash1
+    image: registry.gitlab.com/mayachain/devops/node-launcher:dash-daemon-22.0.0
+    volumes:
+      - "./mocknet/dash:/mocknet"
+    environment:
+      BLOCK_TIME: ${DASH_BLOCK_TIME:-5}
+    entrypoint: "/mocknet/entrypoint-genesis.sh"
+    ports:
+      - "19898:19898"
+      - "28332:28332"
+
+  dash2:
+    container_name: dash-2
+    profiles:
+      - dash
+      - mocknet
+      - mocknet-cluster
+    hostname: dash2
+    image: registry.gitlab.com/mayachain/devops/node-launcher:dash-daemon-22.0.0
+    volumes:
+      - "./mocknet/dash:/mocknet"
+    environment:
+      BLOCK_TIME: ${DASH_BLOCK_TIME:-5}
+    entrypoint: "/mocknet/entrypoint-masternode.sh"
+
+  dash3:
+    container_name: dash-3
+    profiles:
+      - dash
+      - mocknet
+      - mocknet-cluster
+    hostname: dash3
+    image: registry.gitlab.com/mayachain/devops/node-launcher:dash-daemon-22.0.0
+    volumes:
+      - "./mocknet/dash:/mocknet"
+    environment:
+      BLOCK_TIME: ${DASH_BLOCK_TIME:-5}
+    entrypoint: "/mocknet/entrypoint-masternode.sh"
+
+  dash4:
+    container_name: dash-4
+    profiles:
+      - dash
+      - mocknet
+      - mocknet-cluster
+    hostname: dash4
+    image: registry.gitlab.com/mayachain/devops/node-launcher:dash-daemon-22.0.0
+    volumes:
+      - "./mocknet/dash:/mocknet"
+    environment:
+      BLOCK_TIME: ${DASH_BLOCK_TIME:-5}
+    entrypoint: "/mocknet/entrypoint-masternode.sh"
+
+  # ------------------------------ ethereum ------------------------------
+
+  ethereum:
+    container_name: eth
+    profiles:
+      - mocknet
+      - mocknet-cluster
+    image: ethereum/client-go:v1.15.11
+    restart: unless-stopped
+    environment:
+      ETH_BLOCK_TIME: ${ETH_BLOCK_TIME:-5}
+    ports:
+      - 8545:8545
+      - 8546:8546
+      - 8551:8551
+      - 30301:30301
+      - 30303:30303
+    volumes:
+      - "./mocknet/eth:/mocknet"
+    entrypoint: /mocknet/start-eth.sh
+
+  # ------------------------------ arbitrum ------------------------------
+  arbitrum:
+    container_name: arb
+    profiles:
+      - mocknet
+      - mocknet-cluster
+      - arbitrum
+    image: offchainlabs/nitro-node:v3.6.3-1d5699d
+    ports:
+      - "8547:8547"
+    volumes:
+      - "./mocknet/arb:/mocknet"
+    entrypoint: /mocknet/start-arb.sh
+
+  # -------------------------- radix -------------------------------------
+  radix:
+    container_name: xrd
+    profiles:
+      - mocknet
+      - mocknet-cluster
+    image: radixdlt/babylon-node:v1.3.0.2
+    restart: unless-stopped
+    environment:
+      JAVA_OPTS: "--enable-preview -server -Xms8g -Xmx8g  -XX:MaxDirectMemorySize=2048m -XX:+HeapDumpOnOutOfMemoryError -XX:+UseCompressedOops -Djavax.net.ssl.trustStore=/etc/ssl/certs/java/cacerts -Djavax.net.ssl.trustStoreType=jks -Djava.security.egd=file:/dev/urandom -DLog4jContextSelector=org.apache.logging.log4j.core.async.AsyncLoggerContextSelector"
+      RADIXDLT_LOG_LEVEL: info
+      RADIXDLT_NODE_KEY: "AAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAY="
+      RADIXDLT_HOST_IP_ADDRESS: "radix"
+      # Using a universe with a single initial validator
+      RADIXDLT_GENESIS_DATA: "/wYAAHNOYVBwWQAHAgCfdxlxngUUXCEGCgEACQEABQkHKAAAIQoJZAAAAAr0DRoICrgLCRsMCuCTBAUKFTQYoABAehDzWgUVMgEAIKAAAGSns7bgDTIWAAFWDVUuRAAYABBjLV7HaxWBDQHAICICAAEgIQEGIAchA//5e9V1Xu6kIEU6FDVSNdOC9kcvhWihiy8FehRgKXVWAQEBAWJ1APCVICECAgwEbmFtZSIAAQwTRGVmYXVsdCB2YWxpZGF0b3IgMQIMCGluZm9fdXJsIg0BDBhodHRwczovL3d3dy5yYWRpeGRsdC5jb22A0V2lblLuqlWNSPddLPYcqXQbJq7Y9QscHefNoU86AQIggAHR0ouStuhEmbg7B5fvUjVVPut+2qDOokPBEowv5zcgIQECIAchA//5dtEAASgACSEKAKBeSwE0oAAAAEDq7XRG0JwsnwwBKw0B4CAMCgx0cmFuc2Zlcl94cmQIcmFkaXN3YXAIbWV0YWRhdGERZnVuZ2libGVfcmVzb3VyY2UVbm9uX0IWAPBpHWFjY291bnRfYXV0aG9yaXplZF9kZXBvc2l0b3JzDmdsb2JhbF9uX293bmVkJm5vbl9mdW5naWJsZV9yZXNvdXJjZV93aXRoX3JlbW90ZV90eXBlGWt2X3N0b3JlX3dpdGhfcmVtb3RlXwEaPA9tYXhfdHJhbnNhY3Rpb24="
+      RADIXDLT_NETWORK_SEEDS_REMOTE: ""
+    ports:
+      - 3333:3333
+      - 3334:3334

@@ -1,0 +1,114 @@
+{{ template "default-state.yaml" }}
+---
+type: create-blocks
+count: 1
+---
+type: check
+endpoint: http://localhost:1317/cosmos/bank/v1beta1/balances/{{ addr_maya_fox }}
+asserts:
+  - .balances|length == 1
+  - .balances[]|select(.denom == "cacao")|.amount|tonumber == 2500000000000000
+---
+type: tx-send
+from_address: {{ addr_maya_fox }}
+to_address: {{ addr_maya_wolf }}
+amount:
+  - denom: cacao
+    amount: "2500000000000"
+---
+type: create-blocks
+count: 1
+---
+type: check
+endpoint: http://localhost:1317/auth/accounts/{{ addr_maya_fox }}
+asserts:
+  - .result.value.sequence == "1"
+---
+type: check
+endpoint: http://localhost:1317/cosmos/bank/v1beta1/balances/{{ addr_maya_fox }}
+asserts:
+  - .balances|length == 1
+  - .balances[]|select(.denom == "cacao")|.amount|tonumber == 2497498000000000
+---
+type: check
+endpoint: http://localhost:1317/cosmos/bank/v1beta1/balances/{{ addr_maya_wolf }}
+asserts:
+  - .balances|length == 1
+  - .balances[]|select(.denom == "cacao")|.amount|tonumber == 2500000000000
+---
+type: tx-send
+from_address: {{ addr_maya_fox }}
+to_address: {{ addr_maya_wolf }}
+amount:
+  - denom: cacao
+    amount: "2497496000000000"
+---
+type: create-blocks
+count: 1
+---
+type: check
+endpoint: http://localhost:1317/auth/accounts/{{ addr_maya_fox }}
+asserts:
+  - .result.value.sequence == "2"
+---
+type: check
+endpoint: http://localhost:1317/cosmos/bank/v1beta1/balances/{{ addr_maya_fox }}
+asserts:
+  - .balances|length == 0
+---
+type: check
+endpoint: http://localhost:1317/cosmos/bank/v1beta1/balances/{{ addr_maya_wolf }}
+asserts:
+  - .balances|length == 1
+  - .balances[]|select(.denom == "cacao")|.amount|tonumber == 2499996000000000
+---
+type: check
+endpoint: http://localhost:1317/txs?tx.height=3
+asserts:
+  - .txs|length == 1
+  - .txs[0]|.logs|length == 1
+  - .txs[0]|.logs[0]|.events|length == 4
+  - .txs[0]|.logs[0]|.events[2].type == "message"
+  - .txs[0]|.logs[0]|.events[2].attributes|length == 5
+  - .txs[0]|.logs[0]|.events[2].attributes[0]|.key == "action"
+  - .txs[0]|.logs[0]|.events[2].attributes[0]|.value == "send"
+  - .txs[0]|.logs[0]|.events[2].attributes[1]|.key == "sender"
+  - .txs[0]|.logs[0]|.events[2].attributes[1]|.value == "{{ addr_maya_fox }}"
+---
+type: tx-send
+from_address: {{ addr_maya_fox }}
+to_address: {{ addr_maya_wolf }}
+amount:
+  - denom: cacao
+    amount: "1"
+---
+type: create-blocks
+count: 1
+---
+type: check
+endpoint: http://localhost:1317/auth/accounts/{{ addr_maya_fox }}
+asserts:
+  - .result.value.sequence == "3"
+---
+########################################################################################
+# attempt send to lending module
+########################################################################################
+type: check
+endpoint: http://localhost:1317/mayachain/balance/module/mayachain
+asserts:
+  - .|[.coins[]|select(.denom == "cacao")]|length == 0
+---
+type: tx-send
+from_address: {{ addr_maya_wolf }}
+to_address: {{ addr_module_mayachain }}
+amount:
+  - denom: cacao
+    amount: "1"
+---
+type: create-blocks
+count: 1
+---
+type: check
+endpoint: http://localhost:1317/mayachain/balance/module/mayachain
+asserts:
+  - .|[.coins[]|select(.denom == "cacao")]|length == 0

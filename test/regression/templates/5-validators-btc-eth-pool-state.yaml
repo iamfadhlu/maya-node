@@ -1,0 +1,297 @@
+type: state
+genesis:
+  initial_height: "0"
+  app_state:
+    auth:
+      accounts:
+        - "@type": /cosmos.auth.v1beta1.ModuleAccount
+          base_account:
+            account_number: "0"
+            address: {{ addr_module_transfer }}
+            pub_key: ~
+            sequence: "0"
+          name: transfer
+          permissions:
+            - minter
+            - burner
+        - "@type": /cosmos.auth.v1beta1.ModuleAccount
+          base_account:
+            account_number: "1"
+            address: {{ addr_module_asgard }}
+            pub_key: ~
+            sequence: "0"
+          name: asgard
+          permissions: []
+        - "@type": /cosmos.auth.v1beta1.ModuleAccount
+          base_account:
+            account_number: "2"
+            address: {{ addr_module_mayachain }}
+            pub_key: ~
+            sequence: "0"
+          name: mayachain
+          permissions:
+            - minter
+            - burner
+        - "@type": /cosmos.auth.v1beta1.ModuleAccount
+          base_account:
+            account_number: "3"
+            address: {{ addr_module_reserve }}
+            pub_key: ~
+            sequence: "0"
+          name: reserve
+          permissions: []
+        - "@type": /cosmos.auth.v1beta1.ModuleAccount
+          base_account:
+            account_number: "4"
+            address: {{ addr_module_fee_collector }}
+            pub_key: ~
+            sequence: "0"
+          name: fee_collector
+          permissions: []
+        - "@type": /cosmos.auth.v1beta1.ModuleAccount
+          base_account:
+            account_number: "5"
+            address: {{ addr_module_bond }}
+            pub_key: ~
+            sequence: "0"
+          name: bond
+          permissions: []
+        - "@type": /cosmos.auth.v1beta1.BaseAccount
+          address: {{ addr_maya_dog }}
+          pub_key: null
+          account_number: "6"
+          sequence: "0"
+        - "@type": /cosmos.auth.v1beta1.BaseAccount
+          address: {{ addr_maya_cat }}
+          pub_key: null
+          account_number: "7"
+          sequence: "0"
+        - "@type": /cosmos.auth.v1beta1.BaseAccount
+          address: {{ addr_maya_fox }}
+          pub_key: null
+          account_number: "8"
+          sequence: "0"
+        - "@type": /cosmos.auth.v1beta1.BaseAccount
+          address: {{ addr_maya_pig }}
+          pub_key: null
+          account_number: "9"
+          sequence: "0"
+        - "@type": /cosmos.auth.v1beta1.BaseAccount
+          address: {{ addr_maya_frog }}
+          pub_key: null
+          account_number: "10"
+          sequence: "0"
+        - "@type": /cosmos.auth.v1beta1.BaseAccount
+          address: {{ addr_maya_goat }}
+          pub_key: null
+          account_number: "11"
+          sequence: "0"
+    bank:
+      balances:
+        - address: {{ addr_maya_dog }}
+          coins:
+            - denom: cacao
+              amount: "5000000000000"
+        - address: {{ addr_maya_cat }}
+          coins:
+            - denom: cacao
+              amount: "2500000000000"
+        - address: {{ addr_maya_pig }}
+          coins:
+            - denom: cacao
+              amount: "2500000000000"
+        - address: {{ addr_maya_fox }}
+          coins:
+            - denom: cacao
+              amount: "2500000000000"
+            - denom: maya
+              amount: "50000000"
+        - address: {{ addr_maya_frog }}
+          coins:
+            - denom: cacao
+              amount: "2500000000000"
+        - address: {{ addr_maya_goat }}
+          coins:
+            - denom: cacao
+              amount: "2500000000000"
+        - address: {{ addr_module_reserve }}
+          coins:
+            - amount: "35000000000000"
+              denom: cacao
+        - address: {{ addr_module_bond }}
+          coins:
+            - amount: "12500000000000"
+              denom: cacao
+        - address: {{ addr_module_asgard }}
+          coins:
+            - amount: "20000000000000"
+              denom: cacao
+      params:
+        default_send_enabled: false
+    transfer:
+      params:
+        send_enabled: false
+    mayachain:
+      store_version: "{{ store_version }}" # avoid store migrations
+      node_accounts:
+        - active_block_height: "0"
+          bond: "2500000000000"
+          ip_address: 1.1.1.1
+          node_address: {{ addr_maya_cat }}
+          bond_address: {{ addr_maya_cat }}
+          pub_key_set:
+            secp256k1: {{ pubkey_cat }}
+          signer_membership:
+            - tmayapub1addwnpepqfshsq2y6ejy2ysxmq4gj8n8mzuzyulk9wh4n946jv5w2vpwdn2yuz3v0gx
+          status: Active
+          # matches the priv_validator_key.json mounted in the test container
+          validator_cons_pub_key: tmayacpub1zcjduepqq75h7uy6qhesh9d3a9tuk0mzrnc46u8rye44ze6peua3zmpfh23qpj8pe3
+          version: {{ version }}
+        - active_block_height: "0"
+          bond: "2500000000000"
+          ip_address: 1.1.1.1
+          node_address: {{ addr_maya_fox }}
+          bond_address: {{ addr_maya_fox }}
+          pub_key_set:
+            secp256k1: {{ pubkey_fox }}
+          signer_membership:
+            - tmayapub1addwnpepqfll6vmxepk9usvefmnqau83t9yfrelmg4gn57ee2zu2wc3gsjsz63vsv9d
+            - tmayapub1addwnpepqfshsq2y6ejy2ysxmq4gj8n8mzuzyulk9wh4n946jv5w2vpwdn2yuz3v0gx
+          status: Active
+          validator_cons_pub_key: {{ cons_pubkey_fox }}
+          version: {{ version }}
+        - active_block_height: "0"
+          bond: "2500000000000"
+          ip_address: 1.1.1.1
+          node_address: {{ addr_maya_pig }}
+          bond_address: {{ addr_maya_pig }}
+          pub_key_set:
+            secp256k1: {{ pubkey_pig }}
+          signer_membership:
+            - tmayapub1addwnpepqfshsq2y6ejy2ysxmq4gj8n8mzuzyulk9wh4n946jv5w2vpwdn2yuz3v0gx
+          status: Active
+          validator_cons_pub_key: {{ cons_pubkey_pig }}
+          version: {{ version }}
+        - active_block_height: "0"
+          bond: "2500000000000"
+          ip_address: 1.1.1.1
+          node_address: {{ addr_maya_frog }}
+          bond_address: {{ addr_maya_frog }}
+          pub_key_set:
+            secp256k1: {{ pubkey_frog }}
+          signer_membership:
+            - tmayapub1addwnpepqfshsq2y6ejy2ysxmq4gj8n8mzuzyulk9wh4n946jv5w2vpwdn2yuz3v0gx
+          status: Active
+          validator_cons_pub_key: {{ cons_pubkey_frog }}
+          version: {{ version }}
+        - active_block_height: "0"
+          bond: "2500000000000"
+          ip_address: 1.1.1.1
+          node_address: {{ addr_maya_goat }}
+          bond_address: {{ addr_maya_goat }}
+          pub_key_set:
+            secp256k1: {{ pubkey_goat }}
+          signer_membership:
+            - tmayapub1addwnpepqfshsq2y6ejy2ysxmq4gj8n8mzuzyulk9wh4n946jv5w2vpwdn2yuz3v0gx
+          status: Active
+          validator_cons_pub_key: {{ cons_pubkey_goat }}
+          version: {{ version }}
+      liquidity_providers:
+        - asset: BTC.BTC
+          asset_address: {{ addr_btc_cat }}
+          asset_deposit_value: "100000000"
+          last_add_height: "1"
+          pending_asset: "0"
+          pending_cacao: "0"
+          cacao_address: {{ addr_maya_cat }}
+          cacao_deposit_value: "100000000000"
+          units: "100000000000"
+        - asset: ETH.ETH
+          asset_address: {{ addr_eth_cat }}
+          asset_deposit_value: "1000000000"
+          last_add_height: "1"
+          pending_asset: "0"
+          pending_cacao: "0"
+          cacao_address: {{ addr_maya_cat }}
+          cacao_deposit_value: "100000000000"
+          units: "100000000000"
+        - asset: MAYA.MAYA
+          asset_address: {{ addr_maya_cat }}
+          asset_deposit_value: "1000000"
+          last_add_height: "1"
+          pending_asset: "0"
+          pending_cacao: "0"
+          cacao_address: {{ addr_maya_cat }}
+          cacao_deposit_value: "10000000000000"
+          units: "10000000000000"
+      pools:
+        - LP_units: "100000000000"
+          asset: BTC.BTC
+          balance_asset: "100000000"
+          balance_cacao: "100000000000000"
+          decimals: "8"
+          pending_inbound_asset: "0"
+          pending_inbound_cacao: "0"
+          status: Available
+          synth_units: "0"
+        - LP_units: "100000000000"
+          asset: ETH.ETH
+          balance_asset: "1000000000"
+          balance_cacao: "100000000000000"
+          decimals: "8"
+          pending_inbound_asset: "0"
+          pending_inbound_cacao: "0"
+          status: Available
+          synth_units: "0"
+        - LP_units: "100000000000"
+          asset: MAYA.MAYA
+          balance_asset: "100000000"
+          balance_cacao: "1000000000000000"
+          pending_inbound_asset: "0"
+          pending_inbound_cacao: "0"
+          status: Available
+          synth_units: "0"
+      network_fees:
+        - chain: BTC
+          transaction_fee_rate: "7"
+          transaction_size: "1000"
+        - chain: ETH
+          transaction_fee_rate: "8"
+          transaction_size: "80000"
+      vaults:
+        - block_height: "0"
+          chains:
+            - MAYA
+            - BTC
+            - BNB
+            - ETH
+            - DASH
+            - ARB
+          coins:
+            - amount: "100000000"
+              asset: BTC.BTC
+              decimals: "8"
+            - amount: "1000000000"
+              asset: ETH.ETH
+              decimals: "8"
+            - amount: "1000000"
+              asset: MAYA.MAYA
+              decimals: "4"
+          inbound_tx_count: "2"
+          membership:
+            - {{ pubkey_cat }}
+            - {{ pubkey_fox }}
+            - {{ pubkey_pig }}
+            - {{ pubkey_frog }}
+            - {{ pubkey_goat }}
+          pub_key: tmayapub1addwnpepqfshsq2y6ejy2ysxmq4gj8n8mzuzyulk9wh4n946jv5w2vpwdn2yuz3v0gx
+          status: ActiveVault
+          type: AsgardVault
+        - block_height: "0"
+          chains:
+            - MAYA
+          membership:
+            - {{ pubkey_cat }}
+          pub_key: tmayapub1addwnpepqfll6vmxepk9usvefmnqau83t9yfrelmg4gn57ee2zu2wc3gsjsz63vsv9d
+          status: InactiveVault
+          type: AsgardVault

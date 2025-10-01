@@ -1,0 +1,232 @@
+{
+  "result": {
+    "hash": "07c7c32a978e9d697fc84b8a2fe8c90d0ab432761a043021fff3eec0851b665b",
+    "confirmations": 10,
+    "size": 532,
+    "height": 182,
+    "version": 4,
+    "merkleroot": "b1126974bfeca34832020ba8c3541969389486dd8738c16607ffad361dfe3b1d",
+    "blockcommitments": "1f05fcf621afe06f1d6a7fec5d0aa4d2db0e4b8c763939ebac3f7b6c545bdae7",
+    "authdataroot": "ad52724e37f52c500d815c47e0abd56a5caa0e0910a8feb4dfc8ed9deba4040e",
+    "finalsaplingroot": "3e49b5f954aa9d3545bc6c37744661eea48d7c34e3000d82b7f0010c30f4c2fb",
+    "finalorchardroot": "ae2935f1dfd8a24aed7c70df7de3a668eb7a49b1319880dde2bbd9031ae5d82f",
+    "chainhistoryroot": "09c8fea0c74bcc60da2a6699a2aaa39dcaf197554254497491386a38aa6b72a8",
+    "tx": [
+      {
+        "txid": "f2e8e3a4163d93265210f03b6e64af4c33417d32af7af7421c8104c6a73dc609",
+        "authdigest": "ffffffffffffffffffffffffffffffffffffffffffffffffffffffffffffffff",
+        "size": 109,
+        "overwintered": true,
+        "version": 4,
+        "versiongroupid": "892f2085",
+        "locktime": 0,
+        "expiryheight": 182,
+        "hex": "0400008085202f89010000000000000000000000000000000000000000000000000000000000000000ffffffff0502b6000101ffffffff0180005025000000001976a91425b2668b605f0e6e26ea4a49ef56ae72112417ef88ac00000000b60000000000000000000000000000",
+        "vin": [
+          {
+            "coinbase": "02b6000101",
+            "sequence": 4294967295
+          }
+        ],
+        "vout": [
+          {
+            "value": 6.26,
+            "valueZat": 626000000,
+            "valueSat": 626000000,
+            "n": 0,
+            "scriptPubKey": {
+              "asm": "OP_DUP OP_HASH160 25b2668b605f0e6e26ea4a49ef56ae72112417ef OP_EQUALVERIFY OP_CHECKSIG",
+              "hex": "76a91425b2668b605f0e6e26ea4a49ef56ae72112417ef88ac",
+              "reqSigs": 1,
+              "type": "pubkeyhash",
+              "addresses": ["tmD9g3kudoFYbFRZFXASeRxqCYd8BaDhcct"]
+            }
+          }
+        ],
+        "vjoinsplit": [],
+        "valueBalance": 0,
+        "valueBalanceZat": 0,
+        "vShieldedSpend": [],
+        "vShieldedOutput": []
+      },
+      {
+        "txid": "eaa37079406851ba2269a213f2e75c78950d1e8f44eb593f5ee1ea46f7f0cfd9",
+        "authdigest": "ffffffffffffffffffffffffffffffffffffffffffffffffffffffffffffffff",
+        "size": 245,
+        "overwintered": true,
+        "version": 4,
+        "versiongroupid": "892f2085",
+        "locktime": 0,
+        "expiryheight": 222,
+        "hex": "0400008085202f8901e2cf43c6f11a8c12ddba624a7399fca024e5d3a9c1acae4680ed35b98f7ef7e0000000006b48304502210098a245bc954da2b55c038f03c8a3b70c7074ab2d36965d68514ec5eb86cece5f02203c91c2b28a612a13ab342a4128ae3ddf38b30fac805697ce96b3724e81397fde012103a340c6b85f4a85c7d63c7c604237a94b388be547728b02ac9bd944c893afa55bffffffff02002f6859000000001976a91422db56f1d0f603ca56d85c2cb7b65d18c2802d1488acc0ec5859000000001976a9147a156cea9e68e5c3c598d290fc8ba9cd3a18806288ac00000000de0000000000000000000000000000",
+        "vin": [
+          {
+            "txid": "e0f77e8fb935ed8046aeacc1a9d3e524a0fc99734a62badd128c1af1c643cfe2",
+            "vout": 0,
+            "scriptSig": {
+              "asm": "304502210098a245bc954da2b55c038f03c8a3b70c7074ab2d36965d68514ec5eb86cece5f02203c91c2b28a612a13ab342a4128ae3ddf38b30fac805697ce96b3724e81397fde[ALL] 03a340c6b85f4a85c7d63c7c604237a94b388be547728b02ac9bd944c893afa55b",
+              "hex": "48304502210098a245bc954da2b55c038f03c8a3b70c7074ab2d36965d68514ec5eb86cece5f02203c91c2b28a612a13ab342a4128ae3ddf38b30fac805697ce96b3724e81397fde012103a340c6b85f4a85c7d63c7c604237a94b388be547728b02ac9bd944c893afa55b"
+            },
+            "sequence": 4294967295
+          }
+        ],
+        "vout": [
+          {
+            "value": 15,
+            "valueZat": 1500000000,
+            "valueSat": 1500000000,
+            "n": 0,
+            "scriptPubKey": {
+              "asm": "OP_DUP OP_HASH160 22db56f1d0f603ca56d85c2cb7b65d18c2802d14 OP_EQUALVERIFY OP_CHECKSIG",
+              "hex": "76a91422db56f1d0f603ca56d85c2cb7b65d18c2802d1488ac",
+              "reqSigs": 1,
+              "type": "pubkeyhash",
+              "addresses": ["t1TsN3pxiG9eqaqMNiDHNg1vNHgsBWrApGn"]
+            }
+          },
+          {
+            "value": 14.99,
+            "valueZat": 1499000000,
+            "valueSat": 1499000000,
+            "n": 1,
+            "scriptPubKey": {
+              "asm": "OP_DUP OP_HASH160 7a156cea9e68e5c3c598d290fc8ba9cd3a188062 OP_EQUALVERIFY OP_CHECKSIG",
+              "hex": "76a9147a156cea9e68e5c3c598d290fc8ba9cd3a18806288ac",
+              "reqSigs": 1,
+              "type": "pubkeyhash",
+              "addresses": ["tmLqsSEy6cDjcTnRUd3ENKu1wWAckuiVUFx"]
+            }
+          }
+        ],
+        "vjoinsplit": [],
+        "valueBalance": 0,
+        "valueBalanceZat": 0,
+        "vShieldedSpend": [],
+        "vShieldedOutput": []
+      },
+      {
+        "txid": "eaa37079406851ba2269a213f2e75c78950d1e8f44eb593f5ee1ea46f7f0cfd9",
+        "authdigest": "ffffffffffffffffffffffffffffffffffffffffffffffffffffffffffffffff",
+        "size": 245,
+        "overwintered": true,
+        "version": 4,
+        "versiongroupid": "892f2085",
+        "locktime": 0,
+        "expiryheight": 222,
+        "hex": "0400008085202f8901e2cf43c6f11a8c12ddba624a7399fca024e5d3a9c1acae4680ed35b98f7ef7e0000000006b48304502210098a245bc954da2b55c038f03c8a3b70c7074ab2d36965d68514ec5eb86cece5f02203c91c2b28a612a13ab342a4128ae3ddf38b30fac805697ce96b3724e81397fde012103a340c6b85f4a85c7d63c7c604237a94b388be547728b02ac9bd944c893afa55bffffffff02002f6859000000001976a91422db56f1d0f603ca56d85c2cb7b65d18c2802d1488acc0ec5859000000001976a9147a156cea9e68e5c3c598d290fc8ba9cd3a18806288ac00000000de0000000000000000000000000000",
+        "vin": [
+          {
+            "txid": "e0f77e8fb935ed8046aeacc1a9d3e524a0fc99734a62badd128c1af1c643cfe2",
+            "vout": 0,
+            "scriptSig": {
+              "asm": "304502210098a245bc954da2b55c038f03c8a3b70c7074ab2d36965d68514ec5eb86cece5f02203c91c2b28a612a13ab342a4128ae3ddf38b30fac805697ce96b3724e81397fde[ALL] 03a340c6b85f4a85c7d63c7c604237a94b388be547728b02ac9bd944c893afa55b",
+              "hex": "48304502210098a245bc954da2b55c038f03c8a3b70c7074ab2d36965d68514ec5eb86cece5f02203c91c2b28a612a13ab342a4128ae3ddf38b30fac805697ce96b3724e81397fde012103a340c6b85f4a85c7d63c7c604237a94b388be547728b02ac9bd944c893afa55b"
+            },
+            "sequence": 4294967295
+          }
+        ],
+        "vout": [
+          {
+            "value": 15,
+            "valueZat": 1500000000,
+            "valueSat": 1500000000,
+            "n": 0,
+            "scriptPubKey": {
+              "asm": "OP_DUP OP_HASH160 22db56f1d0f603ca56d85c2cb7b65d18c2802d14 OP_EQUALVERIFY OP_CHECKSIG",
+              "hex": "76a91422db56f1d0f603ca56d85c2cb7b65d18c2802d1488ac",
+              "reqSigs": 1,
+              "type": "pubkeyhash",
+              "addresses": ["tmYVNpaLzGepQ7hGK7zPXJhdeJ33b6iprKh"]
+            }
+          },
+          {
+            "value": 14.99,
+            "valueZat": 1499000000,
+            "valueSat": 1499000000,
+            "n": 1,
+            "scriptPubKey": {
+              "asm": "OP_DUP OP_HASH160 7a156cea9e68e5c3c598d290fc8ba9cd3a188062 OP_EQUALVERIFY OP_CHECKSIG",
+              "hex": "76a9147a156cea9e68e5c3c598d290fc8ba9cd3a18806288ac",
+              "reqSigs": 1,
+              "type": "pubkeyhash",
+              "addresses": ["tmLqsSEy6cDjcTnRUd3ENKu1wWAckuiVUFx"]
+            }
+          }
+        ],
+        "vjoinsplit": [],
+        "valueBalance": 0,
+        "valueBalanceZat": 0,
+        "vShieldedSpend": [],
+        "vShieldedOutput": []
+      }
+    ],
+    "time": 1741896860,
+    "nonce": "00005f69b37c173de1812e8253899a69cc1eaba9727ade7a4860840baff7001d",
+    "solution": "05ff9df7a4fc9985100a108e95a805b20f9c22b52bb892393b51ff4eda6e9b1755cbabf2",
+    "bits": "200f0f0f",
+    "difficulty": 1,
+    "chainwork": "0000000000000000000000000000000000000000000000000000000000000c27",
+    "anchor": "59d2cde5e65c1414c32ba54f0fe4bdb3d67618125286e6a191317917c812c6d7",
+    "chainSupply": {
+      "monitored": true,
+      "chainValue": 1137.5,
+      "chainValueZat": 113750000000,
+      "valueDelta": 6.25,
+      "valueDeltaZat": 625000000
+    },
+    "valuePools": [
+      {
+        "id": "transparent",
+        "monitored": true,
+        "chainValue": 1137.5,
+        "chainValueZat": 113750000000,
+        "valueDelta": 6.25,
+        "valueDeltaZat": 625000000
+      },
+      {
+        "id": "sprout",
+        "monitored": true,
+        "chainValue": 0,
+        "chainValueZat": 0,
+        "valueDelta": 0,
+        "valueDeltaZat": 0
+      },
+      {
+        "id": "sapling",
+        "monitored": true,
+        "chainValue": 0,
+        "chainValueZat": 0,
+        "valueDelta": 0,
+        "valueDeltaZat": 0
+      },
+      {
+        "id": "orchard",
+        "monitored": true,
+        "chainValue": 0,
+        "chainValueZat": 0,
+        "valueDelta": 0,
+        "valueDeltaZat": 0
+      },
+      {
+        "id": "lockbox",
+        "monitored": true,
+        "chainValue": 0,
+        "chainValueZat": 0,
+        "valueDelta": 0,
+        "valueDeltaZat": 0
+      }
+    ],
+    "trees": {
+      "sapling": {
+        "size": 0
+      },
+      "orchard": {
+        "size": 0
+      }
+    },
+    "previousblockhash": "0c80332d2ddb351981b3c907fc689ae6f7f0e0692a01cc289d4bee989c3f47ec",
+    "nextblockhash": "0777468e605d31cd767999f949e659214372cccee599594efd7e71871ccb288d"
+  },
+  "error": null,
+  "id": 1
+}

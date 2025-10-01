@@ -1,0 +1,3532 @@
+openapi: 3.0.0
+info:
+  title: Mayanode API
+  version: 1.124.0
+  contact:
+    email: devs@mayachain.org
+  description: Mayanode REST API.
+
+########################################################################################
+# Paths
+########################################################################################
+
+paths:
+  # ------------------------------ health ------------------------------
+
+  /mayachain/ping:
+    get:
+      operationId: ping
+      tags:
+        - Health
+      responses:
+        200:
+          description: OK
+          content:
+            application/json:
+              schema:
+                type: object
+                title: Ping
+                properties:
+                  ping:
+                    type: string
+                    example: pong
+
+  # ------------------------------ pools ------------------------------
+
+  /mayachain/pool/{asset}:
+    parameters:
+      - $ref: "#/components/parameters/queryHeight"
+      - $ref: "#/components/parameters/asset"
+    get:
+      description: Returns the pool information for the provided asset.
+      operationId: pool
+      tags:
+        - Pools
+      responses:
+        200:
+          description: OK
+          content:
+            application/json:
+              schema:
+                $ref: "#/components/schemas/PoolResponse"
+
+  /mayachain/pools:
+    parameters:
+      - $ref: "#/components/parameters/queryHeight"
+    get:
+      description: Returns the pool information for all assets.
+      operationId: pools
+      tags:
+        - Pools
+      responses:
+        200:
+          description: OK
+          content:
+            application/json:
+              schema:
+                $ref: "#/components/schemas/PoolsResponse"
+
+  # # ------------------------------ liquidity providers ------------------------------
+
+  /mayachain/pool/{asset}/liquidity_provider/{address}:
+    parameters:
+      - $ref: "#/components/parameters/queryHeight"
+      - $ref: "#/components/parameters/asset"
+      - $ref: "#/components/parameters/address"
+    get:
+      description: Returns the liquidity provider information for an address and asset.
+      operationId: liquidityProvider
+      tags:
+        - Liquidity Providers
+      responses:
+        200:
+          description: OK
+          content:
+            application/json:
+              schema:
+                $ref: "#/components/schemas/LiquidityProviderResponse"
+
+  /mayachain/pool/{asset}/liquidity_providers:
+    parameters:
+      - $ref: "#/components/parameters/queryHeight"
+      - $ref: "#/components/parameters/asset"
+    get:
+      description: Returns all liquidity provider information for an asset.
+      operationId: liquidityProviders
+      tags:
+        - Liquidity Providers
+      responses:
+        200:
+          description: OK
+          content:
+            application/json:
+              schema:
+                $ref: "#/components/schemas/LiquidityProvidersResponse"
+
+  # ------------------------------ cacao pool ------------------------------
+
+  /mayachain/cacaopool:
+    parameters:
+      - $ref: "#/components/parameters/queryHeight"
+    get:
+      description: Returns the pool information for the CACAO pool.
+      operationId: cacaoPool
+      tags:
+        - CACAO Pool
+      responses:
+        200:
+          description: OK
+          content:
+            application/json:
+              schema:
+                $ref: "#/components/schemas/CACAOPoolResponse"
+
+  # ------------------------------ cacao providers ------------------------------
+
+  /mayachain/cacao_provider/{address}:
+    parameters:
+      - $ref: "#/components/parameters/queryHeight"
+      - $ref: "#/components/parameters/address"
+    get:
+      description: Returns the CACAO Provider information for an address.
+      operationId: cacaoProvider
+      tags:
+        - CACAO Pool
+      responses:
+        200:
+          description: OK
+          content:
+            application/json:
+              schema:
+                $ref: "#/components/schemas/CACAOProviderResponse"
+
+  /mayachain/cacao_providers:
+    parameters:
+      - $ref: "#/components/parameters/queryHeight"
+    get:
+      description: Returns all CACAO Providers.
+      operationId: cacaoProviders
+      tags:
+        - CACAO Pool
+      responses:
+        200:
+          description: OK
+          content:
+            application/json:
+              schema:
+                $ref: "#/components/schemas/CACAOProvidersResponse"
+
+  # # ------------------------------ savers ------------------------------
+
+  /mayachain/pool/{asset}/saver/{address}:
+    parameters:
+      - $ref: "#/components/parameters/queryHeight"
+      - $ref: "#/components/parameters/asset"
+      - $ref: "#/components/parameters/address"
+    get:
+      description: Returns the saver position given then savers pool and address.
+      operationId: saver
+      tags:
+        - Savers
+      responses:
+        200:
+          description: OK
+          content:
+            application/json:
+              schema:
+                $ref: "#/components/schemas/SaverResponse"
+
+  /mayachain/pool/{asset}/savers:
+    parameters:
+      - $ref: "#/components/parameters/queryHeight"
+      - $ref: "#/components/parameters/asset"
+    get:
+      description: Returns all savers for the savers pool.
+      operationId: savers
+      tags:
+        - Savers
+      responses:
+        200:
+          description: OK
+          content:
+            application/json:
+              schema:
+                $ref: "#/components/schemas/SaversResponse"
+
+  # ------------------------------ transactions ------------------------------
+
+  /mayachain/tx/{hash}:
+    parameters:
+      - $ref: "#/components/parameters/queryHeight"
+      - $ref: "#/components/parameters/hash"
+    get:
+      description: Returns the observed transaction for a provided inbound or outbound hash.
+      operationId: tx
+      tags:
+        - Transactions
+      responses:
+        200:
+          description: OK
+          content:
+            application/json:
+              schema:
+                $ref: "#/components/schemas/TxResponse"
+
+  /mayachain/tx/{hash}/signers:
+    parameters:
+      - $ref: "#/components/parameters/queryHeight"
+      - $ref: "#/components/parameters/hash"
+    get:
+      description: Deprecated - migrate to /mayachain/tx/details.
+      operationId: txSignersOld
+      tags:
+        - Transactions
+      responses:
+        200:
+          description: OK
+          content:
+            application/json:
+              schema:
+                $ref: "#/components/schemas/TxSignersResponse"
+
+  /mayachain/tx/details/{hash}:
+    parameters:
+      - $ref: "#/components/parameters/queryHeight"
+      - $ref: "#/components/parameters/hash"
+    get:
+      description: Returns the signers for a provided inbound or outbound hash.
+      operationId: txSigners
+      tags:
+        - Transactions
+      responses:
+        200:
+          description: OK
+          content:
+            application/json:
+              schema:
+                $ref: "#/components/schemas/TxDetailsResponse"
+
+  /mayachain/tx/in/{hash}:
+    parameters:
+      - $ref: "#/components/parameters/queryHeight"
+      - $ref: "#/components/parameters/hash"
+    get:
+      description: Returns the inbound transaction voter for a provided hash.
+      operationId: txInVoter
+      tags:
+        - Transactions
+      responses:
+        200:
+          description: OK
+          content:
+            application/json:
+              schema:
+                $ref: "#/components/schemas/TxDetailsResponse"
+
+  /mayachain/tx/out/{hash}:
+    parameters:
+      - $ref: "#/components/parameters/queryHeight"
+      - $ref: "#/components/parameters/hash"
+    get:
+      description: Returns the outbound transaction voter for a provided hash.
+      operationId: txOutVoter
+      tags:
+        - Transactions
+      responses:
+        200:
+          description: OK
+          content:
+            application/json:
+              schema:
+                $ref: "#/components/schemas/TxDetailsResponse"
+
+  /mayachain/tx/stages/{hash}:
+    parameters:
+      - $ref: "#/components/parameters/queryHeight"
+      - $ref: "#/components/parameters/hash"
+    get:
+      description: Returns the processing stages of a provided inbound hash.
+      operationId: txStages
+      tags:
+        - Transactions
+      responses:
+        200:
+          description: OK
+          content:
+            application/json:
+              schema:
+                $ref: "#/components/schemas/TxStagesResponse"
+
+  /mayachain/tx/status/{hash}:
+    parameters:
+      - $ref: "#/components/parameters/queryHeight"
+      - $ref: "#/components/parameters/hash"
+    get:
+      description: Returns the status of a provided inbound hash.
+      operationId: txStatus
+      tags:
+        - Transactions
+      responses:
+        200:
+          description: OK
+          content:
+            application/json:
+              schema:
+                $ref: "#/components/schemas/TxStatusResponse"
+
+  # ------------------------------ nodes ------------------------------
+
+  /mayachain/node/{address}:
+    parameters:
+      - $ref: "#/components/parameters/queryHeight"
+      - $ref: "#/components/parameters/address"
+    get:
+      description: Returns node information for the provided node address.
+      operationId: node
+      tags:
+        - Nodes
+      responses:
+        200:
+          description: OK
+          content:
+            application/json:
+              schema:
+                $ref: "#/components/schemas/NodeResponse"
+
+  /mayachain/nodes:
+    parameters:
+      - $ref: "#/components/parameters/queryHeight"
+    get:
+      description: Returns node information for all registered validators.
+      operationId: nodes
+      tags:
+        - Nodes
+      responses:
+        200:
+          description: OK
+          content:
+            application/json:
+              schema:
+                $ref: "#/components/schemas/NodesResponse"
+
+  # ------------------------------ vaults ------------------------------
+
+  /mayachain/vaults/asgard:
+    parameters:
+      - $ref: "#/components/parameters/queryHeight"
+    get:
+      description: Returns current asgard vaults.
+      operationId: asgard
+      tags:
+        - Vaults
+      responses:
+        200:
+          description: OK
+          content:
+            application/json:
+              schema:
+                $ref: "#/components/schemas/VaultsResponse"
+
+  /mayachain/vaults/yggdrasil:
+    parameters:
+      - $ref: "#/components/parameters/queryHeight"
+    get:
+      description: Returns current yggdrasil vaults.
+      operationId: yggdrasil
+      tags:
+        - Vaults
+      responses:
+        200:
+          description: OK
+          content:
+            application/json:
+              schema:
+                $ref: "#/components/schemas/VaultsResponse"
+
+  /mayachain/vault/{pubkey}:
+    parameters:
+      - $ref: "#/components/parameters/queryHeight"
+      - $ref: "#/components/parameters/pubkey"
+    get:
+      description: Returns the vault for the provided pubkey.
+      operationId: vault
+      tags:
+        - Vaults
+      responses:
+        200:
+          description: OK
+          content:
+            application/json:
+              schema:
+                $ref: "#/components/schemas/VaultResponse"
+
+  /mayachain/vaults/pubkeys:
+    parameters:
+      - $ref: "#/components/parameters/queryHeight"
+    get:
+      description: Returns all pubkeys for current vaults.
+      operationId: vaultPubkeys
+      tags:
+        - Vaults
+      responses:
+        200:
+          description: OK
+          content:
+            application/json:
+              schema:
+                $ref: "#/components/schemas/VaultPubkeysResponse"
+
+  # ------------------------------ network ------------------------------
+
+  /mayachain/network:
+    parameters:
+      - $ref: "#/components/parameters/queryHeight"
+    get:
+      description: Returns network overview statistics.
+      operationId: network
+      tags:
+        - Network
+      responses:
+        200:
+          description: OK
+          content:
+            application/json:
+              schema:
+                $ref: "#/components/schemas/NetworkResponse"
+
+  # ------------------------------ POL ------------------------------
+
+  /mayachain/pol:
+    parameters:
+      - $ref: "#/components/parameters/queryHeight"
+    get:
+      description: Returns protocol owned liquidity overview statistics.
+      operationId: pol
+      tags:
+        - POL
+      responses:
+        200:
+          description: OK
+          content:
+            application/json:
+              schema:
+                $ref: "#/components/schemas/POLResponse"
+
+  /mayachain/inbound_addresses:
+    parameters:
+      - $ref: "#/components/parameters/queryHeight"
+    get:
+      description: Returns the set of asgard addresses that should be used for inbound transactions.
+      operationId: inboundAddresses
+      tags:
+        - Network
+      responses:
+        200:
+          description: OK
+          content:
+            application/json:
+              schema:
+                $ref: "#/components/schemas/InboundAddressesResponse"
+
+  /mayachain/lastblock:
+    parameters:
+      - $ref: "#/components/parameters/queryHeight"
+    get:
+      description: Returns the last block information for all chains.
+      operationId: lastblock
+      tags:
+        - Network
+      responses:
+        200:
+          description: OK
+          content:
+            application/json:
+              schema:
+                $ref: "#/components/schemas/LastBlockResponse"
+
+  /mayachain/lastblock/{chain}:
+    parameters:
+      - $ref: "#/components/parameters/queryHeight"
+      - $ref: "#/components/parameters/chain"
+    get:
+      description: Returns the last block information for the provided chain.
+      operationId: lastblockChain
+      tags:
+        - Network
+      responses:
+        200:
+          description: OK
+          content:
+            application/json:
+              schema:
+                $ref: "#/components/schemas/LastBlockResponse"
+
+  /mayachain/version:
+    parameters:
+      - $ref: "#/components/parameters/queryHeight"
+    get:
+      description: Returns the network's current MAYANode version, the network's next MAYANode version, and the querier's MAYANode version.
+      operationId: version
+      tags:
+        - Network
+      responses:
+        200:
+          description: OK
+          content:
+            application/json:
+              schema:
+                $ref: "#/components/schemas/VersionResponse"
+
+  /mayachain/constants:
+    parameters:
+      - $ref: "#/components/parameters/queryHeight"
+    get:
+      description: Returns constant configuration, can be overridden by mimir.
+      operationId: constants
+      tags:
+        - Network
+      responses:
+        200:
+          description: OK
+          content:
+            application/json:
+              schema:
+                $ref: "#/components/schemas/ConstantsResponse"
+
+  /mayachain/ragnarok:
+    parameters:
+      - $ref: "#/components/parameters/queryHeight"
+    get:
+      description: Returns a boolean indicating whether the chain is in ragnarok.
+      operationId: ragnarok
+      tags:
+        - Network
+      responses:
+        200:
+          description: OK
+          content:
+            application/json:
+              schema:
+                type: boolean
+                example: false
+
+  /mayachain/ban/{address}:
+    parameters:
+      - $ref: "#/components/parameters/queryHeight"
+      - $ref: "#/components/parameters/address"
+    get:
+      description: Returns the ban status for the provided node address.
+      operationId: ban
+      tags:
+        - Network
+      responses:
+        200:
+          description: OK
+          content:
+            application/json:
+              schema:
+                $ref: "#/components/schemas/BanResponse"
+
+  # ----------------------- streaming swaps  --------------------------
+
+  /mayachain/swap/streaming/{hash}:
+    parameters:
+      - $ref: "#/components/parameters/queryHeight"
+      - $ref: "#/components/parameters/hash"
+    get:
+      description: Returns the state of a streaming swap
+      operationId: stream_swap
+      tags:
+        - StreamingSwap
+      responses:
+        200:
+          description: OK
+          content:
+            application/json:
+              schema:
+                $ref: "#/components/schemas/StreamingSwapResponse"
+
+  /mayachain/swaps/streaming:
+    parameters:
+      - $ref: "#/components/parameters/queryHeight"
+    get:
+      description: Returns the state of all streaming swaps
+      operationId: stream_swaps
+      tags:
+        - StreamingSwap
+      responses:
+        200:
+          description: OK
+          content:
+            application/json:
+              schema:
+                $ref: "#/components/schemas/StreamingSwapsResponse"
+
+    # ------------------------------ trade unit ------------------------------
+
+  /mayachain/trade/unit/{asset}:
+    parameters:
+      - $ref: "#/components/parameters/queryHeight"
+      - $ref: "#/components/parameters/asset"
+    get:
+      description: Returns the total units and depth of a trade asset
+      operationId: trade_unit
+      tags:
+        - TradeUnit
+      responses:
+        200:
+          description: OK
+          content:
+            application/json:
+              schema:
+                $ref: "#/components/schemas/TradeUnitResponse"
+
+  /mayachain/trade/units:
+    parameters:
+      - $ref: "#/components/parameters/queryHeight"
+    get:
+      description: Returns the total units and depth for each trade asset
+      operationId: trade_units
+      tags:
+        - TradeUnits
+      responses:
+        200:
+          description: OK
+          content:
+            application/json:
+              schema:
+                $ref: "#/components/schemas/TradeUnitsResponse"
+
+  # ------------------------------ trade account ------------------------------
+
+  /mayachain/trade/account/{address}:
+    parameters:
+      - $ref: "#/components/parameters/queryHeight"
+      - $ref: "#/components/parameters/address"
+    get:
+      description: Returns the units and depth of a trade account
+      operationId: trade_account
+      tags:
+        - TradeAccount
+      responses:
+        200:
+          description: OK
+          content:
+            application/json:
+              schema:
+                $ref: "#/components/schemas/TradeAccountResponse"
+
+  /mayachain/trade/accounts/{asset}:
+    parameters:
+      - $ref: "#/components/parameters/queryHeight"
+      - name: asset
+        in: path
+        required: true
+        schema:
+          type: string
+        example: "BTC~BTC" # Override global example
+        description: Trade asset (tilde-separated, e.g., BTC~BTC)
+    get:
+      description: Returns all trade accounts for an asset
+      operationId: trade_accounts
+      tags:
+        - TradeAccounts
+      responses:
+        200:
+          description: OK
+          content:
+            application/json:
+              schema:
+                $ref: "#/components/schemas/TradeAccountsResponse"
+
+  # ------------------------------ queue ------------------------------
+
+  /mayachain/queue:
+    parameters:
+      - $ref: "#/components/parameters/queryHeight"
+    get:
+      description: Returns queue statistics.
+      operationId: queue
+      tags:
+        - Queue
+      responses:
+        200:
+          description: OK
+          content:
+            application/json:
+              schema:
+                $ref: "#/components/schemas/QueueResponse"
+
+  /mayachain/queue/swap:
+    parameters:
+      - $ref: "#/components/parameters/queryHeight"
+    get:
+      description: Returns the swap queue.
+      operationId: queueSwap
+      tags:
+        - Queue
+      responses:
+        200:
+          description: OK
+          content:
+            application/json:
+              schema:
+                $ref: "#/components/schemas/SwapQueueResponse"
+
+  /mayachain/queue/scheduled:
+    parameters:
+      - $ref: "#/components/parameters/queryHeight"
+    get:
+      description: Returns the scheduled queue.
+      operationId: queueScheduled
+      tags:
+        - Queue
+      responses:
+        200:
+          description: OK
+          content:
+            application/json:
+              schema:
+                $ref: "#/components/schemas/ScheduledResponse"
+
+  /mayachain/queue/outbound:
+    parameters:
+      - $ref: "#/components/parameters/queryHeight"
+    get:
+      description: Returns the outbound queue including estimated CACAO values.
+      operationId: queueOutbound
+      tags:
+        - Queue
+      responses:
+        200:
+          description: OK
+          content:
+            application/json:
+              schema:
+                $ref: "#/components/schemas/OutboundResponse"
+
+  # ------------------------------ tss ------------------------------
+
+  /mayachain/keysign/{height}:
+    parameters:
+      - $ref: "#/components/parameters/pathHeight"
+    get:
+      description: Returns keysign information for the provided height - the height being the first block a tx out item appears in the signed-but-unobserved outbound queue.
+      operationId: keysign
+      tags:
+        - TSS
+      responses: &keysign-response
+        200:
+          description: OK
+          content:
+            application/json:
+              schema:
+                $ref: "#/components/schemas/KeysignResponse"
+
+  /mayachain/keysign/{height}/{pubkey}:
+    parameters:
+      - $ref: "#/components/parameters/pathHeight"
+      - $ref: "#/components/parameters/pubkey"
+    get:
+      description: Returns keysign information for the provided height and pubkey - the height being the block at which a tx out item is scheduled to be signed and moved from the scheduled outbound queue to the outbound queue.
+      operationId: keysignPubkey
+      tags:
+        - TSS
+      responses: *keysign-response
+
+  /mayachain/keygen/{height}/{pubkey}:
+    parameters:
+      - $ref: "#/components/parameters/pathHeight"
+      - $ref: "#/components/parameters/pubkey"
+    get:
+      description: Returns keygen information for the provided height and pubkey - the pubkey being of one of the members of a keygen block for that height
+      operationId: keygenPubkey
+      tags:
+        - TSS
+      responses:
+        200:
+          description: OK
+          content:
+            application/json:
+              schema:
+                $ref: "#/components/schemas/KeygenResponse"
+
+  # ------------------------------ tss metrics ------------------------------
+
+  /mayachain/metrics:
+    parameters:
+      - $ref: "#/components/parameters/queryHeight"
+    get:
+      description: Returns keygen and keysign metrics for current vaults.
+      operationId: metrics
+      tags:
+        - TSS
+      responses:
+        200:
+          description: OK
+          content:
+            application/json:
+              schema:
+                $ref: "#/components/schemas/MetricsResponse"
+
+  /mayachain/metric/keygen/{pubkey}:
+    parameters:
+      - $ref: "#/components/parameters/queryHeight"
+      - $ref: "#/components/parameters/pubkey"
+    get:
+      description: Returns keygen metrics for the provided vault pubkey.
+      operationId: metricsKeygen
+      tags:
+        - TSS
+      responses:
+        200:
+          description: OK
+          content:
+            application/json:
+              schema:
+                $ref: "#/components/schemas/KeygenMetricsResponse"
+
+  # ------------------------------ mayanames ------------------------------
+
+  /mayachain/mayaname/{name}:
+    parameters:
+      - $ref: "#/components/parameters/queryHeight"
+      - name: name
+        in: path
+        description: the mayanode to lookup
+        required: true
+        schema:
+          type: string
+    get:
+      description: Returns addresses registered to the provided mayaname.
+      operationId: mayaname
+      tags:
+        - Mayanames
+      responses:
+        200:
+          description: OK
+          content:
+            application/json:
+              schema:
+                $ref: "#/components/schemas/MayanameResponse"
+
+  # ------------------------------ mimir ------------------------------
+
+  /mayachain/mimir:
+    parameters:
+      - $ref: "#/components/parameters/queryHeight"
+    get:
+      description: Returns current active mimir configuration.
+      operationId: mimir
+      tags:
+        - Mimir
+      responses:
+        200:
+          description: OK
+          content:
+            application/json:
+              schema:
+                $ref: "#/components/schemas/MimirResponse"
+
+  /mayachain/mimir/key/{key}:
+    parameters:
+      - $ref: "#/components/parameters/queryHeight"
+      - name: key
+        in: path
+        description: the mimir key to lookup
+        required: true
+        schema:
+          type: string
+    get:
+      description: Returns current active mimir configuration for the provided key.
+      operationId: mimirKey
+      tags:
+        - Mimir
+      responses:
+        200:
+          description: OK
+          content:
+            application/json:
+              schema:
+                type: integer
+                format: int64
+
+  /mayachain/mimir/admin:
+    parameters:
+      - $ref: "#/components/parameters/queryHeight"
+    get:
+      description: Returns current admin mimir configuration.
+      operationId: mimirAdmin
+      tags:
+        - Mimir
+      responses:
+        200:
+          description: OK
+          content:
+            application/json:
+              schema:
+                $ref: "#/components/schemas/MimirResponse"
+
+  /mayachain/mimir/nodes_all:
+    parameters:
+      - $ref: "#/components/parameters/queryHeight"
+    get:
+      description: Returns current node mimir votes.
+      operationId: mimirNodes
+      tags:
+        - Mimir
+      responses:
+        200:
+          description: OK
+          content:
+            application/json:
+              schema:
+                $ref: "#/components/schemas/MimirNodesResponse"
+
+  /mayachain/mimir/node/{address}:
+    parameters:
+      - $ref: "#/components/parameters/queryHeight"
+      - $ref: "#/components/parameters/address"
+    get:
+      description: Returns current node mimir configuration for the provided node address.
+      operationId: mimirNode
+      tags:
+        - Mimir
+      responses:
+        200:
+          description: OK
+          content:
+            application/json:
+              schema:
+                $ref: "#/components/schemas/MimirResponse"
+
+  # ------------------------------ quotes ------------------------------
+
+  /mayachain/quote/swap:
+    parameters:
+      - $ref: "#/components/parameters/queryHeight"
+      - name: from_asset
+        in: query
+        description: the source asset
+        schema:
+          type: string
+          example: "BTC.BTC"
+      - name: to_asset
+        in: query
+        description: the target asset
+        schema:
+          type: string
+          example: "ETH.ETH"
+      - name: amount
+        in: query
+        description: the source asset amount in 1e8 decimals
+        schema:
+          type: integer
+          format: int64
+          example: 1000000
+      - name: destination
+        in: query
+        description: the destination address, required to generate memo
+        schema:
+          type: string
+          example: "0x1c7b17362c84287bd1184447e6dfeaf920c31bbe"
+      - name: refund_address
+        in: query
+        description: the refund address, refunds will be sent here if the swap fails
+        schema:
+          type: string
+          example: "0x1c7b17362c84287bd1184447e6dfeaf920c31bbe"
+      - name: streaming_interval
+        in: query
+        description: the interval in which streaming swaps are swapped
+        schema:
+          type: integer
+          format: int64
+          example: 10
+      - name: streaming_quantity
+        in: query
+        description: the quantity of swaps within a streaming swap
+        schema:
+          type: integer
+          format: int64
+          example: 10
+      - name: tolerance_bps
+        in: query
+        description: the maximum basis points from the current feeless swap price to set the limit in the generated memo
+        schema:
+          type: integer
+          format: int64
+          example: 100
+      - name: liquidity_tolerance_bps
+        in: query
+        description: the maximum basis points of tolerance for pool price movements to set the limit in the generated memo
+        schema:
+          type: integer
+          format: int64
+          example: 100
+      - name: affiliate_bps
+        in: query
+        description: the affiliate fee in basis points; use "/" to separate multiple values
+        schema:
+          type: string
+          example: 100/50
+      - name: affiliate
+        in: query
+        description: the affiliate (address or mayaname); use "/" to separate multiple values
+        schema:
+          type: string
+          example: "t/dx"
+    get:
+      description: Provide a quote estimate for the provided swap.
+      operationId: quoteswap
+      tags:
+        - Quote
+      responses:
+        200:
+          description: OK
+          content:
+            application/json:
+              schema:
+                $ref: "#/components/schemas/QuoteSwapResponse"
+
+  /mayachain/quote/saver/deposit:
+    parameters:
+      - $ref: "#/components/parameters/queryHeight"
+      - name: asset
+        in: query
+        description: the asset to deposit
+        schema:
+          type: string
+          example: "BTC.BTC"
+      - name: amount
+        in: query
+        description: the source asset amount in 1e8 decimals
+        schema:
+          type: integer
+          format: int64
+          example: 1000000
+    get:
+      description: Provide a quote estimate for the provided saver deposit.
+      operationId: quotesaverdeposit
+      tags:
+        - Quote
+      responses:
+        200:
+          description: OK
+          content:
+            application/json:
+              schema:
+                $ref: "#/components/schemas/QuoteSaverDepositResponse"
+
+  /mayachain/quote/saver/withdraw:
+    parameters:
+      - $ref: "#/components/parameters/queryHeight"
+      - name: asset
+        in: query
+        description: the asset to withdraw
+        schema:
+          type: string
+          example: "BTC.BTC"
+      - name: address
+        in: query
+        description: the address for the position
+        schema:
+          type: string
+          example: "bc1qd45uzetakjvdy5ynjjyp4nlnj89am88e4e5jeq"
+      - name: withdraw_bps
+        in: query
+        description: the basis points of the existing position to withdraw
+        schema:
+          type: integer
+          format: int64
+          example: 100
+    get:
+      description: Provide a quote estimate for the provided saver withdraw.
+      operationId: quotesaverwithdraw
+      tags:
+        - Quote
+      responses:
+        200:
+          description: OK
+          content:
+            application/json:
+              schema:
+                $ref: "#/components/schemas/QuoteSaverWithdrawResponse"
+
+  # ------------------------------ invariants ------------------------------
+
+  /mayachain/invariant/{invariant}:
+    parameters:
+      - $ref: "#/components/parameters/queryHeight"
+      - $ref: "#/components/parameters/invariant"
+    get:
+      description: Returns result of running the given invariant.
+      operationId: invariant
+      tags:
+        - Invariants
+      responses:
+        200:
+          description: OK
+          content:
+            application/json:
+              schema:
+                $ref: "#/components/schemas/InvariantResponse"
+
+  /mayachain/invariants:
+    parameters:
+      - $ref: "#/components/parameters/queryHeight"
+    get:
+      description: Returns a list of available invariants.
+      operationId: invariants
+      tags:
+        - Invariants
+      responses:
+        200:
+          description: OK
+          content:
+            application/json:
+              schema:
+                $ref: "#/components/schemas/InvariantsResponse"
+
+  # ------------------------------ block ------------------------------
+
+  /mayachain/block:
+    parameters:
+      - $ref: "#/components/parameters/queryHeight"
+    get:
+      description: Returns verbose details of the block.
+      operationId: block
+      tags:
+        - Block
+      responses:
+        200:
+          description: OK
+          content:
+            application/json:
+              schema:
+                $ref: "#/components/schemas/BlockResponse"
+
+########################################################################################
+# Components
+########################################################################################
+
+components:
+  # ------------------------------ parameters ------------------------------
+
+  parameters:
+    queryHeight:
+      name: height
+      in: query
+      description: optional block height, defaults to current tip
+      required: false
+      schema:
+        type: integer
+        format: int64
+        minimum: 0
+
+    pathHeight:
+      name: height
+      in: path
+      required: true
+      schema:
+        type: integer
+        format: int64
+        minimum: 0
+
+    hash:
+      name: hash
+      in: path
+      required: true
+      schema:
+        type: string
+        example: "CF524818D42B63D25BBA0CCC4909F127CAA645C0F9CD07324F2824CC151A64C7"
+
+    asset:
+      name: asset
+      in: path
+      required: true
+      schema:
+        type: string
+        example: "BTC.BTC"
+
+    address:
+      name: address
+      in: path
+      required: true
+      schema:
+        type: string
+        example: "maya1zupk5lmc84r2dh738a9g3zscavannjy3nzplwt"
+
+    pubkey:
+      name: pubkey
+      in: path
+      required: true
+      schema:
+        type: string
+        example: "mayapub1addwnpepq068dr0x7ue973drmq4eqmzhcq3650n7nx5fhgn9gl207luxp6vaklu52tc"
+
+    chain:
+      name: chain
+      in: path
+      required: true
+      schema:
+        type: string
+        example: "BTC"
+
+    invariant:
+      name: invariant
+      in: path
+      required: true
+      schema:
+        type: string
+        example: asgard
+
+  # ------------------------------ schemas ------------------------------
+
+  schemas:
+    Pool:
+      type: object
+      required:
+        - balance_cacao
+        - balance_asset
+        - asset
+        - LP_units
+        - pool_units
+        - status
+        - synth_units
+        - synth_supply
+        - pending_inbound_cacao
+        - pending_inbound_asset
+        - savers_depth
+        - savers_units
+        - synth_mint_paused
+        - bondable
+      properties:
+        balance_cacao:
+          type: string
+          example: "13460619152985"
+        balance_asset:
+          type: string
+          example: "3197744873"
+        asset:
+          type: string
+          example: "BTC.BTC"
+        LP_units:
+          type: string
+          description: the total pool liquidity provider units
+          example: "14694928607473"
+        pool_units:
+          type: string
+          description: the total pool units, this is the sum of LP and synth units
+          example: "14694928607473"
+        status:
+          type: string
+          example: "Available"
+        decimals:
+          type: integer
+          format: int64
+          example: 6
+        synth_units:
+          type: string
+          description: the total synth units in the pool
+          example: "0"
+        synth_supply:
+          type: string
+          description: the total supply of synths for the asset
+          example: "0"
+        pending_inbound_cacao:
+          type: string
+          example: "464993836"
+        pending_inbound_asset:
+          type: string
+          example: "101713319"
+        savers_depth:
+          example: "199998"
+          description: the balance of L1 asset deposited into the Savers Vault
+        savers_units:
+          type: string
+          example: "199998"
+          description: the number of units owned by Savers
+        synth_mint_paused:
+          type: boolean
+          example: true
+          description: whether additional synths cannot be minted
+        bondable:
+          type: boolean
+          example: true
+          description: whether LPs can bond liquidity in the pool to a node
+
+    POL:
+      type: object
+      required:
+        - cacao_deposited
+        - cacao_withdrawn
+        - value
+        - pnl
+        - current_deposit
+      properties:
+        cacao_deposited:
+          type: string
+          example: "857134475040"
+          description: total amount of CACAO deposited into the pools
+        cacao_withdrawn:
+          type: string
+          example: "0"
+          description: total amount of CACAO withdrawn from the pools
+        value:
+          type: string
+          example: "21999180112172346"
+          description: total value of protocol's LP position in CACAO value
+        pnl:
+          type: string
+          example: "21999180112172346"
+          description: profit and loss of protocol owned liquidity
+        current_deposit:
+          type: string
+          example: "21999180112172346"
+          description: current amount of cacao deposited
+
+    CACAOProvider:
+      type: object
+      required:
+        - cacao_address
+        - units
+        - value
+        - pnl
+        - deposit_amount
+        - withdraw_amount
+        - last_deposit_height
+        - last_withdraw_height
+      properties:
+        cacao_address:
+          type: string
+          example: "MAYA.CACAO"
+        units:
+          type: string
+          example: "1234"
+        value:
+          type: string
+          example: "123456"
+        pnl:
+          type: string
+          example: "123456"
+        deposit_amount:
+          type: string
+          example: "6677"
+        withdraw_amount:
+          type: string
+          example: "5443"
+        last_deposit_height:
+          type: integer
+          format: int64
+          example: 82745
+        last_withdraw_height:
+          type: integer
+          format: int64
+          example: 82745
+
+    LiquidityProviderSummary:
+      type: object
+      required:
+        - asset
+        - units
+        - pending_cacao
+        - pending_asset
+        - cacao_deposit_value
+        - asset_deposit_value
+      properties:
+        asset:
+          type: string
+          example: "BNB.BNB"
+        cacao_address:
+          type: string
+          example: "maya1xxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxx"
+        asset_address:
+          type: string
+          example: "bnb1xxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxx"
+        last_add_height:
+          type: integer
+          format: int64
+          example: 82745
+        last_withdraw_height:
+          type: integer
+          format: int64
+          example: 82745
+        units:
+          type: string
+          example: "0"
+        pending_cacao:
+          type: string
+          example: "0"
+        pending_asset:
+          type: string
+          example: "242000000"
+        pending_tx_id:
+          type: string
+          example: "C4C876802xxxxxxxxxxBC408829878446A37011EBBA0C5CAA3DD64A548879CB228"
+        cacao_deposit_value:
+          type: string
+          example: "0"
+        asset_deposit_value:
+          type: string
+          example: "0"
+
+    LiquidityProvider:
+      type: object
+      required:
+        - asset
+        - units
+        - pending_cacao
+        - pending_asset
+        - cacao_deposit_value
+        - asset_deposit_value
+        - withdraw_counter
+        - bonded_nodes
+      properties:
+        asset:
+          type: string
+          example: "BNB.BNB"
+        cacao_address:
+          type: string
+          example: "maya1xxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxx"
+        asset_address:
+          type: string
+          example: "bnb1xxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxx"
+        last_add_height:
+          type: integer
+          format: int64
+          example: 82745
+        last_withdraw_height:
+          type: integer
+          format: int64
+          example: 82745
+        units:
+          type: string
+          example: "0"
+        pending_cacao:
+          type: string
+          example: "0"
+        pending_asset:
+          type: string
+          example: "242000000"
+        pending_tx_id:
+          type: string
+          example: "C4C876802xxxxxxxxxxBC408829878446A37011EBBA0C5CAA3DD64A548879CB228"
+        cacao_deposit_value:
+          type: string
+          example: "0"
+        asset_deposit_value:
+          type: string
+          example: "0"
+        node_bond_address:
+          type: string
+          deprecated: true
+          example: "maya1zupk5lmc84r2dh738a9g3zscavannjy3nzplwt"
+        withdraw_counter:
+          type: string
+          example: "1"
+        last_withdraw_counter_height:
+          type: integer
+          format: int64
+          example: 60
+        bonded_nodes:
+          type: array
+          items:
+            $ref: "#/components/schemas/LPBondedNode"
+        cacao_redeem_value:
+          type: string
+          example: "0"
+        asset_redeem_value:
+          type: string
+          example: "0"
+        luvi_deposit_value:
+          type: string
+          example: "0"
+        luvi_redeem_value:
+          type: string
+          example: "0"
+        luvi_growth_pct:
+          type: string
+          example: "0"
+
+    LPBondedNode:
+      type: object
+      required:
+        - node_address
+        - units
+      properties:
+        node_address:
+          type: string
+          example: "maya1zupk5lmc84r2dh738a9g3zscavannjy3nzplwt"
+        units:
+          type: string
+          example: "1000000000"
+
+    Saver:
+      type: object
+      required:
+        - asset
+        - asset_address
+        - units
+        - asset_deposit_value
+        - asset_redeem_value
+        - growth_pct
+      properties:
+        asset:
+          type: string
+          example: "BNB.BNB"
+        asset_address:
+          type: string
+          example: "bnb1xxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxx"
+        last_add_height:
+          type: integer
+          format: int64
+          example: 82745
+        last_withdraw_height:
+          type: integer
+          format: int64
+          example: 82745
+        units:
+          type: string
+          example: "0"
+        asset_deposit_value:
+          type: string
+          example: "0"
+        asset_redeem_value:
+          type: string
+          example: "0"
+        growth_pct:
+          type: string
+          example: "0.02"
+
+    Coin:
+      type: object
+      required:
+        - asset
+        - amount
+      properties:
+        asset:
+          type: string
+          example: "BTC.BTC"
+        amount:
+          type: string
+          example: "100000"
+        decimals:
+          type: integer
+          format: int64
+          example: 6
+
+    Vault:
+      type: object
+      required:
+        - coins
+        - status
+        - routers
+        - addresses
+      properties:
+        block_height:
+          type: integer
+          format: int64
+        pub_key:
+          type: string
+        pub_key_eddsa:
+          type: string
+        coins:
+          type: array
+          items:
+            $ref: "#/components/schemas/Coin"
+        type:
+          type: string
+          enum: ["AsgardVault", "YggdrasilVault"]
+        status:
+          type: string
+          # TODO: Currently status is not consistent between asgard and yggdrasil.
+          # enum: ["Active", ...]
+        status_since:
+          type: integer
+          format: int64
+        membership:
+          type: array
+          description: the list of node public keys which are members of the vault
+          items:
+            type: string
+        chains:
+          type: array
+          items:
+            type: string
+        inbound_tx_count:
+          type: integer
+          format: int64
+        outbound_tx_count:
+          type: integer
+          format: int64
+        pending_tx_block_heights:
+          type: array
+          items:
+            type: integer
+            format: int64
+        routers:
+          type: array
+          items:
+            $ref: "#/components/schemas/VaultRouter"
+        addresses:
+          type: array
+          items:
+            $ref: "#/components/schemas/VaultAddress"
+        frozen:
+          type: array
+          items:
+            type: string
+
+    YggdrasilVault:
+      type: object
+      required:
+        - coins
+        - routers
+        - status
+        - bond
+        - total_value
+        - addresses
+      properties:
+        block_height:
+          type: integer
+          format: int64
+        pub_key:
+          type: string
+        coins:
+          type: array
+          items:
+            $ref: "#/components/schemas/Coin"
+        type:
+          type: string
+          enum: ["AsgardVault", "YggdrasilVault"]
+        status_since:
+          type: integer
+          format: int64
+        membership:
+          type: array
+          description: the list of node public keys which are members of the vault
+          items:
+            type: string
+        chains:
+          type: array
+          items:
+            type: string
+        inbound_tx_count:
+          type: integer
+          format: int64
+        outbound_tx_count:
+          type: integer
+          format: int64
+        pending_tx_block_heights:
+          type: array
+          items:
+            type: integer
+            format: int64
+        routers:
+          type: array
+          items:
+            $ref: "#/components/schemas/VaultRouter"
+        status:
+          type: string
+          # TODO: Currently status is not consistent between asgard (VaultStatus) and yggdrasil (NodeStatus).
+          # enum: ["Active", ...]
+        bond:
+          type: string
+          description: current node bond
+          example: "123456789"
+        total_value:
+          type: string
+          description: value in cacao of the vault's assets
+          example: "83456789"
+        addresses:
+          type: array
+          items:
+            $ref: "#/components/schemas/VaultAddress"
+
+    VaultRouter:
+      type: object
+      properties:
+        chain:
+          type: string
+          example: "ETH"
+        router:
+          type: string
+          example: "0x3624525075b88B24ecc29CE226b0CEc1fFcB6976"
+
+    VaultAddress:
+      type: object
+      required:
+        - chain
+        - address
+      properties:
+        chain:
+          type: string
+          example: "BTC"
+        address:
+          type: string
+          example: "bc1qd45uzetakjvdy5ynjjyp4nlnj89am88e4e5jeq"
+
+    VaultInfo:
+      type: object
+      required:
+        - pub_key
+        - routers
+      properties:
+        pub_key:
+          type: string
+          example: "mayapub1addwnpepq068dr0x7ue973drmq4eqmzhcq3650n7nx5fhgn9gl207luxp6vaklu52tc"
+        pub_key_eddsa:
+          type: string
+          example: "mayapub1addwnpepq068dr0x7ue973drmq4eqmzhcq3650n7nx5fhgn9gl207luxp6vaklu52tc"
+        routers:
+          type: array
+          items:
+            $ref: "#/components/schemas/VaultRouter"
+
+    StreamingSwap:
+      type: object
+      required:
+        - trade_target
+        - deposit
+        - in
+        - out
+      properties:
+        tx_id:
+          type: string
+          example: "CF524818D42B63D25BBA0CCC4909F127CAA645C0F9CD07324F2824CC151A64C7"
+          description: the hash of a transaction
+        interval:
+          type: integer
+          format: int64 # OpenAPI cannot generate a uint64 or int128 field, so using int64 instead.
+          description: how often each swap is made, in blocks
+        quantity:
+          type: integer
+          format: int64 # OpenAPI cannot generate a uint64 or int128 field, so using int64 instead.
+          description: the total number of swaps in a streaming swaps
+        count:
+          type: integer
+          format: int64 # OpenAPI cannot generate a uint64 or int128 field, so using int64 instead.
+          description: the amount of swap attempts so far
+        last_height:
+          type: integer
+          format: int64
+          description: the block height of the latest swap
+        trade_target:
+          type: string
+          example: "100"
+          description: the total number of tokens the swapper wants to receive of the output asset
+        source_asset:
+          type: string
+          example: "BTC.BTC"
+          description: the asset to be swapped from
+        target_asset:
+          type: string
+          example: "ETH.ETH"
+          description: the asset to be swapped to
+        destination:
+          type: string
+          example: "0x66fb1cd65b97fa40457b90b7d1ca6b92cb64b32b"
+          description: the destination address to receive the swap output
+        deposit:
+          type: string
+          example: "100"
+          description: the number of input tokens the swapper has deposited
+        in:
+          type: string
+          example: "100"
+          description: the amount of input tokens that have been swapped so far
+        out:
+          type: string
+          example: "100"
+          description: the amount of output tokens that have been swapped so far
+        failed_swaps:
+          type: array
+          description: the list of swap indexes that failed
+          items:
+            type: integer
+            format: int64 # OpenAPI cannot generate a uint64 or int128 field, so using int64 instead.
+        failed_swap_reasons:
+          type: array
+          description: the list of reasons that sub-swaps have failed
+          items:
+            type: string
+
+    Tx:
+      type: object
+      required:
+        - coins
+        - gas
+      properties:
+        id:
+          type: string
+          example: "CF524818D42B63D25BBA0CCC4909F127CAA645C0F9CD07324F2824CC151A64C7"
+        chain:
+          type: string
+          example: "BTC"
+        from_address:
+          type: string
+          example: "bcrt1q0s4mg25tu6termrk8egltfyme4q7sg3h8kkydt"
+        to_address:
+          type: string
+          example: "bcrt1qf3s7q037eancht7sg0aj995dht25rwrnqsf45e"
+        coins:
+          type: array
+          items:
+            $ref: "#/components/schemas/Coin"
+        gas:
+          type: array
+          items:
+            $ref: "#/components/schemas/Coin"
+        memo:
+          type: string
+          example: "ADD:BTC.BTC:maya1zupk5lmc84r2dh738a9g3zscavannjy3nzplwt"
+
+    LastBlock:
+      type: object
+      required:
+        - chain
+        - last_observed_in
+        - last_signed_out
+        - mayachain
+      properties:
+        chain:
+          type: string
+        last_observed_in:
+          type: integer
+          format: int64
+        last_signed_out:
+          type: integer
+          format: int64
+        mayachain:
+          type: integer
+          format: int64
+
+    ObservedTx:
+      type: object
+      required:
+        - tx
+      properties:
+        tx:
+          $ref: "#/components/schemas/Tx"
+        observed_pub_key:
+          type: string
+          example: "mayapub1addwnpepq27ck6u44zl8qqdnmzjjc8rg72amrxrsp42p9vd7kt6marhy6ww76z8shwe"
+        observed_pub_key_eddsa:
+          type: string
+          example: "mayapub1addwnpepq27ck6u44zl8qqdnmzjjc8rg72amrxrsp42p9vd7kt6marhy6ww76z8shwe"
+        external_observed_height:
+          type: integer
+          format: int64
+          example: 7581334
+          description: the block height on the external source chain when the transaction was observed, not provided if chain is maya
+        external_confirmation_delay_height:
+          type: integer
+          format: int64
+          example: 7581334
+          description: the block height on the external source chain when confirmation counting will be complete, not provided if chain is maya
+        aggregator:
+          type: string
+          description: the outbound aggregator to use, will also match a suffix
+          example: "0x69800327b38A4CeF30367Dec3f64c2f2386f3848"
+        aggregator_target:
+          type: string
+          description: the aggregator target asset provided to transferOutAndCall
+          example: "0x0a44986b70527154e9F4290eC14e5f0D1C861822"
+        aggregator_target_limit:
+          type: string
+          description: the aggregator target asset limit provided to transferOutAndCall
+          example: "0x0a44986b70527154e9F4290eC14e5f0D1C861822"
+        signers:
+          type: array
+          items:
+            type: string
+            example: "maya1f3s7q037eancht7sg0aj995dht25rwrnu4ats5"
+        keysign_ms:
+          type: integer
+          format: int64
+          example: 10000
+        out_hashes:
+          type: array
+          items:
+            type: string
+            example: "E17A0906E015F0C343691C18E475C8CB5F3F6C63F5BCDE0F3A341909763CC92B"
+        status:
+          type: string
+          enum: ["done", "incomplete"]
+          example: "done"
+        block_height:
+          type: integer
+          format: int64
+          example: 7581334
+          description: the block height of the observed transaction on the source chain, not provided if chain is MAYA
+        finalise_height:
+          type: integer
+          format: int64
+          example: 7581334
+          description: the finalised height of the observed transaction on the source chain, not provided if chain is MAYA
+
+    MsgSwap:
+      type: object
+      required:
+        - tx
+        - target_asset
+        - trade_target
+        - affiliate_basis_points
+      properties:
+        tx:
+          $ref: "#/components/schemas/Tx"
+        target_asset:
+          type: string
+          example: "ETH.ETH"
+          description: the asset to be swapped to
+        destination:
+          type: string
+          example: "0x66fb1cd65b97fa40457b90b7d1ca6b92cb64b32b"
+          description: the destination address to receive the swap output
+        trade_target:
+          type: string
+          description: the minimum amount of output asset to receive (else cancelling and refunding the swap)
+        affiliate_address:
+          type: string
+          example: "maya1f3s7q037eancht7sg0aj995dht25rwrnu4ats5"
+          description: the affiliate address which will receive any affiliate fee
+        affiliate_basis_points:
+          type: string
+          description: the affiliate fee in basis points
+        signer:
+          type: string
+          description: the signer (sender) of the transaction
+        aggregator:
+          type: string
+          description: the contract address if an aggregator is specified for a non-mayachain SwapOut
+        aggregator_target_address:
+          type: string
+          description: the desired output asset of the aggregator SwapOut
+        aggregator_target_limit:
+          type: string
+          description: the minimum amount of SwapOut asset to receive (else cancelling the SwapOut and receiving mayachain's output)
+        order_type:
+          type: string
+          description: market if immediately completed or refunded, limit if held until fulfillable
+        stream_quantity:
+          type: integer
+          format: int64 # OpenAPI cannot generate a uint64 or int128 field, so using int64 instead.
+          description: number of swaps to execute in a streaming swap
+        stream_interval:
+          type: integer
+          format: int64 # OpenAPI cannot generate a uint64 or int128 field, so using int64 instead.
+          description: the interval (in blocks) to execute the streaming swap
+
+    TxOutItem:
+      type: object
+      required:
+        - chain
+        - to_address
+        - coin
+        - max_gas
+      properties:
+        chain:
+          type: string
+          example: "ETH"
+        to_address:
+          type: string
+          example: "0x66fb1cd65b97fa40457b90b7d1ca6b92cb64b32b"
+        vault_pub_key:
+          type: string
+          example: "mayapub1addwnpepqt45wmsxj29xpgdrdsvg2h3dx68qeapgykw3hlyj6vuds2r0pnkwx5gt9m4"
+        vault_pub_key_eddsa:
+          type: string
+          example: "mayapub1addwnpepqt45wmsxj29xpgdrdsvg2h3dx68qeapgykw3hlyj6vuds2r0pnkwx5gt9m4"
+        coin:
+          $ref: "#/components/schemas/Coin"
+        memo:
+          type: string
+          example: "OUT:208BF0ACD78C89A0534B0457BA0867B101961A2319C1E49DD28676526904BBEA"
+        max_gas:
+          type: array
+          items:
+            $ref: "#/components/schemas/Coin"
+        gas_rate:
+          type: integer
+          format: int64
+        in_hash:
+          type: string
+          example: "208BF0ACD78C89A0534B0457BA0867B101961A2319C1E49DD28676526904BBEA"
+        out_hash:
+          type: string
+          example: "0D0B2FDB6DAD6E5FD3C5E46D39128F9DA15E96F0B2CC054CE059EA3532B150FB"
+        aggregator:
+          type: string
+          description: the contract address if an aggregator is specified for a non-mayachain SwapOut
+        aggregator_target_asset:
+          type: string
+          description: the desired output asset of the aggregator SwapOut
+        aggregator_target_limit:
+          type: string
+          description: the minimum amount of SwapOut asset to receive (else cancelling the SwapOut and receiving mayachain's output)
+        height:
+          type: integer
+          format: int64
+          example: 1234
+
+    TssMetric:
+      type: object
+      properties:
+        address:
+          type: string
+        tss_time:
+          type: integer
+          format: int64
+
+    TssKeysignMetric:
+      type: object
+      required:
+        - node_tss_times
+      properties:
+        tx_id:
+          type: string
+        node_tss_times:
+          type: array
+          items:
+            $ref: "#/components/schemas/TssMetric"
+
+    Node:
+      type: object
+      required:
+        - node_address
+        - status
+        - pub_key_set
+        - aztec_address
+        - validator_cons_pub_key
+        - peer_id
+        - bond
+        - active_block_height
+        - bond_address
+        - status_since
+        - signer_membership
+        - requested_to_leave
+        - forced_to_leave
+        - leave_height
+        - ip_address
+        - version
+        - slash_points
+        - jail
+        - observe_chains
+        - preflight_status
+        - bond_providers
+        - reward
+      properties:
+        node_address:
+          type: string
+          example: "maya1f3s7q037eancht7sg0aj995dht25rwrnu4ats5"
+        status:
+          type: string
+          enum: ["Active", "Whitelisted", "Standby", "Disabled"]
+          example: "Active"
+        pub_key_set:
+          type: object
+          title: NodePubKeySet
+          properties:
+            secp256k1:
+              type: string
+              example: "mayapub1addwnpepq27ck6u44zl8qqdnmzjjc8rg72amrxrsp42p9vd7kt6marhy6ww76z8shwe"
+            ed25519:
+              type: string
+              example: "mayapub1addwnpepq27ck6u44zl8qqdnmzjjc8rg72amrxrsp42p9vd7kt6marhy6ww76z8shwe"
+        aztec_address:
+          type: string
+          example: "aztec1f3s7q037eancht7sg0aj995dht25rwrnu4ats5"
+        validator_cons_pub_key:
+          type: string
+          description: the consensus pub key for the node
+          example: "maya104gsqwta048e80j909g6y9kkqdjrw0lff866ew"
+        peer_id:
+          type: string
+          description: the P2PID (:6040/p2pid endpoint) of the node
+          example: "16Uiu2HAmRgsiryer3pWCPJz18PQZDFFs1GBqCPGGJczrQXdoTBMk"
+        bond:
+          type: string
+          description: current node bond
+          example: "123456789"
+        reward:
+          type: string
+          example: "123456"
+        active_block_height:
+          type: integer
+          format: int64
+          description: the block height at which the node became active
+          example: 123456
+        bond_address:
+          type: string
+          example: "maya1f3s7q037eancht7sg0aj995dht25rwrnu4ats5"
+        status_since:
+          type: integer
+          format: int64
+          description: the block height of the current provided information for the node
+          example: 100000
+        signer_membership:
+          type: array
+          description: the set of vault public keys of which the node is a member
+          items:
+            type: string
+            example: "mayapub1addwnpepq2jqhv5rdqlkusfxy05stfzcgslhhz5qh8pxetw5ry2aa6awgdh3shq8s82"
+        requested_to_leave:
+          type: boolean
+        forced_to_leave:
+          type: boolean
+          description: indicates whether the node has been forced to leave by the network, typically via ban
+        leave_height:
+          type: integer
+          format: int64
+          example: 0
+        ip_address:
+          type: string
+          example: "10.20.30.40"
+        version:
+          type: string
+          description: the currently set version of the node
+          example: "0.35.0"
+        slash_points:
+          type: integer
+          format: int64
+          description: the accumulated slash points, reset at churn but excessive slash points may carry over
+          example: 42
+        jail:
+          type: object
+          title: NodeJail
+          properties:
+            node_address:
+              type: string
+              example: "tmaya1f3s7q037eancht7sg0aj995dht25rwrnu4ats5"
+            release_height:
+              type: integer
+              format: int64
+              example: 1234
+            reason:
+              type: string
+        observe_chains:
+          type: array
+          description: the last observed heights for all chain by the node
+          items:
+            type: object
+            title: ChainHeight
+            required:
+              - chain
+              - height
+            properties:
+              chain:
+                type: string
+                example: "BTC"
+              height:
+                type: integer
+                format: int64
+                example: 2000000
+        preflight_status:
+          type: object
+          title: NodePreflightStatus
+          required:
+            - status
+            - reason
+            - code
+          properties:
+            status:
+              type: string
+              description: the next status of the node
+              example: "Ready"
+            reason:
+              type: string
+              description: the reason for the transition to the next status
+              example: "OK"
+            code:
+              type: integer
+              format: int64
+              example: 0
+        bond_providers:
+          type: object
+          title: NodeBondProviders
+          required:
+            - node_operator_fee
+            - providers
+          properties:
+            node_address:
+              type: string
+            node_operator_fee:
+              type: string
+            providers:
+              type: array
+              items:
+                $ref: "#/components/schemas/NodeBondProvider"
+
+    NodeBondProvider:
+      type: object
+      required:
+        - bond_address
+        - bonded
+        - reward
+        - pools
+      title: NodeBondProvider
+      properties:
+        bond_address:
+          type: string
+        bonded:
+          type: boolean
+        reward:
+          type: string
+        pools:
+          type: object
+          description: Pools the Bond Provider is bonded from to that Node Address
+          additionalProperties:
+            type: string
+          example:
+            BTC.BTC: "1000000000"
+            ETH.ETH: "1000000000"
+
+    KeygenMetric:
+      type: object
+      required:
+        - node_tss_times
+      properties:
+        pub_key:
+          type: string
+        node_tss_times:
+          type: array
+          items:
+            type: object
+            title: NodeKeygenMetric
+            properties:
+              address:
+                type: string
+              tss_time:
+                type: string
+
+    MayanameSubaffiliate:
+      type: object
+      properties:
+        name:
+          type: string
+          example: "xyz"
+        bps:
+          type: integer
+          format: int64
+          example: 200
+
+    MayanameAlias:
+      type: object
+      properties:
+        chain:
+          type: string
+          example: "BTC"
+        address:
+          type: string
+          example: "bc1qn9esxuw8ca7ts8l6w66kdh800s09msvutydc46"
+
+    Mayaname:
+      type: object
+      required:
+        - preferred_asset
+        - aliases
+      properties:
+        name:
+          type: string
+          example: "maya"
+        expire_block_height:
+          type: integer
+          format: int64
+          example: 1234
+        owner:
+          type: string
+          example: "maya1f3s7q037eancht7sg0aj995dht25rwrnu4ats5"
+        preferred_asset:
+          type: string
+          example: "BTC.BTC"
+        preferred_asset_swap_threshold_cacao:
+          type: string
+          example: "1000"
+          description: Amount of CACAO currently required to swap to preferred asset (this is variable based on outbound fee of the asset).
+        affiliate_collector_cacao:
+          type: string
+          example: "100"
+          description: Amount of CACAO currently accrued by this mayaname in affiliate fees waiting to be swapped to preferred asset.
+        aliases:
+          type: array
+          items:
+            $ref: "#/components/schemas/MayanameAlias"
+        affiliate_bps:
+          type: integer
+          format: int64
+          example: 2000
+          description: Affiliate basis points for calculating affiliate fees, which are applied as the default basis points when the MAYAName is listed as an affiliate in swap memo.
+        subaffiliates:
+          type: array
+          items:
+            $ref: "#/components/schemas/MayanameSubaffiliate"
+          description: List of subaffiliates and the corresponding affiliate basis points. If a MAYAName is specified as an affiliate in a swap memo, the shares of the affiliate fee are distributed among the listed subaffiliates based on the basis points assigned to each subaffiliate.
+
+    BlockTx:
+      type: object
+      required:
+        - hash
+        - tx
+        - result
+      properties:
+        hash:
+          type: string
+          example: "223BF64D4A01074DC523A80E76B9BBC786C791FB0A1893AC5B14866356FCFD6C"
+        tx:
+          type: object
+          additionalProperties: true
+        result:
+          type: object
+          properties:
+            code:
+              type: integer
+              format: int64
+              example: 0
+            data:
+              type: string
+              example: ""
+            log:
+              type: string
+              example: "not enough gas"
+            info:
+              type: string
+              example: ""
+            gas_wanted:
+              type: string
+              example: "100"
+            gas_used:
+              type: string
+              example: "100"
+            events:
+              type: array
+              nullable: true
+              items:
+                type: object
+                additionalProperties:
+                  type: string
+            codespace:
+              type: string
+              example: "ibc"
+
+    QuoteFees:
+      type: object
+      required:
+        - asset
+        - liquidity
+        - total
+        - slippage_bps
+        - total_bps
+      properties:
+        asset:
+          type: string
+          example: "ETH.ETH"
+          description: the target asset used for all fees
+        affiliate:
+          type: string
+          example: "1234"
+          description: affiliate fee in the target asset
+        outbound:
+          type: string
+          example: "1234"
+          description: outbound fee in the target asset
+        liquidity:
+          type: string
+          example: "1234"
+          description: liquidity fees paid to pools in the target asset
+        total:
+          type: string
+          example: "9876"
+          description: total fees in the target asset
+        slippage_bps:
+          type: integer
+          format: int64
+          description: the swap slippage in basis points
+        total_bps:
+          type: integer
+          format: int64
+          description: total basis points in fees relative to amount out
+
+    # ------------------------------ responses ------------------------------
+
+    PoolResponse:
+      $ref: "#/components/schemas/Pool"
+
+    PoolsResponse:
+      type: array
+      items:
+        $ref: "#/components/schemas/Pool"
+
+    CACAOPoolResponse:
+      type: object
+      required:
+        - pol
+        - providers
+        - reserve
+      properties:
+        pol:
+          $ref: "#/components/schemas/POL"
+        providers:
+          type: object
+          required:
+            - units
+            - pending_units
+            - pending_cacao
+            - value
+            - pnl
+            - cacao_deposited
+            - cacao_withdrawn
+            - current_deposit
+          properties:
+            units:
+              type: string
+              example: "123456"
+              description: the units of CACAOPool owned by providers (including pending)
+            pending_units:
+              type: string
+              example: "123456"
+              description: the units of CACAOPool owned by providers that remain pending
+            pending_cacao:
+              type: string
+              example: "123456"
+              description: the amount of CACAO pending
+            value:
+              type: string
+              example: "123456"
+              description: the value of the provider share of the CACAOPool (includes pending CACAO)
+            pnl:
+              type: string
+              example: "123456"
+              description: the profit and loss of the provider share of the CACAOPool
+            current_deposit:
+              type: string
+              example: "123456"
+              description: the current CACAO deposited by providers
+        reserve:
+          type: object
+          required:
+            - units
+            - value
+            - pnl
+            - cacao_deposited
+            - cacao_withdrawn
+            - current_deposit
+          properties:
+            units:
+              type: string
+              example: "123456"
+              description: the units of CACAOPool owned by the reserve
+            value:
+              type: string
+              example: "123456"
+              description: the value of the reserve share of the CACAOPool
+            pnl:
+              type: string
+              example: "123456"
+              description: the profit and loss of the reserve share of the CACAOPool
+            current_deposit:
+              type: string
+              example: "123456"
+              description: the current CACAO deposited by the reserve
+
+    CACAOProviderResponse:
+      $ref: "#/components/schemas/CACAOProvider"
+
+    CACAOProvidersResponse:
+      type: array
+      items:
+        $ref: "#/components/schemas/CACAOProvider"
+
+    LiquidityProvidersResponse:
+      type: array
+      items:
+        $ref: "#/components/schemas/LiquidityProviderSummary"
+
+    LiquidityProviderResponse:
+      $ref: "#/components/schemas/LiquidityProvider"
+
+    SaverResponse:
+      $ref: "#/components/schemas/Saver"
+
+    SaversResponse:
+      type: array
+      items:
+        $ref: "#/components/schemas/Saver"
+
+    TxResponse:
+      type: object
+      properties:
+        observed_tx:
+          $ref: "#/components/schemas/ObservedTx"
+        consensus_height:
+          type: integer
+          format: int64
+          example: 7581321
+          description: the mayachain height at which the inbound reached consensus
+        finalised_height:
+          type: integer
+          format: int64
+          example: 7581334
+          description: the mayachain height at which the outbound was finalised
+        outbound_height:
+          type: integer
+          format: int64
+          example: 1234
+          description: the mayachain height for which the outbound was scheduled
+        keysign_metric:
+          $ref: "#/components/schemas/TssKeysignMetric"
+
+    TxDetailsResponse: &tx-details-response
+      type: object
+      required:
+        - tx
+        - txs
+        - actions
+        - out_txs
+      properties:
+        tx_id:
+          type: string
+          example: "CF524818D42B63D25BBA0CCC4909F127CAA645C0F9CD07324F2824CC151A64C7"
+        tx:
+          $ref: "#/components/schemas/ObservedTx"
+        txs:
+          type: array
+          items:
+            $ref: "#/components/schemas/ObservedTx"
+        actions:
+          type: array
+          items:
+            $ref: "#/components/schemas/TxOutItem"
+        out_txs:
+          type: array
+          items:
+            $ref: "#/components/schemas/Tx"
+        consensus_height:
+          type: integer
+          format: int64
+          example: 7581321
+          description: the mayachain height at which the inbound reached consensus
+        finalised_height:
+          type: integer
+          format: int64
+          example: 7581334
+          description: the mayachain height at which the outbound was finalised
+        updated_vault:
+          type: boolean
+          example: false
+        reverted:
+          type: boolean
+          example: false
+        outbound_height:
+          type: integer
+          format: int64
+          example: 1234
+          description: the mayachain height for which the outbound was scheduled
+
+    TxSignersResponse: *tx-details-response
+
+    TxStagesResponse:
+      type: object
+      required:
+        - inbound_observed
+      properties:
+        inbound_observed:
+          type: object
+          title: InboundObservedStage
+          required:
+            - final_count
+            - completed
+          properties:
+            started:
+              type: boolean
+              example: false
+              description: returns true if any nodes have observed the transaction (to be deprecated in favour of counts)
+            pre_confirmation_count:
+              type: integer
+              format: int64 # OpenAPI cannot generate a uint64 or int128 field, so using int64 instead.
+              example: 80
+              description: number of signers for pre-confirmation-counting observations
+            final_count:
+              type: integer
+              format: int64 # OpenAPI cannot generate a uint64 or int128 field, so using int64 instead.
+              example: 80
+              description: number of signers for final observations, after any confirmation counting complete
+            completed:
+              type: boolean
+              example: false
+              description: returns true if no transaction observation remains to be done
+        inbound_confirmation_counted:
+          type: object
+          title: InboundConfirmationCountedStage
+          required:
+            - completed
+          properties:
+            counting_start_height:
+              type: integer
+              format: int64
+              example: 1234
+              description: the MAYAChain block height when confirmation counting began
+            chain:
+              type: string
+              example: "BTC"
+              description: the external source chain for which confirmation counting takes place
+            external_observed_height:
+              type: integer
+              format: int64
+              example: 16042625
+              description: the block height on the external source chain when the transaction was observed
+            external_confirmation_delay_height:
+              type: integer
+              format: int64
+              example: 16042626
+              description: the block height on the external source chain when confirmation counting will be complete
+            remaining_confirmation_seconds:
+              type: integer
+              format: int64
+              example: 600
+              description: the estimated remaining seconds before confirmation counting completes
+            completed:
+              type: boolean
+              example: false
+              description: returns true if no transaction confirmation counting remains to be done
+        inbound_finalised:
+          type: object
+          title: InboundFinalisedStage
+          required:
+            - completed
+          properties:
+            completed:
+              type: boolean
+              example: false
+              description: returns true if the inbound transaction has been finalised (MAYAChain agreeing it exists)
+        swap_status:
+          type: object
+          title: SwapStatus
+          required:
+            - pending
+          properties:
+            pending:
+              type: boolean
+              example: false
+              description: true when awaiting a swap
+            streaming:
+              type: object
+              title: StreamingStatus
+              required:
+                - interval
+                - quantity
+                - count
+              properties:
+                interval:
+                  type: integer
+                  format: int64 # OpenAPI cannot generate a uint64 or int128 field, so using int64 instead.
+                  description: how often each swap is made, in blocks
+                quantity:
+                  type: integer
+                  format: int64 # OpenAPI cannot generate a uint64 or int128 field, so using int64 instead.
+                  description: the total number of swaps in a streaming swaps
+                count:
+                  type: integer
+                  format: int64 # OpenAPI cannot generate a uint64 or int128 field, so using int64 instead.
+                  description: the amount of swap attempts so far
+        swap_finalised:
+          type: object
+          title: SwapFinalisedStage
+          required:
+            - completed
+          properties:
+            completed:
+              type: boolean
+              example: false
+              description: (to be deprecated in favor of swap_status) returns true if an inbound transaction's swap (successful or refunded) is no longer pending
+        outbound_delay:
+          type: object
+          title: OutboundDelayStage
+          required:
+            - completed
+          properties:
+            remaining_delay_blocks:
+              type: integer
+              format: int64
+              example: 5
+              description: the number of remaining MAYAChain blocks the outbound will be delayed
+            remaining_delay_seconds:
+              type: integer
+              format: int64
+              example: 30
+              description: the estimated remaining seconds of the outbound delay before it will be sent
+            completed:
+              type: boolean
+              example: false
+              description: returns true if no transaction outbound delay remains
+        outbound_signed:
+          type: object
+          title: OutboundSignedStage
+          required:
+            - completed
+          properties:
+            scheduled_outbound_height:
+              type: integer
+              format: int64
+              example: 1234
+              description: MAYAChain height for which the external outbound is scheduled
+            blocks_since_scheduled:
+              type: integer
+              format: int64
+              example: 1234
+              description: MAYAChain blocks since the scheduled outbound height
+            completed:
+              type: boolean
+              example: false
+              description: returns true if an external transaction has been signed and broadcast (and observed in its mempool)
+
+    TxStatusResponse:
+      type: object
+      required:
+        - stages
+      properties:
+        tx:
+          $ref: "#/components/schemas/Tx"
+        planned_out_txs:
+          type: array
+          items:
+            type: object
+            title: PlannedOutTx
+            required:
+              - chain
+              - to_address
+              - coin
+              - refund
+            properties:
+              chain:
+                type: string
+                example: "BTC"
+              to_address:
+                type: string
+                example: "bcrt1qf3s7q037eancht7sg0aj995dht25rwrnqsf45e"
+              coin:
+                $ref: "#/components/schemas/Coin"
+              refund:
+                type: boolean
+                example: false
+                description: returns true if the planned transaction has a refund memo
+        out_txs:
+          type: array
+          items:
+            $ref: "#/components/schemas/Tx"
+        stages:
+          $ref: "#/components/schemas/TxStagesResponse"
+
+    NodeResponse:
+      $ref: "#/components/schemas/Node"
+
+    NodesResponse:
+      type: array
+      items:
+        $ref: "#/components/schemas/Node"
+
+    StreamingSwapsResponse:
+      type: array
+      items:
+        $ref: "#/components/schemas/StreamingSwap"
+
+    StreamingSwapResponse:
+      $ref: "#/components/schemas/StreamingSwap"
+
+    VaultsResponse:
+      type: array
+      items:
+        $ref: "#/components/schemas/Vault"
+
+    VaultResponse:
+      $ref: "#/components/schemas/Vault"
+
+    VaultPubkeysResponse:
+      type: object
+      required:
+        - asgard
+        - yggdrasil
+        - inactive
+      properties:
+        asgard:
+          type: array
+          items:
+            $ref: "#/components/schemas/VaultInfo"
+        yggdrasil:
+          type: array
+          items:
+            $ref: "#/components/schemas/VaultInfo"
+        inactive:
+          type: array
+          items:
+            $ref: "#/components/schemas/VaultInfo"
+
+    NetworkResponse:
+      type: object
+      required:
+        - bond_reward_cacao
+        - total_bond_units
+        - total_reserve
+        - total_asgard
+        - gas_spent_cacao
+        - gas_withheld_cacao
+      properties:
+        bond_reward_cacao:
+          type: string
+          example: "857134475040"
+          description: total amount of cacao awarded to node operators
+        total_bond_units:
+          type: string
+          example: "0"
+          description: total bonded cacao
+        total_reserve:
+          type: string
+          example: "21999180112172346"
+          description: total reserve cacao
+        total_asgard:
+          type: string
+          example: "21999180112172346"
+          description: total asgard cacao
+        gas_spent_cacao:
+          type: string
+          example: "1000000000"
+          description: Sum of the gas the network has spent to send outbounds
+        gas_withheld_cacao:
+          type: string
+          example: "1500000000"
+          description: Sum of the gas withheld from users to cover outbound gas
+        outbound_fee_multiplier:
+          type: string
+          example: "15000"
+          description: Current outbound fee multiplier, in basis points
+
+    POLResponse:
+      type: object
+      required:
+        - cacao_deposited
+        - cacao_withdrawn
+        - value
+        - pnl
+        - current_deposit
+      properties:
+        cacao_deposited:
+          type: string
+          example: "857134475040"
+          description: total amount of CACAO deposited into the pools
+        cacao_withdrawn:
+          type: string
+          example: "0"
+          description: total amount of CACAO withdrawn from the pools
+        value:
+          type: string
+          example: "21999180112172346"
+          description: total value of protocol's LP position in CACAO value
+        pnl:
+          type: string
+          example: "21999180112172346"
+          description: profit and loss of protocol owned liquidity
+        current_deposit:
+          type: string
+          example: "21999180112172346"
+          description: current amount of cacao deposited
+
+    InboundAddressesResponse:
+      type: array
+      items:
+        type: object
+        title: InboundAddress
+        required:
+          - halted
+        properties:
+          chain:
+            type: string
+            example: "BTC"
+          pub_key:
+            type: string
+            example: "mayapub1addwnpepq2jqhv5rdqlkusfxy05stfzcgslhhz5qh8pxetw5ry2aa6awgdh3shq8s82"
+          address:
+            type: string
+            example: "bc1qn9esxuw8ca7ts8l6w66kdh800s09msvutydc46"
+          router:
+            type: string
+          halted:
+            type: boolean
+            example: false
+          global_trading_paused:
+            type: boolean
+            example: false
+            description: "Returns true if trading is paused globally"
+          chain_trading_paused:
+            type: boolean
+            example: false
+            description: "Returns true if trading is paused for this chain"
+          chain_lp_actions_paused:
+            type: boolean
+            example: false
+            description: "Returns true if LP actions are paused for this chain"
+          gas_rate:
+            type: string
+            example: "214"
+            description: "The minimum fee rate used by vaults to send outbound TXs. The actual fee rate may be higher. For EVM chains this is returned in gwei (1e9)."
+          gas_rate_units:
+            type: string
+            example: "satsperbyte"
+            description: "Units of the gas_rate."
+          outbound_tx_size:
+            type: string
+            example: "1000"
+            description: "Avg size of outbound TXs on each chain. For UTXO chains it may be larger than average, as it takes into account vault consolidation txs, which can have many vouts"
+          outbound_fee:
+            type: string
+            example: "428000"
+            description: "The total outbound fee charged to the user for outbound txs in the gas asset of the chain."
+          dust_threshold:
+            type: string
+            example: "10000"
+            description: Defines the minimum transaction size for the chain in base units (sats, wei, uatom). Transactions with asset amounts lower than the dust_threshold are ignored.
+
+    LastBlockResponse:
+      type: array
+      items:
+        $ref: "#/components/schemas/LastBlock"
+
+    VersionResponse:
+      type: object
+      required:
+        - current
+        - next
+        - querier
+      properties:
+        current:
+          type: string
+          example: "0.17.0"
+          description: current version
+        next:
+          type: string
+          example: "0.18.0"
+          description: next version
+        querier:
+          type: string
+          example: "0.16.0"
+          description: querier version
+
+    ConstantsResponse:
+      type: object
+      properties:
+        int_64_values:
+          type: object
+          additionalProperties:
+            type: string
+          example:
+            AsgardSize: 40
+            BadValidatorRate: 43200
+        bool_values:
+          type: object
+          additionalProperties:
+            type: string
+          example:
+            StrictBondLiquidityRatio: true
+        string_values:
+          type: object
+          additionalProperties:
+            type: string
+          example:
+            DefaultPoolStatus: Staged
+
+    BanResponse:
+      type: object
+      properties:
+        node_address:
+          type: string
+          example: "maya1f3s7q037eancht7sg0aj995dht25rwrnu4ats5"
+        block_height:
+          type: integer
+          format: int64
+        signers:
+          type: array
+          items:
+            type: string
+            example: "maya1f3s7q037eancht7sg0aj995dht25rwrnu4ats5"
+
+    QueueResponse:
+      type: object
+      required:
+        - swap
+        - outbound
+        - internal
+        - scheduled_outbound_value
+      properties:
+        swap:
+          type: integer
+          format: int64
+          example: 0
+        outbound:
+          type: integer
+          format: int64
+          example: 10
+          description: number of signed outbound tx in the queue
+        internal:
+          type: integer
+          format: int64
+          example: 0
+        scheduled_outbound_value:
+          type: string
+          description: scheduled outbound value in CACAO
+
+    SwapQueueResponse:
+      type: array
+      items:
+        $ref: "#/components/schemas/MsgSwap"
+
+    OutboundResponse:
+      type: array
+      items:
+        $ref: "#/components/schemas/TxOutItem"
+
+    ScheduledResponse:
+      type: array
+      items:
+        $ref: "#/components/schemas/TxOutItem"
+
+    KeysignResponse:
+      type: object
+      required:
+        - keysign
+        - signature
+      properties:
+        keysign:
+          type: object
+          title: KeysignInfo
+          required:
+            - tx_array
+          properties:
+            height:
+              type: integer
+              format: int64
+              description: the block(s) in which a tx out item is scheduled to be signed and moved from the scheduled outbound queue to the outbound queue
+            tx_array:
+              type: array
+              items:
+                $ref: "#/components/schemas/TxOutItem"
+        signature:
+          type: string
+
+    KeygenResponse:
+      type: object
+      required:
+        - keygen_block
+        - signature
+      properties:
+        keygen_block:
+          type: object
+          title: KeygenBlock
+          required:
+            - keygens
+          properties:
+            height:
+              type: integer
+              format: int64
+              description: the height of the keygen block
+            keygens:
+              type: array
+              items:
+                type: object
+                title: keygen
+                properties:
+                  id:
+                    type: string
+                  type:
+                    type: string
+                  members:
+                    type: array
+                    items:
+                      type: string
+                      description: pubkeys of the keygen block member nodes
+        signature:
+          type: string
+
+    KeygenMetricsResponse:
+      type: array
+      items:
+        $ref: "#/components/schemas/KeygenMetric"
+
+    MetricsResponse:
+      type: object
+      properties:
+        keygen:
+          $ref: "#/components/schemas/KeygenMetricsResponse"
+        keysign:
+          type: object
+          title: KeysignMetrics
+          properties:
+            tx_id:
+              type: string
+            node_tss_times:
+              type: array
+              items:
+                $ref: "#/components/schemas/TssMetric"
+
+    MayanameResponse:
+      type: array
+      items:
+        type: object
+        title: Mayaname
+        properties:
+          name:
+            type: string
+            example: "maya"
+          chain:
+            type: string
+            example: "BTC"
+          address:
+            type: string
+            example: "bc1qd45uzetakjvdy5ynjjyp4nlnj89am88e4e5jeq"
+          expire_block_height:
+            type: integer
+            format: int64
+            example: 1234
+
+    TradeUnitResponse:
+      type: object
+      required:
+        - asset
+        - units
+        - depth
+      properties:
+        asset:
+          type: string
+          example: "BTC~BTC"
+          description: trade account asset with "~" separator
+        units:
+          type: string
+          description: total units of trade asset
+        depth:
+          type: string
+          description: total depth of trade asset
+
+    TradeUnitsResponse:
+      type: array
+      items:
+        $ref: "#/components/schemas/TradeUnitResponse"
+
+    TradeAccountResponse:
+      type: object
+      required:
+        - asset
+        - units
+        - owner
+      properties:
+        asset:
+          type: string
+          example: "BTC~BTC"
+          description: trade account asset with "~" separator
+        units:
+          type: string
+          description: units of trade asset belonging to this owner
+        owner:
+          type: string
+          description: maya address of trade account owner
+        last_add_height:
+          type: integer
+          format: int64
+          description: last mayachain height trade assets were added to trade account
+        last_withdraw_height:
+          type: integer
+          format: int64
+          description: last mayachain height trade assets were withdrawn from trade account
+
+    TradeAccountsResponse:
+      type: array
+      items:
+        $ref: "#/components/schemas/TradeAccountResponse"
+
+    MimirResponse:
+      type: object
+      additionalProperties:
+        type: string
+      example:
+        NODEOPERATORFEE: 2000
+        NUMBEROFNEWNODESPERCHURN: 2
+
+    MimirNodesResponse:
+      type: object
+      properties:
+        mimirs:
+          type: array
+          items:
+            type: object
+            title: MimirVote
+            properties:
+              key:
+                type: string
+              value:
+                type: integer
+                format: int64
+              signer:
+                type: string
+
+    InvariantResponse:
+      type: object
+      required:
+        - invariant
+        - broken
+        - msg
+      properties:
+        invariant:
+          type: string
+          example: asgard
+          description: The name of the invariant.
+        broken:
+          type: boolean
+          example: false
+          description: Returns true if the invariant is broken.
+        msg:
+          type: array
+          items:
+            type: string
+          example: ["insolvent: 200000cacao", "oversolvent: 1btc/btc"]
+          description: Informative message about the invariant result.
+
+    InvariantsResponse:
+      type: object
+      properties:
+        invariants:
+          type: array
+          items:
+            type: string
+
+    BlockResponse:
+      type: object
+      required:
+        - "id"
+        - "header"
+        - "begin_block_events"
+        - "end_block_events"
+        - "txs"
+      properties:
+        id:
+          type: object
+          required:
+            - "hash"
+            - "parts"
+          properties:
+            hash:
+              type: string
+              example: "112BC173FD838FB68EB43476816CD7B4C6661B6884A9E357B417EE957E1CF8F7"
+            parts:
+              type: object
+              required:
+                - "total"
+                - "hash"
+              properties:
+                total:
+                  type: integer
+                  format: int64
+                  example: 1
+                hash:
+                  type: string
+                  example: "38D4B26B5B725C4F13571EFE022C030390E4C33C8CF6F88EDD142EA769642DBD"
+        header:
+          type: object
+          required:
+            - "version"
+            - "chain_id"
+            - "height"
+            - "time"
+            - "last_block_id"
+            - "last_commit_hash"
+            - "data_hash"
+            - "validators_hash"
+            - "next_validators_hash"
+            - "consensus_hash"
+            - "app_hash"
+            - "last_results_hash"
+            - "evidence_hash"
+            - "proposer_address"
+          properties:
+            version:
+              required:
+                - "block"
+                - "app"
+              properties:
+                block:
+                  type: string
+                  example: "10"
+                app:
+                  type: string
+                  example: "0"
+              type: object
+            chain_id:
+              type: string
+              example: "cosmoshub-2"
+            height:
+              type: integer
+              format: int64
+              example: 123
+            time:
+              type: string
+              example: "2019-04-22T17:01:51.701356223Z"
+            last_block_id:
+              type: object
+              required:
+                - "hash"
+                - "parts"
+              properties:
+                hash:
+                  type: string
+                  example: "112BC173FD838FB68EB43476816CD7B4C6661B6884A9E357B417EE957E1CF8F7"
+                parts:
+                  type: object
+                  required:
+                    - "total"
+                    - "hash"
+                  properties:
+                    total:
+                      type: integer
+                      format: int64
+                      example: 1
+                    hash:
+                      type: string
+                      example: "38D4B26B5B725C4F13571EFE022C030390E4C33C8CF6F88EDD142EA769642DBD"
+            last_commit_hash:
+              type: string
+              example: "21B9BC845AD2CB2C4193CDD17BFC506F1EBE5A7402E84AD96E64171287A34812"
+            data_hash:
+              type: string
+              example: "970886F99E77ED0D60DA8FCE0447C2676E59F2F77302B0C4AA10E1D02F18EF73"
+            validators_hash:
+              type: string
+              example: "D658BFD100CA8025CFD3BECFE86194322731D387286FBD26E059115FD5F2BCA0"
+            next_validators_hash:
+              type: string
+              example: "D658BFD100CA8025CFD3BECFE86194322731D387286FBD26E059115FD5F2BCA0"
+            consensus_hash:
+              type: string
+              example: "0F2908883A105C793B74495EB7D6DF2EEA479ED7FC9349206A65CB0F9987A0B8"
+            app_hash:
+              type: string
+              example: "223BF64D4A01074DC523A80E76B9BBC786C791FB0A1893AC5B14866356FCFD6C"
+            last_results_hash:
+              type: string
+              example: ""
+            evidence_hash:
+              type: string
+              example: ""
+            proposer_address:
+              type: string
+              example: "D540AB022088612AC74B287D076DBFBC4A377A2E"
+        begin_block_events:
+          type: array
+          items:
+            type: object
+            additionalProperties:
+              type: string
+        end_block_events:
+          type: array
+          items:
+            type: object
+            additionalProperties:
+              type: string
+        txs:
+          type: array
+          nullable: true
+          items:
+            $ref: "#/components/schemas/BlockTx"
+
+    baseQuoteResponse:
+      properties: &quote-properties
+        inbound_address:
+          type: string
+          description: the inbound address for the transaction on the source chain
+          example: "bc1qjk3xzu5slu7mtmc8jc9yed3zqvkhkttm700g9a"
+        inbound_confirmation_blocks:
+          type: integer
+          format: int64
+          description: the approximate number of source chain blocks required before processing
+        inbound_confirmation_seconds:
+          type: integer
+          format: int64
+          description: the approximate seconds for block confirmations required before processing
+        outbound_delay_blocks:
+          type: integer
+          format: int64
+          description: the number of mayachain blocks the outbound will be delayed
+        outbound_delay_seconds:
+          type: integer
+          format: int64
+          description: the approximate seconds for the outbound delay before it will be sent
+        fees:
+          $ref: "#/components/schemas/QuoteFees"
+        router:
+          type: string
+          description: the EVM chain router contract address
+          example: "0x3624525075b88B24ecc29CE226b0CEc1fFcB6976"
+        expiry:
+          type: integer
+          format: int64
+          description: expiration timestamp in unix seconds
+          example: 1671660285
+        warning:
+          type: string
+          description: static warning message
+          example: Do not cache this response. Do not send funds after the expiry.
+        notes:
+          type: string
+          description: chain specific quote notes
+          example: Transfer the inbound_address the asset with the memo. Do not use multi-in, multi-out transactions.
+        dust_threshold:
+          type: string
+          example: "10000"
+          description: Defines the minimum transaction size for the chain in base units (sats, wei, uatom). Transactions with asset amounts lower than the dust_threshold are ignored.
+        recommended_min_amount_in:
+          type: string
+          description: The recommended minimum inbound amount for this transaction type & inbound asset. Sending less than this amount could result in failed refunds.
+          example: "15000"
+        recommended_gas_rate:
+          type: string
+          example: "10"
+          description: the recommended gas rate to use for the inbound to ensure timely confirmation
+        gas_rate_units:
+          type: string
+          example: "gwei"
+          description: the units of the recommended gas rate
+
+    QuoteSwapResponse:
+      type: object
+      required:
+        - expected_amount_out
+        - outbound_delay_blocks
+        - outbound_delay_seconds
+        - fees
+        - warning
+        - notes
+        - expiry
+      properties:
+        <<: *quote-properties
+        memo:
+          type: string
+          description: generated memo for the swap
+          example: "=:ETH.ETH:0x1c7b17362c84287bd1184447e6dfeaf920c31bbe:1440450000:maya17gw75axcnr8747pkanye45pnrwk7p9c3cqncsv:100"
+        expected_amount_out:
+          type: string
+          description: the amount of the target asset the user can expect to receive after fees
+          example: "10000"
+        max_streaming_quantity:
+          type: integer
+          format: int64
+          description: the maximum amount of trades a streaming swap can do for a trade
+          example: 10
+        streaming_swap_blocks:
+          type: integer
+          format: int64
+          description: the number of blocks the streaming swap will execute over
+          example: 100
+        streaming_swap_seconds:
+          type: integer
+          format: int64
+          description: approx the number of seconds the streaming swap will execute over
+          example: 600
+        total_swap_seconds:
+          type: integer
+          format: int64
+          description: total number of seconds a swap is expected to take (inbound conf + streaming swap + outbound delay)
+          example: 600
+
+    QuoteSaverDepositResponse:
+      type: object
+      required:
+        - memo
+        - inbound_address
+        - expected_amount_deposit
+        - fees
+        - slippage_bps
+        - warning
+        - notes
+        - expiry
+        - recommended_gas_rate
+        - gas_rate_units
+      properties:
+        <<: *quote-properties
+        memo:
+          type: string
+          description: generated memo for the deposit
+          example: "+:ETH/ETH::maya17gw75axcnr8747pkanye45pnrwk7p9c3chd5xu:100"
+        expected_amount_out:
+          type: string
+          description: same as expected_amount_deposit, to be deprecated in favour of expected_amount_deposit
+          example: "10000"
+        expected_amount_deposit:
+          type: string
+          description: the amount of the target asset the user can expect to deposit after fees
+          example: "10000"
+
+    QuoteSaverWithdrawResponse:
+      type: object
+      required:
+        - inbound_address
+        - expected_amount_out
+        - dust_amount
+        - memo
+        - outbound_delay_blocks
+        - outbound_delay_seconds
+        - fees
+        - slippage_bps
+        - warning
+        - notes
+        - expiry
+        - recommended_gas_rate
+        - gas_rate_units
+      properties:
+        <<: *quote-properties
+        memo:
+          type: string
+          description: generated memo for the withdraw, the client can use this OR send the dust amount
+          example: "-:ETH.ETH:0x1c7b17362c84287bd1184447e6dfeaf920c31bbe:1440450000:maya17gw75axcnr8747pkanye45pnrwk7p9c3cqncsv:100"
+        dust_amount:
+          type: string
+          description: the dust amount of the target asset the user should send to initialize the withdraw, the client can send this OR provide the memo
+          example: "10000"
+        expected_amount_out:
+          type: string
+          description: the amount of the target asset the user can expect to withdraw after fees in 1e8 decimals
+          example: "10000"

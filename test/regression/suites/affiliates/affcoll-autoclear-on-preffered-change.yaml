@@ -1,0 +1,77 @@
+{{ template "default-state.yaml" }}
+---
+{{ template "btc-pool-state.yaml" }}
+---
+type: state
+genesis:
+  app_state:
+    mayachain:
+      mayanames:
+        - name: dx
+          expire_block_height: "100000000"
+          owner: "{{ addr_maya_cat }}"
+          preferred_asset: "MAYA.CACAO"
+          aliases:
+            - chain: "CACAO"
+              address: {{ addr_maya_cat }}
+            - chain: "MAYA"
+              address: {{ addr_maya_cat }}
+            - chain: "THOR"
+              address: "thor1rr6rahhd4sy76a7rdxkjaen2q4k4pw2g06w7qp"
+      affiliate_collectors:
+        - owner_address: {{ addr_maya_cat }}
+          cacao_amount: "${AFFCOLL_BALANCE=112626790971391}"
+      affiliate_collector_module: "${AFFCOLL_BALANCE}"
+---
+type: create-blocks
+count: 1
+---
+########################################################################################
+# Check MAYANames's settgings
+########################################################################################
+type: check
+endpoint: http://localhost:1317/mayachain/mayaname/dx
+asserts:
+  - .name == "dx"
+  - .expire_block_height == 100000000
+  - .owner == "{{ addr_maya_cat }}"
+  - .preferred_asset == "MAYA.CACAO"
+  - .affiliate_collector_cacao == "${AFFCOLL_BALANCE}"
+  - .aliases[0].chain == "CACAO"
+  - .aliases[0].address == "{{ addr_maya_cat }}"
+  - .aliases[1].chain == "MAYA"
+  - .aliases[1].address == "{{ addr_maya_cat }}"
+  - .aliases[2].chain == "THOR"
+  - .aliases[2].address == "thor1rr6rahhd4sy76a7rdxkjaen2q4k4pw2g06w7qp"
+---
+# save 'dx' (addr_maya_cat) cacao balance
+type: check
+endpoint: http://localhost:1317/cosmos/bank/v1beta1/balances/{{ addr_maya_cat }}
+asserts:
+  - .balances[]|select(.denom=="cacao")|.amount|tonumber == ${CAT_BALANCE=2500000000000000}
+---
+########################################################################################
+# swap
+########################################################################################
+type: tx-deposit
+signer: {{ addr_maya_cat }}
+coins:
+  - amount: "${GAS=2000000000}"
+    asset: "cacao"
+memo: "~:dx::::MAYA.CACAO"
+---
+type: create-blocks
+count: 1
+---
+# affiliate collector amount and preferred asset should be cleared
+type: check
+endpoint: http://localhost:1317/mayachain/mayaname/dx
+asserts:
+  - .affiliate_collector_cacao|tonumber == 0
+  - .preferred_asset == "."
+---
+# previous affiliate collector balance should be added to 'dx' (addr_maya_cat)
+type: check
+endpoint: http://localhost:1317/cosmos/bank/v1beta1/balances/{{ addr_maya_cat }}
+asserts:
+  - .balances[]|select(.denom=="cacao")|.amount|tonumber == ${CAT_BALANCE}+${AFFCOLL_BALANCE}-2*${GAS}

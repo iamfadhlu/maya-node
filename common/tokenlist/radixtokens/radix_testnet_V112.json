@@ -1,0 +1,14 @@
+[
+  {
+    "address": "resource_loc1tknxxxxxxxxxradxrdxxxxxxxxx009923554798xxxxxxxxxvq32hv",
+    "name": "Radix",
+    "symbol": "XRD",
+    "decimals": 18
+  },
+  {
+    "address": "resource_loc1th5r2tn083j0wj8pqs2y44a39hvxn6gcygfelh97yff69sja08u0rc",
+    "name": "Test token",
+    "symbol": "TEST",
+    "decimals": 10
+  }
+]

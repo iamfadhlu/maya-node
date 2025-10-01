@@ -1,0 +1,83 @@
+{{ template "default-state.yaml" }}
+---
+type: create-blocks
+count: 1
+---
+type: check
+endpoint: http://localhost:1317/cosmos/bank/v1beta1/balances/{{ addr_maya_fox }}
+asserts:
+  - .balances|length == 1
+  - .balances[]|select(.denom == "cacao")|.amount|tonumber == 2500000000000000
+---
+type: tx-deposit
+signer: {{ addr_maya_fox }}
+coins:
+  - amount: "2500000000000000"
+    asset: "cacao"
+memo: "bond:::{{ addr_maya_fox }}"
+---
+type: create-blocks
+count: 1
+---
+type: check
+endpoint: http://localhost:1317/auth/accounts/{{ addr_maya_fox }}
+asserts:
+  - .result.value.sequence == "1"
+---
+type: check
+endpoint: http://localhost:1317/cosmos/bank/v1beta1/balances/{{ addr_maya_fox }}
+asserts:
+  - .balances|length == 1
+  - .balances[]|select(.denom == "cacao")|.amount|tonumber == 2500000000000000
+---
+type: check
+endpoint: http://localhost:1317/mayachain/node/{{ addr_maya_fox }}
+asserts:
+  - .bond == "0"
+---
+type: check
+endpoint: http://localhost:1317/mayachain/block
+asserts:
+  - .txs|length == 1
+  - .txs[0]|.result.log|contains("insufficient funds")
+#---
+## Currently we don't support single side cacao bonding
+#type: tx-deposit
+#signer: {{ addr_maya_fox }}
+#coins:
+#  - amount: "2499996000000"
+#    asset: "cacao"
+#memo: "bond:{{ addr_maya_dog }}:{{ addr_maya_fox }}"
+#---
+#type: create-blocks
+#count: 1
+#---
+#type: check
+#endpoint: http://localhost:1317/auth/accounts/{{ addr_maya_fox }}
+#asserts:
+#  - .result.value.sequence == "2"
+#---
+#type: check
+#endpoint: http://localhost:1317/mayachain/node/{{ addr_maya_fox }}
+#asserts:
+#  - .bond == "2499996000000"
+#---
+#type: check
+#endpoint: http://localhost:1317/cosmos/bank/v1beta1/balances/{{ addr_maya_fox }}
+#asserts:
+#  - .balances|length == 0
+#---
+#type: tx-deposit
+#signer: {{ addr_maya_fox }}
+#coins:
+#  - amount: "1"
+#    asset: "cacao"
+#memo: "bond:{{ addr_maya_fox }}"
+#---
+#type: create-blocks
+#count: 1
+#---
+#type: check
+#endpoint: http://localhost:1317/auth/accounts/{{ addr_maya_fox }}
+#asserts:
+#  - .result.value.sequence == "2"

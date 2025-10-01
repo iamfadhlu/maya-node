@@ -1,0 +1,73 @@
+{
+  "name": "@mayaprotocol/zcash-ts",
+  "version": "1.0.1",
+  "main": "dist/index.js",
+  "types": "dist/index.d.ts",
+  "files": [
+    "dist",
+    "*.node",
+    "README.md",
+    "LICENSE"
+  ],
+  "scripts": {
+    "build": "tsc",
+    "test": "jest",
+    "test:watch": "jest --watch",
+    "test:coverage": "jest --coverage",
+    "test:verbose": "jest --verbose",
+    "test:e2e": "jest --testNamePattern='Regtest E2E'",
+    "regtest:up": "docker compose up -d && sleep 30",
+    "regtest:down": "docker compose down -v",
+    "regtest:logs": "docker compose logs -f",
+    "clean": "rm -rf dist coverage",
+    "prepublishOnly": "npm run build"
+  },
+  "author": "Maya Protocol",
+  "license": "MIT",
+  "description": "Advanced TypeScript Zcash library for Maya Protocol with full transaction building capabilities",
+  "keywords": [
+    "zcash",
+    "cryptocurrency",
+    "blockchain",
+    "maya-protocol",
+    "napi",
+    "rust",
+    "transaction-building"
+  ],
+  "repository": {
+    "type": "git",
+    "url": "https://gitlab.com/mayachain/mayanode.git",
+    "directory": "chain/zec/ts"
+  },
+  "homepage": "https://gitlab.com/mayachain/mayanode/tree/develop/chain/zec/ts",
+  "engines": {
+    "node": ">=16"
+  },
+  "os": [
+    "linux",
+    "darwin"
+  ],
+  "cpu": [
+    "x64",
+    "arm64"
+  ],
+  "dependencies": {
+    "@noble/curves": "^1.7.0",
+    "@noble/hashes": "^1.6.1",
+    "axios": "^1.7.9",
+    "blake2b-wasm": "^2.4.0",
+    "bs58check": "^4.0.0",
+    "json-rpc-2.0": "^1.7.0",
+    "lodash": "^4.17.21"
+  },
+  "devDependencies": {
+    "@types/blake2b-wasm": "^2.4.3",
+    "@types/jest": "^29.5.14",
+    "@types/lodash": "^4.17.13",
+    "@types/node": "^22.0.0",
+    "jest": "^29.7.0",
+    "ts-jest": "^29.2.5",
+    "ts-node": "^10.9.2",
+    "typescript": "^5.7.2"
+  }
+}

@@ -1,0 +1,31 @@
+[package]
+name = "maya_router"
+version = "1.0.0"
+edition = "2021"
+
+[dependencies]
+sbor = { version = "1.2.0" }
+scrypto = { version = "1.2.0" }
+
+[dev-dependencies]
+scrypto-test = { version = "1.2.0" }
+scrypto-compiler = { version = "1.2.0" }
+radix-engine = { version = "1.2.0" }
+strum = { version = "0.26.2", features = ["derive"] }
+strum_macros = { version = "0.26.2" }
+
+[profile.release]
+opt-level = 'z'        # Optimize for size.
+lto = true             # Enable Link Time Optimization.
+codegen-units = 1      # Reduce number of codegen units to increase optimizations.
+panic = 'abort'        # Abort on panic.
+strip = true           # Strip the symbols.
+overflow-checks = true # Panic in the case of an overflow.
+
+[features]
+default = []
+
+[lib]
+crate-type = ["cdylib", "lib"]
+
+[workspace]

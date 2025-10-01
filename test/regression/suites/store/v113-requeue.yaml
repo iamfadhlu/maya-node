@@ -1,0 +1,254 @@
+type: state
+genesis:
+  initial_height: "5"
+  app_state:
+    auth:
+      accounts:
+        - "@type": /cosmos.auth.v1beta1.ModuleAccount
+          base_account:
+            account_number: "0"
+            address: {{ addr_module_transfer }}
+            pub_key: ~
+            sequence: "0"
+          name: transfer
+          permissions:
+            - minter
+            - burner
+        - "@type": /cosmos.auth.v1beta1.ModuleAccount
+          base_account:
+            account_number: "1"
+            address: {{ addr_module_asgard }}
+            pub_key: ~
+            sequence: "0"
+          name: asgard
+          permissions: []
+        - "@type": /cosmos.auth.v1beta1.BaseAccount
+          address: tmaya1kj0kxul6ul8fr5mpq50u8kl066kk64gpunkjr4
+          pub_key: null
+          account_number: "2"
+          sequence: "0"
+    bank:
+      balances:
+        - address: {{ addr_module_asgard }}
+          coins:
+            - amount: "100000000000000"
+              denom: cacao
+        - address: {{ addr_maya_dog }}
+          coins:
+            - denom: cacao
+              amount: "1000000000000000"
+      params:
+        default_send_enabled: true
+    mayachain:
+      store_version: "112"
+      pools:
+        - asset: BTC.BTC
+          status: Available
+          status_since: "0"
+          decimals: "8"
+          balance_cacao: "1000000000000000"
+          balance_asset: "0"
+          LP_units: "1000000000000000"
+          synth_units: "0"
+          pending_inbound_cacao: "0"
+          pending_inbound_asset: "0"
+      liquidity_providers:
+        - asset: "BTC.BTC"
+          cacao_address: {{ addr_maya_dog }}
+          asset_address: ""
+          last_add_height: "1"
+          last_withdraw_height: "0"
+          units: "1000000000000000"
+          pending_cacao: "0"
+          pending_asset: "0"
+          pending_tx_Id: ""
+          cacao_deposit_value: "0"
+          asset_deposit_value: "0"
+          node_bond_address: null
+          withdraw_counter: "0"
+          last_withdraw_counter_height: "0"
+          bonded_nodes:
+            - node_address: {{ addr_maya_dog }}
+              units: "1000000000000000"
+      bond_providers:
+        - node_address: {{ addr_maya_dog }}
+          node_operator_fee: "0"
+          providers:
+            - bond_address: {{ addr_maya_dog }}
+              bonded: true
+              reward: "0"
+      node_accounts:
+        - active_block_height: "0"
+          ip_address: 1.1.1.1
+          node_address: {{ addr_maya_dog }}
+          bond_address: {{ addr_maya_dog }}
+          pub_key_set:
+            secp256k1: {{ pubkey_dog }}
+            ed25519: "tmayapub1addwnpepqfshsq2y6ejy2ysxmq4gj8n8mzuzyulk9wh4n946jv5w2vpwdn2yuz3v0gx"
+          signer_membership: []
+          status: Active
+          # matches the priv_validator_key.json mounted in the test container
+          validator_cons_pub_key: tmayacpub1zcjduepqq75h7uy6qhesh9d3a9tuk0mzrnc46u8rye44ze6peua3zmpfh23qpj8pe3
+          version: "1.112.0"
+      observed_tx_in_voters:
+        - tx_id: "431A6446957894DF77FA4220844990898F96BF46E1C8752910386A299AF72455"
+          height: "1"
+          tx:
+            status: "done"
+            out_hashes:
+              - "0606EF45F20F9404282FD70EA6FA8A71F82D17047D8B47F74FBA2B399E8EE2D2"
+            block_height: "1"
+            signers: []
+            observed_pub_key: {{ pubkey_fox }}
+            keysign_ms: "0"
+            finalise_height: "1"
+            tx:
+              id: "431A6446957894DF77FA4220844990898F96BF46E1C8752910386A299AF72455"
+              chain: "MAYA"
+              from_address: tmaya1kj0kxul6ul8fr5mpq50u8kl066kk64gpunkjr4
+              to_address: tmaya1g98cy3n9mmjrpn0sxmn63lztelera37nqzk5v2
+              coins:
+                - asset: "MAYA.CACAO"
+                  amount: "30000000000000"
+                  decimals: "8"
+              gas:
+                - asset: "MAYA.CACAO"
+                  amount: "2000000000"
+                  decimals: "8"
+              memo: "=:a:0x0d894EeE5239666C6856918EB952B4D8e2ae6849:0/3/0:moca:30"
+          txs:
+            - status: "done"
+              out_hashes:
+                - "0606EF45F20F9404282FD70EA6FA8A71F82D17047D8B47F74FBA2B399E8EE2D2"
+              block_height: "1"
+              signers: []
+              observed_pub_key: {{ pubkey_fox }}
+              keysign_ms: "0"
+              finalise_height: "1"
+              tx:
+                id: "431A6446957894DF77FA4220844990898F96BF46E1C8752910386A299AF72455"
+                chain: "MAYA"
+                from_address: tmaya1kj0kxul6ul8fr5mpq50u8kl066kk64gpunkjr4
+                to_address: tmaya1g98cy3n9mmjrpn0sxmn63lztelera37nqzk5v2
+                coins:
+                  - asset: "MAYA.CACAO"
+                    amount: "30000000000000"
+                    decimals: "8"
+                gas:
+                  - asset: "MAYA.CACAO"
+                    amount: "2000000000"
+                    decimals: "8"
+                memo: "=:a:0x0d894EeE5239666C6856918EB952B4D8e2ae6849:0/3/0:moca:30"
+          actions:
+            - chain: "ARB"
+              to_address: "0x0d894EeE5239666C6856918EB952B4D8e2ae6849"
+              vault_pub_key: {{ pubkey_fox }}
+              coin:
+                asset: "ARB.ETH"
+                amount: "49623274"
+                decimals: "8"
+              memo: "OUT:431A6446957894DF77FA4220844990898F96BF46E1C8752910386A299AF72455"
+              max_gas:
+                - asset: "ARB.ETH"
+                  amount: "4500"
+                  decimals: "8"
+              gas_rate: "9"
+              in_hash: "431A6446957894DF77FA4220844990898F96BF46E1C8752910386A299AF72455"
+          out_txs:
+            - id: "0606EF45F20F9404282FD70EA6FA8A71F82D17047D8B47F74FBA2B399E8EE2D2"
+              chain: "ARB"
+              from_address: "0xd5351f53b6a577ae229b4629152b7ae700815075"
+              to_address: "0x0d894EeE5239666C6856918EB952B4D8e2ae6849"
+              coins:
+                - asset: "ARB.ETH"
+                  amount: "49623274"
+                  decimals: "8"
+              gas:
+                - asset: "ARB.ETH"
+                  amount: "4500"
+                  decimals: "8"
+              memo: "OUT:431A6446957894DF77FA4220844990898F96BF46E1C8752910386A299AF72455"
+          finalised_height: "1"
+          outbound_height: "1"
+      observed_tx_out_voters:
+        - tx_id: "0606EF45F20F9404282FD70EA6FA8A71F82D17047D8B47F74FBA2B399E8EE2D2"
+          finalised_height: "1"
+          updated_vault: true
+          reverted: false
+          height: "1"
+          tx:
+            status: "done"
+            observed_pub_key: {{ pubkey_fox }}
+            signers:
+              - {{ pubkey_fox }}
+            tx:
+              id: "0606EF45F20F9404282FD70EA6FA8A71F82D17047D8B47F74FBA2B399E8EE2D2"
+              memo: "OUT:431A6446957894DF77FA4220844990898F96BF46E1C8752910386A299AF72455"
+              chain: "ARB"
+              from_address: "0xd5351f53b6a577ae229b4629152b7ae700815075"
+              to_address: "0x0d894EeE5239666C6856918EB952B4D8e2ae6849"
+              coins:
+                - asset: "ARB.ETH"
+                  amount: "49623274"
+                  decimals: "8"
+              gas:
+                - asset: "ARB.ETH"
+                  amount: "4500"
+                  decimals: "8"
+      vaults:
+        - block_height: "0"
+          chains:
+            - MAYA
+            - BTC
+            - ETH
+            - ARB
+          coins:
+            - amount: "200000000"
+              asset: BTC.BTC
+              decimals: "8"
+            - amount: "1000000000"
+              asset: ETH.ETH
+              decimals: "8"
+            - amount: "100000000000"
+              asset: ETH.USDX-0X9999999999999999999999999999999999999999
+              decimals: "6"
+            - amount: "100000000000"
+              asset: ETH.USDY-0X9999999999999999999999999999999999999999
+              decimals: "8"
+            - amount: "100000000000"
+              asset: ETH.USDZ-0X9999999999999999999999999999999999999999
+              decimals: "8"
+          inbound_tx_count: "3"
+          membership:
+            - tmayapub1addwnpepqfshsq2y6ejy2ysxmq4gj8n8mzuzyulk9wh4n946jv5w2vpwdn2yuz3v0gx
+          pub_key: tmayapub1addwnpepqfshsq2y6ejy2ysxmq4gj8n8mzuzyulk9wh4n946jv5w2vpwdn2yuz3v0gx
+          status: ActiveVault
+          type: AsgardVault
+---
+type: create-blocks
+count: 1
+---
+type: tx-version
+signer: {{ addr_maya_dog }}
+version: "1.113.0"
+---
+type: check
+endpoint: http://localhost:1317/mayachain/queue/outbound
+asserts:
+  - .|length == 0
+---
+type: create-blocks
+count: 2
+---
+type: check
+endpoint: http://localhost:1317/mayachain/queue/outbound
+asserts:
+  - .|length == 1
+  - .[0].in_hash == "431A6446957894DF77FA4220844990898F96BF46E1C8752910386A299AF72455"
+  - .[0].coin.asset == "ARB.ETH"
+  - .[0].coin.amount|tonumber == 49623274
+---
+type: check
+endpoint: http://localhost:1317/mayachain/vaults/asgard
+asserts:
+  - .[0].coins[]|select(.asset == "ARB.ETH").amount|tonumber == 49627774 # 49623274 + 4500

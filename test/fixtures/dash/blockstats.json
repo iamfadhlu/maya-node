@@ -1,0 +1,31 @@
+{
+  "result": {
+    "avgfee": 6555,
+    "avgfeerate": 11,
+    "avgtxsize": 579,
+    "blockhash": "0000000000000002cb2f0d030e9744cd6d93b913b80958b232e4f0b84d828ecf",
+    "height": 1500000,
+    "ins": 178,
+    "maxfee": 100201,
+    "maxfeerate": 446,
+    "maxtxsize": 8748,
+    "medianfee": 376,
+    "medianfeerate": 1,
+    "mediantime": 1625605344,
+    "mediantxsize": 226,
+    "minfee": 0,
+    "minfeerate": 0,
+    "mintxsize": 191,
+    "outs": 217,
+    "subsidy": 267867322,
+    "time": 1625606293,
+    "total_out": 72051181794,
+    "total_size": 34173,
+    "totalfee": 386762,
+    "txs": 60,
+    "utxo_increase": 39,
+    "utxo_size_inc": 2946
+  },
+  "error": null,
+  "id": 1
+}

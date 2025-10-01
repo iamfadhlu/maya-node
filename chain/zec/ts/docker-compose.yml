@@ -1,0 +1,13 @@
+services:
+  zcash-regtest:
+    image: electriccoinco/zcashd:v6.2.0
+    container_name: zcash-regtest-e2e
+    ports:
+      - "18232:18232" # RPC port for regtest
+      - "18233:18233" # P2P port for regtest
+    volumes:
+      - "./regtest-setup.sh:/srv/zcashd/regtest-setup.sh"
+      - "./zcash.conf:/srv/zcashd/.zcash/zcash.conf"
+    environment:
+      - ZCASH_NETWORK=regtest
+    entrypoint: /srv/zcashd/regtest-setup.sh

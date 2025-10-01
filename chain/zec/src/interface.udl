@@ -1,0 +1,61 @@
+[Error]
+enum ZecError {
+    "GenericError",
+    "InvalidVaultPubkey",
+    "InvalidAddress",
+    "InitError",
+    "InvalidMemo",
+    "InvalidAmount",
+};
+
+ enum Network {
+    "Main",
+    "Regtest",
+    "Test",
+};
+
+dictionary UTXO {
+    string txid;
+    u32 height;
+    u32 vout;
+    string script;
+    u64 value;
+};
+
+dictionary Output {
+    string address;
+    u64 amount;
+    string memo;
+};
+
+dictionary PartialTx {
+    u32 height;
+    bytes txid;
+    sequence<UTXO> inputs;
+    sequence<Output> outputs;
+    u64 fee;
+    sequence<bytes> sighashes;
+    u32 expiry_height;
+    u32 version;
+};
+
+namespace zec {
+    [Throws=ZecError]
+    void init_zec();
+
+    [Throws=ZecError]
+    PartialTx build_ptx(bytes vault, PartialTx ptx, Network network);
+
+    [Throws=ZecError]
+    bytes apply_signatures(bytes vault, PartialTx ptx, sequence<bytes> signatures, Network network);
+
+    [Throws=ZecError]
+    bytes get_ovk(bytes vault);
+
+    [Throws=ZecError]
+    string compute_txid(bytes vault, PartialTx ptx, Network network);
+
+    // unused - already ported into Go
+    [Throws=ZecError]
+    void validate_address(string address, Network network);
+};

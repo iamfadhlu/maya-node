@@ -1,0 +1,128 @@
+{{ template "default-state.yaml" }}
+---
+type: state
+genesis:
+  app_state:
+    bank:
+      balances:
+        - address: {{ addr_module_asgard }}
+          coins:
+            - amount: "100000000000000"
+              denom: cacao
+    mayachain:
+      pools:
+        - asset: BTC.BTC
+          status: Available
+          status_since: "0"
+          decimals: "8"
+          balance_cacao: "3000000000000000"
+          balance_asset: "0"
+          LP_units: "3000000000000000"
+          synth_units: "0"
+          pending_inbound_cacao: "0"
+          pending_inbound_asset: "0"
+      liquidity_providers:
+        - asset: "BTC.BTC"
+          cacao_address: {{ addr_maya_dog }}
+          asset_address: ""
+          last_add_height: "1"
+          last_withdraw_height: "0"
+          units: "1000000000000000"
+          pending_cacao: "0"
+          pending_asset: "0"
+          pending_tx_Id: ""
+          cacao_deposit_value: "0"
+          asset_deposit_value: "0"
+          node_bond_address: null
+          withdraw_counter: "0"
+          last_withdraw_counter_height: "0"
+          bonded_nodes:
+            - node_address: {{ addr_maya_dog }}
+              units: "1000000000000000"
+        - asset: "BTC.BTC"
+          cacao_address: {{ addr_maya_fox }}
+          asset_address: ""
+          last_add_height: "1"
+          last_withdraw_height: "0"
+          units: "1000000000000000"
+          pending_cacao: "0"
+          pending_asset: "0"
+          pending_tx_Id: ""
+          cacao_deposit_value: "0"
+          asset_deposit_value: "0"
+          node_bond_address: null
+          withdraw_counter: "0"
+          last_withdraw_counter_height: "0"
+          bonded_nodes:
+            - node_address: {{ addr_maya_fox }}
+              units: "1000000000000000"
+        - asset: "BTC.BTC"
+          cacao_address: {{ addr_maya_cat }}
+          asset_address: ""
+          last_add_height: "1"
+          last_withdraw_height: "0"
+          units: "1000000000000000"
+          pending_cacao: "0"
+          pending_asset: "0"
+          pending_tx_Id: ""
+          cacao_deposit_value: "0"
+          asset_deposit_value: "0"
+          node_bond_address: null
+          withdraw_counter: "0"
+          last_withdraw_counter_height: "0"
+          bonded_nodes:
+            - node_address: {{ addr_maya_fox }}
+              units: "1000000000000000"
+      bond_providers:
+        - node_address: {{ addr_maya_dog }}
+          node_operator_fee: "0"
+          providers:
+            - bond_address: {{ addr_maya_dog }}
+              bonded: true
+              reward: "0"
+        - node_address: {{ addr_maya_fox }}
+          node_operator_fee: "0"
+          providers:
+            - bond_address: {{ addr_maya_fox }}
+              bonded: true
+              reward: "0"
+      store_version: "{{ store_version }}"
+      node_accounts:
+        - active_block_height: "0"
+          ip_address: 1.1.1.1
+          node_address: {{ addr_maya_dog }}
+          bond_address: {{ addr_maya_dog }}
+          pub_key_set:
+            secp256k1: {{ pubkey_dog }}
+            ed25519: "tmayapub1addwnpepqfshsq2y6ejy2ysxmq4gj8n8mzuzyulk9wh4n946jv5w2vpwdn2yuz3v0gx"
+          signer_membership: []
+          status: Active
+          validator_cons_pub_key: tmayacpub1zcjduepqq75h7uy6qhesh9d3a9tuk0mzrnc46u8rye44ze6peua3zmpfh23qpj8pe3
+          version: "{{ version }}"
+          requested_to_leave: false
+        - active_block_height: "0"
+          ip_address: 1.1.1.1
+          node_address: {{ addr_maya_fox }}
+          bond_address: {{ addr_maya_fox }}
+          pub_key_set:
+            secp256k1: {{ pubkey_fox }}
+            ed25519: "tmayapub1addwnpepqfshsq2y6ejy2ysxmq4gj8n8mzuzyulk9wh4n946jv5w2vpwdn2yuz3v0gx"
+          signer_membership: []
+          status: Standby
+          validator_cons_pub_key: tmayacpub1zcjduepqq75h7uy6qhesh9d3a9tuk0mzrnc46u8rye44ze6peua3zmpfh23qpj8pe3
+          version: "{{ version }}"
+          requested_to_leave: true
+---
+type: create-blocks
+count: 1
+---
+type: check
+endpoint: http://localhost:1317/mayachain/nodes
+asserts:
+  - .|length == 2
+  - .[0].node_address == "{{ addr_maya_fox }}"
+  - .[0].requested_to_leave == true
+  - .[0].status == "Standby"
+  - .[1].node_address == "{{ addr_maya_dog }}"
+  - .[1].requested_to_leave == false
+  - .[1].status == "Active"

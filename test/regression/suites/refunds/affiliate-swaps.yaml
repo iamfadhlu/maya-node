@@ -1,0 +1,104 @@
+{{ template "default-state.yaml" }}
+---
+{{ template "btc-pool-state.yaml" }}
+---
+type: create-blocks
+count: 1
+---
+type: tx-mimir
+key: MAYANameGracePeriodBlocks
+value: 5
+signer: {{ addr_maya_dog }}
+sequence: 0
+---
+type: create-blocks
+count: 1
+---
+type: tx-deposit
+signer: {{ addr_maya_dog }}
+coins:
+  - amount: "110000000000"
+    asset: "cacao"
+memo: "~:dog:MAYA:{{ addr_maya_dog }}::::100"
+---
+type: tx-deposit
+signer: {{ addr_maya_cat }}
+coins:
+  - amount: "110000000000"
+    asset: "cacao"
+memo: "~:cat:MAYA:{{ addr_maya_cat }}::::50"
+---
+type: create-blocks
+count: 1
+---
+########################################################################################
+# Setup mayaname
+########################################################################################
+type: tx-send
+from_address: {{ addr_maya_fox }}
+to_address: {{ addr_maya_pig }}
+amount:
+  - amount: "150000000000"
+    denom: "cacao"
+---
+type: create-blocks
+count: 1
+---
+type: tx-deposit
+signer: {{ addr_maya_pig }}
+coins:
+  - amount: "110000000000"
+    asset: "cacao"
+memo: "~:test:MAYA:{{ addr_maya_pig }}:{{ addr_maya_pig }}::10"
+---
+type: create-blocks
+count: 1
+---
+type: check
+endpoint: http://localhost:1317/mayachain/mayaname/test
+asserts:
+  - .aliases[0].address == "{{ addr_maya_pig }}"
+  - .owner == "{{ addr_maya_pig }}"
+  - .expire_block_height == 10
+---
+########################################################################################
+# Validate ownership while mayaname is valid
+########################################################################################
+type: tx-deposit
+signer: {{ addr_maya_dog }}
+coins:
+  - amount: "110000000000"
+    asset: "cacao"
+memo: "~:test:MAYA:{{ addr_maya_dog }}:{{ addr_maya_dog }}"
+---
+type: create-blocks
+count: 1
+---
+type: check
+endpoint: http://localhost:1317/mayachain/mayaname/test
+asserts:
+  - .aliases[0].address == "{{ addr_maya_pig }}"
+  - .owner == "{{ addr_maya_pig }}"
+---
+########################################################################################
+# Fast-forward to beyond grace period - block height will be 20 after this step
+########################################################################################
+type: create-blocks
+count: 15
+---
+type: tx-deposit
+signer: {{ addr_maya_dog }}
+coins:
+  - amount: "110000000000"
+    asset: "cacao"
+memo: "~:test:MAYA:{{ addr_maya_dog }}:{{ addr_maya_dog }}"
+---
+type: create-blocks
+count: 1
+---
+type: check
+endpoint: http://localhost:1317/mayachain/mayaname/test
+asserts:
+  - .aliases[0].address == "{{ addr_maya_dog }}"
+  - .owner == "{{ addr_maya_dog }}"
+  - .expire_block_height == 10256022

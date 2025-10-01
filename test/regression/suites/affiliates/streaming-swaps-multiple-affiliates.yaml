@@ -1,0 +1,182 @@
+{{ template "default-state.yaml" }}
+---
+{{ template "btc-eth-pool-state.yaml" }}
+---
+type: create-blocks
+count: 1
+---
+type: check
+endpoint: http://localhost:1317/mayachain/pools
+asserts:
+  - .|length == 2
+---
+type: check
+endpoint: http://localhost:1317/mayachain/constants
+asserts:
+  - .int_64_values.OutboundTransactionFee == 2000000000 
+---
+type: check
+endpoint: http://localhost:1317/mayachain/inbound_addresses
+asserts:
+  - .|length == 6
+  ###
+  - .[0].chain == "BTC"
+  - .[0].gas_rate == "10"
+  - .[0].outbound_tx_size == "1000"
+  - .[0].outbound_fee == "14000"
+  ###
+  - .[2].chain == "ETH"
+  - .[2].gas_rate == "120"
+  - .[2].outbound_tx_size == "80000"
+  - .[2].outbound_fee == "1280000"
+---
+########################################################################################
+# prepare affiliate mayanames
+########################################################################################
+type: tx-deposit
+signer: {{ addr_maya_fox }}
+coins:
+  - amount: "200000000000"
+    asset: "cacao"
+memo: "~:fox:MAYA:{{ addr_maya_fox }}"
+---
+type: create-blocks
+count: 1
+---
+type: tx-deposit
+signer: {{ addr_maya_cat }}
+coins:
+  - amount: "200000000000"
+    asset: "cacao"
+memo: "~:cat:MAYA:{{ addr_maya_cat }}::::100:fox:4000"
+---
+type: create-blocks
+count: 1
+---
+# set preferred asset so that fees are directed to the affiliate collector
+type: tx-deposit
+signer: {{ addr_maya_fox }}
+coins:
+  - amount: "200000000000"
+    asset: "cacao"
+memo: "~:fox:ETH:{{ addr_eth_fox }}::ETH.ETH"
+---
+type: create-blocks
+count: 1
+---
+type: tx-deposit
+signer: {{ addr_maya_cat }}
+coins:
+  - amount: "200000000000"
+    asset: "cacao"
+memo: "~:cat:ETH:{{ addr_eth_cat }}::ETH.ETH"
+---
+type: create-blocks
+count: 1
+---
+########################################################################################
+# streaming swap to ETH.ETH (100% conversion)
+########################################################################################
+type: tx-observed-in
+signer: {{ addr_maya_dog }}
+txs:
+  - tx:
+      id: "${INBOUND_TXID={{ observe_txid 1 }}}"
+      chain: BTC
+      from_address: {{ addr_btc_fox }}
+      to_address: {{ addr_btc_dog }}
+      coins:
+        - amount: "${INPUT_AMOUNT=500000000}"
+          asset: "${INPUT_ASSET=BTC.BTC}"
+          decimals: 8
+      gas:
+        - amount: "10000"
+          asset: "BTC.BTC"
+      memo: "=:${OUTPUT_ASSET=ETH.ETH}:${DESTINATION={{ addr_eth_fox }}}:0/1/5:cat"
+    block_height: 1
+    finalise_height: 1
+    observed_pub_key: {{ pubkey_dog }}
+---
+type: create-blocks
+count: 1
+---
+type: check
+endpoint: http://localhost:1317/mayachain/swap/streaming/${INBOUND_TXID}
+asserts:
+  - .source_asset == "${INPUT_ASSET}"
+  - .deposit == ${INPUT_AMOUNT}|tostring
+  - .count == ${COUNT=1}
+  - .quantity == ${QUANTITY=5}
+  - .in == (( ${INPUT_AMOUNT} * ${COUNT} / ${QUANTITY} )|tostring)
+  - .tx_id == "0000000000000000000000000000000000000000000000000000000000000001"
+  - .interval == 1
+  - .target_asset == "${OUTPUT_ASSET}"
+  - .out == "160000000"
+  - .destination == "${DESTINATION}"
+  - .last_height == 6
+  - .trade_target == "0"
+  - .failed_swaps|length == 0
+  - .failed_swap_reasons|length == 0
+---
+type: check
+endpoint: http://localhost:1317/mayachain/swaps/streaming
+asserts:
+  - .|length == 1
+---
+type: create-blocks
+count: 4
+---
+type: check
+endpoint: http://localhost:1317/mayachain/swaps/streaming
+asserts:
+  - .|length == 0
+---
+type: check
+endpoint: http://localhost:1317/mayachain/queue/outbound
+asserts:
+  - .|length == 1
+  - .[0]|.in_hash == "${INBOUND_TXID}"
+  - .[0]|.coin.asset == "${OUTPUT_ASSET}"
+  - .[0]|.coin.amount == "${OUTPUT_AMOUNT=288203164}"
+---
+type: tx-observed-out
+signer: {{ addr_maya_dog }}
+txs:
+  - tx:
+      id: "{{ observe_txid 2 }}"
+      chain: ETH
+      from_address: {{ addr_eth_dog }}
+      to_address: ${DESTINATION}
+      coins:
+        - amount: "${OUTPUT_AMOUNT}"
+          asset: "${OUTPUT_ASSET}"
+          decimals: 8
+      gas:
+        - amount: "960000"
+          asset: "ETH.ETH"
+      memo: "OUT:${INBOUND_TXID}"
+    block_height: 5
+    finalise_height: 5
+    observed_pub_key: {{ pubkey_dog }}
+---
+type: create-blocks
+count: 1
+---
+type: check
+endpoint: http://localhost:1317/mayachain/queue/outbound
+asserts:
+  - .|length == 0
+---
+# Check affiliate collectors (cat has ~60%, fox has ~40% of the 1% affiliate fee)
+type: check
+endpoint: http://localhost:1317/mayachain/mayaname/cat
+asserts:
+  - ${GAS=2000000000} == 2000000000
+  - ${COEF=0.01*0.6} == 0.01 * 0.6
+  - (${OUTPUT_AMOUNT} * ${COEF} - ${GAS}) - (.affiliate_collector_cacao|tonumber) < (${OUTPUT_AMOUNT} * ${COEF} - ${GAS}) * 0.001 # 10 bps tolerance
+---
+type: check
+endpoint: http://localhost:1317/mayachain/mayaname/fox
+asserts:
+  - ${COEF=0.01*0.4} == 0.01 * 0.4
+  - (${OUTPUT_AMOUNT} * ${COEF} - ${GAS}) - (.affiliate_collector_cacao|tonumber) < (${OUTPUT_AMOUNT} * ${COEF} - ${GAS}) * 0.001 # 10 bps tolerance

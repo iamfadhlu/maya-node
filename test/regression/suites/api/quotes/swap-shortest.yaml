@@ -1,0 +1,83 @@
+{{ template "default-state.yaml" }}
+---
+{{ template "btc-eth-xrd-pool-state.yaml" }}
+---
+type: create-blocks
+count: 1
+---
+type: check
+endpoint: http://localhost:1317/mayachain/pools
+asserts:
+  - .|length == 3
+---
+# we need affiliate swap to be able to pass we either adjust pools for cacao 1e10 or we adjust the outbound fee
+type: tx-mimir
+key: OutboundTransactionFee
+value: 20000000
+signer: {{ addr_maya_dog }}
+---
+ type: tx-deposit
+ signer: {{ addr_maya_fox }}
+ coins:
+   - amount: "120000000001"
+     asset: "cacao"
+ memo: "~:f:MAYA:{{ addr_maya_fox }}"
+---
+ type: create-blocks
+ count: 1
+---
+ type: check
+ endpoint: http://localhost:1317/mayachain/mayaname/f
+ asserts:
+   - .aliases[0].address == "{{ addr_maya_fox }}"
+   - .owner == "{{ addr_maya_fox }}"
+---
+########################################################################################
+# from BTC to XRD - shortest memo possible with most restricted case
+########################################################################################
+type: check
+endpoint: http://localhost:1317/mayachain/quote/swap
+params:
+  from_asset: b
+  to_asset: x
+  amount: 500000
+  destination: {{ addr_xrd_fox }}
+  streaming_interval: 1
+  streaming_quantity: 14400
+  tolerance_bps: 2000
+asserts:
+  .memo == "=:x:69nfm5ejkxymcq8ggf894k4n7y6r7344793493uxth5pg7al5nzxt8:80000000000/1/10"
+---
+########################################################################################
+# from BTC to XRD - shortest memo possible with abbreviated address
+########################################################################################
+type: check
+endpoint: http://localhost:1317/mayachain/quote/swap
+params:
+  from_asset: b
+  to_asset: x
+  amount: 500000
+  destination: 69nfm5ejkxymcq8ggf894k4n7y6r7344793493uxth5pg7al5nzxt8 # {{ addr_xrd_fox }} abbreviated
+  streaming_interval: 1
+  streaming_quantity: 14400
+  tolerance_bps: 2000
+asserts:
+  .memo == "=:x:69nfm5ejkxymcq8ggf894k4n7y6r7344793493uxth5pg7al5nzxt8:80000000000/1/10"
+---
+########################################################################################
+# from BTC to XRD - shortest memo possible fails but shows the memo on the error string
+########################################################################################
+type: check
+endpoint: http://localhost:1317/mayachain/quote/swap
+params:
+  from_asset: b
+  to_asset: x
+  amount: 500000
+  destination: 69nfm5ejkxymcq8ggf894k4n7y6r7344793493uxth5pg7al5nzxt8 # {{ addr_xrd_fox }} abbreviated
+  streaming_interval: 1
+  streaming_quantity: 14400
+  tolerance_bps: 2000
+  affiliate: {{ addr_maya_fox }}
+  affiliate_bps: 100
+asserts:
+  .error | contains("=:x:69nfm5ejkxymcq8ggf894k4n7y6r7344793493uxth5pg7al5nzxt8:80000000000/1/10:tmaya13wrmhnh2qe98rjse30pl7u6jxszjjwl4fd6gwn:100 (124/80)")

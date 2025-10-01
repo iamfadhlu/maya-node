@@ -1,0 +1,162 @@
+type: state
+genesis:
+  initial_height: "0"
+  app_state:
+    auth:
+      accounts:
+        - "@type": /cosmos.auth.v1beta1.ModuleAccount
+          base_account:
+            account_number: "0"
+            address: {{ addr_module_transfer }}
+            pub_key: ~
+            sequence: "0"
+          name: transfer
+          permissions:
+            - minter
+            - burner
+        - "@type": /cosmos.auth.v1beta1.ModuleAccount
+          base_account:
+            account_number: "1"
+            address: {{ addr_module_asgard }}
+            pub_key: ~
+            sequence: "0"
+          name: asgard
+          permissions: []
+        - "@type": /cosmos.auth.v1beta1.ModuleAccount
+          base_account:
+            account_number: "2"
+            address: {{ addr_module_mayachain }}
+            pub_key: ~
+            sequence: "0"
+          name: mayachain
+          permissions:
+            - minter
+            - burner
+        - "@type": /cosmos.auth.v1beta1.ModuleAccount
+          base_account:
+            account_number: "3"
+            address: {{ addr_module_reserve }}
+            pub_key: ~
+            sequence: "0"
+          name: reserve
+          permissions: []
+        - "@type": /cosmos.auth.v1beta1.ModuleAccount
+          base_account:
+            account_number: "5"
+            address: {{ addr_module_bond }}
+            pub_key: ~
+            sequence: "0"
+          name: bond
+          permissions: []
+        - "@type": /cosmos.auth.v1beta1.BaseAccount
+          address: tmaya18z343fsdlav47chtkyp0aawqt6sgxsh3g94648
+          pub_key: null
+          account_number: "6"
+          sequence: "0"
+        - "@type": /cosmos.auth.v1beta1.BaseAccount
+          address: {{ addr_maya_dog }}
+          pub_key: null
+          account_number: "8"
+          sequence: "0"
+    bank:
+      balances:
+        - address: tmaya18z343fsdlav47chtkyp0aawqt6sgxsh3g94648
+          coins:
+            - denom: cacao
+              amount: "147840013000000000"
+            - denom: maya
+              amount: "5800807000000000"
+        - address: {{ addr_maya_dog }}
+          coins:
+            - denom: cacao
+              amount: "1000000000000000000"
+        - address: {{ addr_module_reserve }}
+          coins:
+            - amount: "25000000000000000"
+              denom: cacao
+        - address: {{ addr_module_asgard }}
+          coins:
+            - amount: "1000000000000000"
+              denom: cacao
+      params:
+        default_send_enabled: false
+    transfer:
+      params:
+        send_enabled: false
+    mayachain:
+      store_version: "118"
+      node_accounts:
+        - active_block_height: "0"
+          bond: "5000000000000"
+          ip_address: 1.1.1.1
+          node_address: {{ addr_maya_dog }}
+          bond_address: {{ addr_maya_dog }}
+          pub_key_set:
+            secp256k1: "tmayapub1addwnpepqfshsq2y6ejy2ysxmq4gj8n8mzuzyulk9wh4n946jv5w2vpwdn2yuz3v0gx"
+            ed25519: "tmayapub1addwnpepqfshsq2y6ejy2ysxmq4gj8n8mzuzyulk9wh4n946jv5w2vpwdn2yuz3v0gx"
+          signer_membership: []
+          status: Active
+          # matches the priv_validator_key.json mounted in the test container
+          validator_cons_pub_key: tmayacpub1zcjduepqq75h7uy6qhesh9d3a9tuk0mzrnc46u8rye44ze6peua3zmpfh23qpj8pe3
+          version: "1.118.0"
+      vaults:
+        - block_height: "0"
+          chains:
+            - MAYA
+          inbound_tx_count: "1"
+          membership:
+            - tmayapub1addwnpepqfshsq2y6ejy2ysxmq4gj8n8mzuzyulk9wh4n946jv5w2vpwdn2yuz3v0gx
+          pub_key: tmayapub1addwnpepqfshsq2y6ejy2ysxmq4gj8n8mzuzyulk9wh4n946jv5w2vpwdn2yuz3v0gx
+          status: ActiveVault
+          type: AsgardVault
+---
+type: create-blocks
+count: 1
+---
+########################################################################################
+# check tmaya18z343fsdlav47chtkyp0aawqt6sgxsh3g94648 balances before migration
+########################################################################################
+type: check
+endpoint: http://localhost:1317/cosmos/bank/v1beta1/balances/tmaya18z343fsdlav47chtkyp0aawqt6sgxsh3g94648
+asserts:
+  - .balances|length == 2
+  - .balances[] | select(.denom=="cacao") | .amount == "147840013000000000"
+  - .balances[] | select(.denom=="maya") | .amount == "5800807000000000"
+---
+########################################################################################
+# check tmaya16nmqmg5qrd6f2pkte4skyv04pye23us0quhgwu balances before migration - should be empty
+########################################################################################
+type: check
+endpoint: http://localhost:1317/cosmos/bank/v1beta1/balances/tmaya16nmqmg5qrd6f2pkte4skyv04pye23us0quhgwu
+asserts:
+  - ([.balances[] | select(.denom=="cacao")] | length == 0) or (.balances[]|select(.denom=="cacao")|.amount|tonumber == 0)
+  - ([.balances[] | select(.denom=="maya")] | length == 0) or (.balances[]|select(.denom=="maya")|.amount|tonumber == 0)
+---
+########################################################################################
+# migrate to v119
+########################################################################################
+type: tx-version
+signer: {{ addr_maya_dog }}
+version: "1.119.0"
+---
+type: create-blocks
+count: 2
+---
+########################################################################################
+# check tmaya18z343fsdlav47chtkyp0aawqt6sgxsh3g94648 balances after migration - should be empty
+########################################################################################
+type: check
+endpoint: http://localhost:1317/cosmos/bank/v1beta1/balances/tmaya18z343fsdlav47chtkyp0aawqt6sgxsh3g94648
+asserts:
+  - ([.balances[] | select(.denom=="cacao")] | length == 0) or (.balances[]|select(.denom=="cacao")|.amount|tonumber == 0)
+  - ([.balances[] | select(.denom=="maya")] | length == 0) or (.balances[]|select(.denom=="maya")|.amount|tonumber == 0)
+---
+########################################################################################
+# check tmaya16nmqmg5qrd6f2pkte4skyv04pye23us0quhgwu balances after migration - should have received the funds
+########################################################################################
+type: check
+endpoint: http://localhost:1317/cosmos/bank/v1beta1/balances/tmaya16nmqmg5qrd6f2pkte4skyv04pye23us0quhgwu
+asserts:
+  - .balances|length == 2
+  - .balances[] | select(.denom=="cacao") | .amount == "147840013000000000"
+  - .balances[] | select(.denom=="maya") | .amount == "5800807000000000"

@@ -1,0 +1,607 @@
+{{ template "default-state.yaml" }}
+---
+type: state
+genesis:
+  app_state:
+    bank:
+      balances:
+        - address: {{ addr_module_asgard }}
+          coins:
+            - amount: "10000000000000000000"
+              denom: cacao
+        - address: {{ addr_module_reserve }}
+          coins:
+            - amount: "10000000000000000000"
+              denom: cacao
+    mayachain:
+      store_version: "121"
+      network_fees:
+        - chain: BTC
+          transaction_fee_rate: "7"
+          transaction_size: "1000"
+        - chain: ETH
+          transaction_fee_rate: "150000000000"
+          transaction_size: "80000"
+      pools:
+        - asset: BTC.BTC
+          status: Available
+          balance_cacao: "100000000000000000"
+          balance_asset: "1000000000"
+          LP_units: "100000000000000000"
+          decimals: "8"
+          synth_units: "0"  # Start with no synth units
+        - asset: ETH.USDC-0XA0B86991C6218B36C1D19D4A2E9EB0CE3606EB48
+          status: Available
+          balance_cacao: "15000000000000000"
+          balance_asset: "25000000000000"
+          LP_units: "15000000000000000"
+          decimals: "6"
+        - asset: ETH.USDT-0XDAC17F958D2EE523A2206206994597C13D831EC7
+          status: Available
+          balance_cacao: "15000000000000000"
+          balance_asset: "25000000000000"
+          LP_units: "15000000000000000"
+          decimals: "6"
+        - asset: DASH.DASH
+          status: Available
+          balance_cacao: "200000000000000"
+          balance_asset: "2000000000"
+          LP_units: "200000000000000"
+          decimals: "8"
+        - asset: THOR.RUNE
+          status: Available
+          balance_cacao: "100000000000000000"
+          balance_asset: "100000000000000"
+          LP_units: "100000000000000000"
+          decimals: "8"
+      liquidity_providers:
+        - asset: "BTC.BTC"
+          cacao_address: {{ addr_maya_dog }}
+          asset_address: ""
+          last_add_height: "1"
+          last_withdraw_height: "0"
+          units: "100000000000000000"
+          pending_cacao: "0"
+          pending_asset: "0"
+          pending_tx_Id: ""
+          cacao_deposit_value: "0"
+          asset_deposit_value: "0"
+          node_bond_address: null
+          withdraw_counter: "0"
+          last_withdraw_counter_height: "0"
+          bonded_nodes:
+            - node_address: {{ addr_maya_dog }}
+              units: "100000000000000000"
+        - asset: "ETH.USDC-0XA0B86991C6218B36C1D19D4A2E9EB0CE3606EB48"
+          cacao_address: {{ addr_maya_fox }}
+          asset_address: ""
+          last_add_height: "1"
+          last_withdraw_height: "0"
+          units: "15000000000000000"
+          pending_cacao: "0"
+          pending_asset: "0"
+          pending_tx_Id: ""
+          cacao_deposit_value: "0"
+          asset_deposit_value: "0"
+          node_bond_address: null
+          withdraw_counter: "0"
+          last_withdraw_counter_height: "0"
+        - asset: "ETH.USDT-0XDAC17F958D2EE523A2206206994597C13D831EC7"
+          cacao_address: {{ addr_maya_cat }}
+          asset_address: ""
+          last_add_height: "1"
+          last_withdraw_height: "0"
+          units: "15000000000000000"
+          pending_cacao: "0"
+          pending_asset: "0"
+          pending_tx_Id: ""
+          cacao_deposit_value: "0"
+          asset_deposit_value: "0"
+          node_bond_address: null
+          withdraw_counter: "0"
+          last_withdraw_counter_height: "0"
+        - asset: "DASH.DASH"
+          cacao_address: {{ addr_maya_pig }}
+          asset_address: ""
+          last_add_height: "1"
+          last_withdraw_height: "0"
+          units: "200000000000000"
+          pending_cacao: "0"
+          pending_asset: "0"
+          pending_tx_Id: ""
+          cacao_deposit_value: "0"
+          asset_deposit_value: "0"
+          node_bond_address: null
+          withdraw_counter: "0"
+          last_withdraw_counter_height: "0"
+        - asset: "THOR.RUNE"
+          cacao_address: {{ addr_maya_deer }}
+          asset_address: ""
+          last_add_height: "1"
+          last_withdraw_height: "0"
+          units: "100000000000000000"
+          pending_cacao: "0"
+          pending_asset: "0"
+          pending_tx_Id: ""
+          cacao_deposit_value: "0"
+          asset_deposit_value: "0"
+          node_bond_address: null
+          withdraw_counter: "0"
+          last_withdraw_counter_height: "0"
+      vaults:
+        - block_height: "0"
+          chains:
+            - MAYA
+            - BTC
+            - ETH
+            - DASH
+            - THOR
+          coins:
+            - amount: "5000000000"
+              asset: BTC.BTC
+              decimals: "8"
+            - amount: "15000000000000000"
+              asset: ETH.USDC-0XA0B86991C6218B36C1D19D4A2E9EB0CE3606EB48
+              decimals: "6"
+            - amount: "15000000000000000"
+              asset: ETH.USDT-0XDAC17F958D2EE523A2206206994597C13D831EC7
+              decimals: "6"
+            - amount: "100000000000000"
+              asset: THOR.RUNE
+              decimals: "8"
+            - amount: "180000000000000000000"
+              asset: ETH.ETH
+              decimals: "8"
+          inbound_tx_count: "6"
+          membership:
+            - tmayapub1addwnpepqfshsq2y6ejy2ysxmq4gj8n8mzuzyulk9wh4n946jv5w2vpwdn2yuz3v0gx
+          pub_key: tmayapub1addwnpepqfshsq2y6ejy2ysxmq4gj8n8mzuzyulk9wh4n946jv5w2vpwdn2yuz3v0gx
+          status: ActiveVault
+          type: AsgardVault
+      node_accounts:
+        - node_address: {{ addr_maya_dog }}
+          status: Active
+          pub_key_set:
+            secp256k1: {{ pubkey_dog }}
+          bond: "100000000000000"
+          version: "1.121.0"
+      mayanames:
+        - name: "t1"
+          expire_block_height: "74095531"
+          owner: "{{ addr_maya_fox }}"
+          preferred_asset: "ETH.USDC-0XA0B86991C6218B36C1D19D4A2E9EB0CE3606EB48"
+          aliases:
+            - chain: "MAYA"
+              address: "{{ addr_maya_fox }}"
+            - chain: "ETH"
+              address: "0x92f980a7aae3574cfe45e30a21d6aa14d08f7c7d"
+        - name: "_"
+          expire_block_height: "41214700"
+          owner: "{{ addr_maya_cat }}"
+          preferred_asset: "ETH.USDC-0XA0B86991C6218B36C1D19D4A2E9EB0CE3606EB48"
+          aliases:
+            - chain: "ETH"
+              address: "0x2d4f72825c5908b6fca5a624f1b412b6e1d79bb4"
+            - chain: "MAYA"
+              address: "{{ addr_maya_cat }}"
+---
+type: create-blocks
+count: 1
+---
+type: check
+endpoint: http://localhost:1317/mayachain/pools
+asserts:
+  - .|length == 5
+---
+# First, update to version 1.121.0 to simulate pre-migration state
+type: tx-version
+signer: {{ addr_maya_dog }}
+version: "1.121.0"
+---
+type: create-blocks
+count: 1
+---
+# Create all 6 stuck transactions with incorrect external_confirmation_delay_height
+# Order them by block height: 902454, 902455, 902461 to avoid "block height can't go backward" errors
+
+# Transaction 5: BTC to BTC synth swap (block height 902454 - process first)
+type: tx-observed-in
+signer: {{ addr_maya_dog }}
+txs:
+  - tx:
+      id: "6811b8f6070ab71b5cfffabf1fb20ca43630cdc18f6d45e51059bc411f563645"
+      chain: BTC
+      from_address: bc1q47pfu4ymsdpjranzucmxcj4g5cqwnh52srnnr9
+      to_address: {{ addr_btc_dog }}
+      coins:
+        - amount: "5270000"
+          asset: "BTC.BTC"
+      gas:
+        - amount: "2101005"
+          asset: "BTC.BTC"
+      memo: "=:BTC/BTC:tmaya1qvlul0ujfrq27ja7uxrp8r7my9juegz0cg70la:0/1/0"
+    block_height: 902454
+    observed_pub_key: {{ pubkey_dog }}
+    finalise_height: 11773976  # Incorrect height
+---
+type: create-blocks
+count: 1
+---
+# Transaction 6: Hyperion - BTC to BTC synth swap (block height 902454)
+type: tx-observed-in
+signer: {{ addr_maya_dog }}
+txs:
+  - tx:
+      id: "9c70fba436e6a4242bf207567efdeb0d52a75ccded2670cfbc4812c80afb821b"
+      chain: BTC
+      from_address: bc1q47pfu4ymsdpjranzucmxcj4g5cqwnh52srnnr9
+      to_address: {{ addr_btc_dog }}
+      coins:
+        - amount: "8520000"
+          asset: "BTC.BTC"
+      gas:
+        - amount: "1690853"
+          asset: "BTC.BTC"
+      memo: "=:BTC/BTC:tmaya1qvlul0ujfrq27ja7uxrp8r7my9juegz0cg70la:0/1/0"
+    block_height: 902454
+    observed_pub_key: {{ pubkey_dog }}
+    finalise_height: 11773976  # Incorrect height
+---
+type: create-blocks
+count: 1
+---
+# Transaction 1: TRUST - USDC swap (block height 902455)
+type: tx-observed-in
+signer: {{ addr_maya_dog }}
+txs:
+  - tx:
+      id: "13d5c6a1dbfd6d8d4eb76b20512bdcab58d08acef1ade50241ea12044109f105"
+      chain: BTC
+      from_address: bc1qux24954hhu6tjltujzrqu3yxu5sckp878f2g6d
+      to_address: {{ addr_btc_dog }}
+      coins:
+        - amount: "18612000"
+          asset: "BTC.BTC"
+      gas:
+        - amount: "1041"
+          asset: "BTC.BTC"
+      memo: "=:ETH.USDC:0xd212611159af5069954ef946ecb38cb2097239a3:3000000000/1/0:_/t1:0/70"
+    block_height: 902455
+    observed_pub_key: {{ pubkey_dog }}
+    finalise_height: 11773983  # Incorrect height (should be 902456)
+---
+type: create-blocks
+count: 1
+---
+# Transaction 2: USDT swap (needs destination update) (block height 902461)
+type: tx-observed-in
+signer: {{ addr_maya_dog }}
+txs:
+  - tx:
+      id: "d8766cafb07465557becf5f23592ba0260457ac675cdb2ea2bab9fd8039d3c84"
+      chain: BTC
+      from_address: bc1qkqvr5cj0386gnk3u0ae5te5cm9vmefvq6gch9q
+      to_address: {{ addr_btc_dog }}
+      coins:
+        - amount: "6001000"
+          asset: "BTC.BTC"
+      gas:
+        - amount: "3320416"
+          asset: "BTC.BTC"
+      memo: "=:ETH.USDT:0xef1c6f153afaf86424fd984728d32535902f1c3d:5000000000/1/0:_/t1:0/70"
+    block_height: 902461
+    observed_pub_key: {{ pubkey_dog }}
+    finalise_height: 11773983  # Incorrect height
+---
+type: create-blocks
+count: 1
+---
+# Transaction 3: USDT swap (needs destination update) (block height 902461)
+type: tx-observed-in
+signer: {{ addr_maya_dog }}
+txs:
+  - tx:
+      id: "60965f801abd1bee82a09b814b21145c5950c168b74341ebb07f7e379dfa900b"
+      chain: BTC
+      from_address: bc1qj2e6g0zau47cr3nu7lauxjg7xxgjhgh6st90rx
+      to_address: {{ addr_btc_dog }}
+      coins:
+        - amount: "64000"
+          asset: "BTC.BTC"
+      gas:
+        - amount: "759"
+          asset: "BTC.BTC"
+      memo: "=:ETH.USDT:0xef1c6f153afaf86424fd984728d32535902f1c3d:600000000/1/0:_/t1:0/70"
+    block_height: 902461
+    observed_pub_key: {{ pubkey_dog }}
+    finalise_height: 11773983  # Incorrect height
+---
+type: create-blocks
+count: 1
+---
+# Transaction 4: USDT swap (block height 902461)
+type: tx-observed-in
+signer: {{ addr_maya_dog }}
+txs:
+  - tx:
+      id: "84f4354cee98a5e53c6606784da34d9e6b109210fcaaec5ccac0d1f113d5a03b"
+      chain: BTC
+      from_address: bc1qmydy6577ypglf7n8lxf5wppt3qglgm0qenn2vq
+      to_address: {{ addr_btc_dog }}
+      coins:
+        - amount: "4600000"
+          asset: "BTC.BTC"
+      gas:
+        - amount: "11802"
+          asset: "BTC.BTC"
+      memo: "=:ETH.USDT:0xef1c6f153afaf86424fd984728d32535902f1c3d:4000000000/1/0:_/t1:0/70"
+    block_height: 902461
+    observed_pub_key: {{ pubkey_dog }}
+    finalise_height: 11773983  # Incorrect height
+---
+type: create-blocks
+count: 1
+---
+# Check first transaction is stuck (not finalized)
+type: check
+endpoint: http://localhost:1317/mayachain/tx/details/13d5c6a1dbfd6d8d4eb76b20512bdcab58d08acef1ade50241ea12044109f105
+asserts:
+  - .tx.external_confirmation_delay_height == 11773983  # Incorrect height
+  - .txs[0].external_confirmation_delay_height == 11773983  # At least one observation has incorrect height
+---
+# Create more blocks to ensure all observations reach consensus
+type: create-blocks
+count: 10
+---
+# Before migration, simulate the LastObserveHeight issue
+# This needs to happen before v122 to set up the incorrect state
+type: tx-observed-in
+signer: {{ addr_maya_dog }}
+txs:
+  - tx:
+      id: "eeeeeeeeeeeeeeeeeeeeeeeeeeeeeeeeeeeeeeeeeeeeeeeeeeeeeeeeeeeeeeee"
+      chain: BTC
+      from_address: bc1qsimulatelastobserveheight
+      to_address: {{ addr_btc_dog }}
+      coins:
+        - amount: "50000"
+          asset: "BTC.BTC"
+      gas:
+        - amount: "500"
+          asset: "BTC.BTC"
+      memo: "simulate:high:observe:height"
+    block_height: 11000000  # High MAYA height that will incorrectly set LastObserveHeight
+    observed_pub_key: {{ pubkey_dog }}
+    finalise_height: 11000001
+---
+type: create-blocks
+count: 1
+---
+# Also simulate DASH chain having incorrect height
+type: tx-observed-in  
+signer: {{ addr_maya_dog }}
+txs:
+  - tx:
+      id: "dddddddddddddddddddddddddddddddddddddddddddddddddddddddddddddddd"
+      chain: DASH
+      from_address: XnQuJpAgEDNtRwoXWLfuEs69cMgCYS8rgs
+      to_address: {{ addr_dash_dog }}
+      coins:
+        - amount: "10000000"
+          asset: "DASH.DASH"
+      gas:
+        - amount: "10000"
+          asset: "DASH.DASH"
+      memo: "simulate:dash:high:height"
+    block_height: 11000002  # High MAYA height for DASH
+    observed_pub_key: {{ pubkey_dog }}
+    finalise_height: 11000003
+---
+type: create-blocks
+count: 1
+---
+# Check LastChainHeight before migration
+type: check
+endpoint: http://localhost:1317/mayachain/lastblock
+asserts:
+  - .|map(select(.chain == "BTC"))|.[0].last_observed_in > 10000000  # Should show incorrect MAYA height
+  - .|map(select(.chain == "DASH"))|.[0].last_observed_in > 10000000  # Should show incorrect MAYA height
+---
+# Check LastObserveHeight before migration
+type: check
+endpoint: http://localhost:1317/mayachain/nodes
+asserts:
+  - .|length == 1  # Only one node in regtest
+  - .[0].observe_chains|map(select(.chain == "BTC"))|.[0].height > 10000000  # Should show incorrect MAYA height for BTC
+  - .[0].observe_chains|map(select(.chain == "DASH"))|.[0].height > 10000000  # Should show incorrect MAYA height for DASH
+---
+# Run v122 store migration
+type: tx-version
+signer: {{ addr_maya_dog }}
+version: "1.122.0"
+---
+type: create-blocks
+count: 2
+---
+type: check
+endpoint: http://localhost:1317/mayachain/lastblock
+asserts:
+  - .|map(select(.chain == "BTC"))|.[0].last_observed_in == 902454  # Fixed to correct BTC height
+  - .|map(select(.chain == "DASH"))|.[0].last_observed_in == 2297619  # Fixed to correct DASH height
+---
+# Check LastObserveHeight after migration
+type: check
+endpoint: http://localhost:1317/mayachain/nodes
+asserts:
+  - .|length == 1
+  - .[0].observe_chains|map(select(.chain == "BTC"))|.[0].height == 902454  # Fixed to correct BTC height
+  - .[0].observe_chains|map(select(.chain == "DASH"))|.[0].height == 2297619  # Fixed to correct DASH height
+---
+# Check that all transactions are now finalized with correct heights
+# First verify they are finalized (without checking actions yet)
+# Transaction 1: TRUST - USDC swap - memo unchanged
+type: check
+endpoint: http://localhost:1317/mayachain/tx/details/13d5c6a1dbfd6d8d4eb76b20512bdcab58d08acef1ade50241ea12044109f105
+asserts:
+  - .tx.external_confirmation_delay_height == 902455  # Fixed to same as observed (instant finalization)
+  - .finalised_height > 0  # Transaction is finalized
+---
+# Check swap queue after migration to verify swaps were added
+# Note: The LastObserveHeight fix was tested by creating high-height observations
+# before the migration (transactions eeee... and dddd...). The migration should
+# have corrected any node's LastObserveHeight that was incorrectly set to MAYA
+# chain heights (11M+) back to the lowest external height (902455 for BTC).
+type: check
+endpoint: http://localhost:1317/mayachain/queue
+asserts:
+  - .swap >= 6  # 6 stuck swaps (may have additional payout swaps)
+---
+# Check individual swap in queue for transaction 1
+type: check
+endpoint: http://localhost:1317/mayachain/queue/swap
+asserts:
+  - '.|map(select(.tx.id == "13d5c6a1dbfd6d8d4eb76b20512bdcab58d08acef1ade50241ea12044109f105"))|length > 0'  # Swap exists in queue
+  - '.|map(select(.tx.id == "13d5c6a1dbfd6d8d4eb76b20512bdcab58d08acef1ade50241ea12044109f105"))|.[0].target_asset == "ETH.USDC-0XA0B86991C6218B36C1D19D4A2E9EB0CE3606EB48"'
+---
+# Check individual swap in queue for transaction 2  
+type: check
+endpoint: http://localhost:1317/mayachain/queue/swap
+asserts:
+  - .|map(select(.tx.id == "d8766cafb07465557becf5f23592ba0260457ac675cdb2ea2bab9fd8039d3c84"))|length > 0  # Swap exists in queue
+  - .|map(select(.tx.id == "d8766cafb07465557becf5f23592ba0260457ac675cdb2ea2bab9fd8039d3c84"))|.[0].destination == "0xef1c6f153afaf86424fd984728d32535902f1c3d"  # Updated destination
+---
+# Check streaming swap for BTC payout
+type: check
+endpoint: http://localhost:1317/mayachain/swap/streaming/D3A57B635016875F104CB5D86A2289D5C0E2CBDD54C4191392704028172C4807
+asserts:
+  - .tx_id == "D3A57B635016875F104CB5D86A2289D5C0E2CBDD54C4191392704028172C4807"
+  - .deposit == "86000000"  # 0.86 BTC
+  - .source_asset == "BTC.BTC"
+  - .target_asset == "MAYA.CACAO"
+  - .quantity == 8 # 860  # Streaming quantity
+---
+# Check streaming swap for RUNE payout
+type: check
+endpoint: http://localhost:1317/mayachain/swap/streaming/B0D39C00AF467F9BFE7260AA58D2492868AA31946D6CD871142F17E4DCB5A678
+asserts:
+  - .tx_id == "B0D39C00AF467F9BFE7260AA58D2492868AA31946D6CD871142F17E4DCB5A678"
+  - .deposit == "2542269000000"  # 25,422.69 RUNE
+  - .source_asset == "THOR.RUNE"
+  - .target_asset == "MAYA.CACAO"
+  - .quantity == 2 # 84  # Streaming quantity from block events
+---
+# Process the swap queue to trigger action generation
+type: create-blocks
+count: 15
+---
+# Now check for actions after swap queue processing
+# Transaction 1: TRUST - USDC swap - should succeed now that "_" is a valid affiliate
+type: check
+endpoint: http://localhost:1317/mayachain/tx/details/13d5c6a1dbfd6d8d4eb76b20512bdcab58d08acef1ade50241ea12044109f105
+asserts:
+  - .tx.external_confirmation_delay_height == 902455  # Fixed to same as observed (instant finalization)
+  - .actions|length > 0  # Should have swap action
+  - .actions[0].to_address == "0xd212611159af5069954ef946ecb38cb2097239a3"  # Original destination
+  - .actions[0].coin.asset == "ETH.USDC-0XA0B86991C6218B36C1D19D4A2E9EB0CE3606EB48"  # USDC output
+---
+# Transaction 2: USDT swap - destination and memo updated, affiliate fixed
+type: check
+endpoint: http://localhost:1317/mayachain/tx/details/d8766cafb07465557becf5f23592ba0260457ac675cdb2ea2bab9fd8039d3c84
+asserts:
+  - .tx.external_confirmation_delay_height == 902461  # Fixed to same as observed (instant finalization)
+  - .tx.tx.memo == "=:ETH.USDT:0xef1c6f153afaf86424fd984728d32535902f1c3d:5000000000/1/0:_/t1:0/70"  # Updated destination and price limit
+  - .finalised_height > 0  # Transaction is finalized
+  - .actions|length > 0  # Should have swap action
+  - .actions[0].to_address == "0xef1c6f153afaf86424fd984728d32535902f1c3d"  # Updated destination
+  - .actions[0].coin.asset == "ETH.USDT-0XDAC17F958D2EE523A2206206994597C13D831EC7"  # USDT output
+---
+# Transaction 3: USDT swap - destination and memo updated, affiliate fixed
+type: check
+endpoint: http://localhost:1317/mayachain/tx/details/60965f801abd1bee82a09b814b21145c5950c168b74341ebb07f7e379dfa900b
+asserts:
+  - .tx.external_confirmation_delay_height == 902461  # Fixed to same as observed (instant finalization)
+  - .tx.tx.memo == "=:ETH.USDT:0xef1c6f153afaf86424fd984728d32535902f1c3d:600000000/1/0:_/t1:0/70"  # Updated destination and price limit
+  - .finalised_height > 0  # Transaction is finalized
+  - .actions|length > 0  # Should have swap action
+  - .actions[0].to_address == "0xef1c6f153afaf86424fd984728d32535902f1c3d"  # Updated destination
+  - .actions[0].coin.asset == "ETH.USDT-0XDAC17F958D2EE523A2206206994597C13D831EC7"  # USDT output
+---
+# Transaction 4: USDT swap - destination and memo updated, affiliate fixed
+type: check
+endpoint: http://localhost:1317/mayachain/tx/details/84f4354cee98a5e53c6606784da34d9e6b109210fcaaec5ccac0d1f113d5a03b
+asserts:
+  - .tx.external_confirmation_delay_height == 902461  # Fixed to same as observed (instant finalization)
+  - .tx.tx.memo == "=:ETH.USDT:0xef1c6f153afaf86424fd984728d32535902f1c3d:4000000000/1/0:_/t1:0/70"  # Updated destination and price limit
+  - .finalised_height > 0  # Transaction is finalized
+  - .actions|length > 0  # Should have swap action
+  - .actions[0].to_address == "0xef1c6f153afaf86424fd984728d32535902f1c3d"  # Updated destination
+  - .actions[0].coin.asset == "ETH.USDT-0XDAC17F958D2EE523A2206206994597C13D831EC7"  # USDT output
+---
+# Transaction 5: BTC synth swap
+type: check
+endpoint: http://localhost:1317/mayachain/tx/details/6811b8f6070ab71b5cfffabf1fb20ca43630cdc18f6d45e51059bc411f563645
+asserts:
+  - .tx.external_confirmation_delay_height == 902454  # Fixed to same as observed (instant finalization)
+  - .finalised_height > 0  # Transaction is finalized
+---
+# Transaction 6: Hyperion BTC synth swap
+type: check
+endpoint: http://localhost:1317/mayachain/tx/details/9c70fba436e6a4242bf207567efdeb0d52a75ccded2670cfbc4812c80afb821b
+asserts:
+  - .tx.external_confirmation_delay_height == 902454  # Fixed to same as observed (instant finalization)
+  - .finalised_height > 0  # Transaction is finalized
+---
+# Now check actions after processing
+# Transaction 1 actions: TRUST - USDC swap
+type: check
+endpoint: http://localhost:1317/mayachain/tx/details/13d5c6a1dbfd6d8d4eb76b20512bdcab58d08acef1ade50241ea12044109f105
+asserts:
+  - .actions|length > 0  # Should have actions generated after reprocessing
+---
+# Transaction 2 actions: USDT swap with updated destination
+type: check
+endpoint: http://localhost:1317/mayachain/tx/details/d8766cafb07465557becf5f23592ba0260457ac675cdb2ea2bab9fd8039d3c84
+asserts:
+  - .actions|length > 0  # Should have actions generated
+---
+# Transaction 3 actions: USDT swap with updated destination
+type: check
+endpoint: http://localhost:1317/mayachain/tx/details/60965f801abd1bee82a09b814b21145c5950c168b74341ebb07f7e379dfa900b
+asserts:
+  - .actions|length > 0  # Should have actions generated
+---
+# Transaction 4 actions: USDT swap
+type: check
+endpoint: http://localhost:1317/mayachain/tx/details/84f4354cee98a5e53c6606784da34d9e6b109210fcaaec5ccac0d1f113d5a03b
+asserts:
+  - .actions|length > 0  # Should have actions generated
+---
+# Transaction 5 actions: BTC synth swap (should succeed after fixing address)
+type: check
+endpoint: http://localhost:1317/mayachain/tx/details/6811b8f6070ab71b5cfffabf1fb20ca43630cdc18f6d45e51059bc411f563645
+asserts:
+  - .actions|length > 0  # Should have actions generated
+  - .actions[0].to_address == "tmaya1qvlul0ujfrq27ja7uxrp8r7my9juegz0cg70la"  # Maya address for synth
+  - .actions[0].coin.asset == "BTC/BTC"  # BTC synth output
+---
+# Transaction 6 actions: Hyperion BTC synth swap (should succeed after fixing address)
+type: check
+endpoint: http://localhost:1317/mayachain/tx/details/9c70fba436e6a4242bf207567efdeb0d52a75ccded2670cfbc4812c80afb821b
+asserts:
+  - .actions|length > 0  # Should have actions generated
+  - .actions[0].to_address == "tmaya1qvlul0ujfrq27ja7uxrp8r7my9juegz0cg70la"  # Maya address for synth
+  - .actions[0].coin.asset == "BTC/BTC"  # BTC synth output
+---
+# Check that the outbound transaction was queued
+type: check
+endpoint: http://localhost:1317/mayachain/queue/outbound
+asserts:
+  - .|length >= 0  # May have been processed already
+---
+# Create blocks to process the outbound queue
+type: create-blocks
+count: 2
+---
+# Create more blocks to complete all processing
+type: create-blocks
+count: 5

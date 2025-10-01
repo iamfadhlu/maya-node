@@ -1,0 +1,450 @@
+type: state
+genesis:
+  initial_height: "0"
+  app_state:
+    auth:
+      accounts:
+        - "@type": /cosmos.auth.v1beta1.ModuleAccount
+          base_account:
+            account_number: "0"
+            address: {{ addr_module_transfer }}
+            pub_key: ~
+            sequence: "0"
+          name: transfer
+          permissions:
+            - minter
+            - burner
+        - "@type": /cosmos.auth.v1beta1.ModuleAccount
+          base_account:
+            account_number: "1"
+            address: {{ addr_module_asgard }}
+            pub_key: ~
+            sequence: "0"
+          name: asgard
+          permissions: []
+        - "@type": /cosmos.auth.v1beta1.ModuleAccount
+          base_account:
+            account_number: "2"
+            address: {{ addr_module_mayachain }}
+            pub_key: ~
+            sequence: "0"
+          name: mayachain
+          permissions:
+            - minter
+            - burner
+        - "@type": /cosmos.auth.v1beta1.ModuleAccount
+          base_account:
+            account_number: "3"
+            address: {{ addr_module_reserve }}
+            pub_key: ~
+            sequence: "0"
+          name: reserve
+          permissions: []
+        - "@type": /cosmos.auth.v1beta1.ModuleAccount
+          base_account:
+            account_number: "5"
+            address: {{ addr_module_bond }}
+            pub_key: ~
+            sequence: "0"
+          name: bond
+          permissions: []
+        - "@type": /cosmos.auth.v1beta1.BaseAccount
+          address: {{ addr_maya_dog }}
+          pub_key: null
+          account_number: "6"
+          sequence: "0"
+        - "@type": /cosmos.auth.v1beta1.BaseAccount
+          address: {{ addr_maya_cat }}
+          pub_key: null
+          account_number: "7"
+          sequence: "0"
+        - "@type": /cosmos.auth.v1beta1.BaseAccount
+          address: {{ addr_maya_fox }}
+          pub_key: null
+          account_number: "8"
+          sequence: "0"
+    bank:
+      balances:
+        - address: {{ addr_maya_dog }}
+          coins:
+            - denom: cacao
+              amount: "500000000000000"
+        - address: {{ addr_maya_cat }}
+          coins:
+            - denom: cacao
+              amount: "2500000000000000"
+        - address: {{ addr_maya_fox }}
+          coins:
+            - denom: cacao
+              amount: "2500000000000000"
+        - address: {{ addr_module_reserve }}
+          coins:
+            - amount: "3500000000000000"
+              denom: cacao
+        - address: {{ addr_module_asgard }}
+          coins:
+            - amount: "20000000000000"
+              denom: cacao
+      params:
+        default_send_enabled: false
+    transfer:
+      params:
+        send_enabled: false
+    mayachain:
+      store_version: "116"
+      mayanames:
+        - name: "wr"
+          expire_block_height: "9999999999"
+          owner: "{{ addr_maya_dog }}"
+          aliases:
+            - chain: "MAYA"
+              address: "{{ addr_maya_dog }}"
+      pools:
+        - LP_units: "10000000000000"
+          asset: BTC.BTC
+          balance_asset: "100000000"
+          balance_cacao: "10000000000000"
+          decimals: "8"
+          pending_inbound_asset: "0"
+          pending_inbound_cacao: "0"
+          status: Available
+          synth_units: "0"
+        - LP_units: "10000000000000"
+          asset: ETH.ETH
+          balance_asset: "1000000000"
+          balance_cacao: "10000000000000"
+          decimals: "8"
+          pending_inbound_asset: "0"
+          pending_inbound_cacao: "0"
+          status: Available
+          synth_units: "0"
+      liquidity_providers:
+        - asset: BTC.BTC
+          cacao_address: {{ addr_maya_dog }}
+          asset_address: ""
+          last_add_height: "1"
+          last_withdraw_height: "0"
+          units: "10000000000000"
+          pending_cacao: "0"
+          pending_asset: "0"
+          pending_tx_Id: ""
+          cacao_deposit_value: "10000000000000"
+          asset_deposit_value: "100000000"
+          node_bond_address: null
+          withdraw_counter: "0"
+          last_withdraw_counter_height: "0"
+          bonded_nodes:
+            - node_address: {{ addr_maya_dog }}
+              units: "10000000000000"
+        - asset: ETH.ETH
+          asset_address: {{ addr_eth_cat }}
+          asset_deposit_value: "1000000000"
+          last_add_height: "1"
+          pending_asset: "0"
+          pending_cacao: "0"
+          cacao_address: {{ addr_maya_cat }}
+          cacao_deposit_value: "10000000000000"
+          units: "10000000000000"
+      bond_providers:
+        - node_address: {{ addr_maya_dog }}
+          node_operator_fee: "0"
+          providers:
+            - bond_address: {{ addr_maya_dog }}
+              bonded: true
+              reward: "0"
+      node_accounts:
+        - active_block_height: "0"
+          ip_address: 1.1.1.1
+          node_address: {{ addr_maya_dog }}
+          bond_address: {{ addr_maya_dog }}
+          pub_key_set:
+            secp256k1: {{ pubkey_dog }}
+            ed25519: "tmayapub1addwnpepqfshsq2y6ejy2ysxmq4gj8n8mzuzyulk9wh4n946jv5w2vpwdn2yuz3v0gx"
+          signer_membership: []
+          status: Active
+          # matches the priv_validator_key.json mounted in the test container
+          validator_cons_pub_key: tmayacpub1zcjduepqq75h7uy6qhesh9d3a9tuk0mzrnc46u8rye44ze6peua3zmpfh23qpj8pe3
+          version: "1.116.0"
+      network_fees:
+        - chain: BTC
+          transaction_fee_rate: "7"
+          transaction_size: "1000"
+        - chain: ETH
+          transaction_fee_rate: "8"
+          transaction_size: "80000"
+      vaults:
+        - block_height: "0"
+          chains:
+            - BTC
+            - ETH
+          coins:
+            - amount: "100000000"
+              asset: BTC.BTC
+              decimals: "8"
+            - amount: "1000000000"
+              asset: ETH.ETH
+              decimals: "8"
+          inbound_tx_count: "2"
+          membership:
+            - tmayapub1addwnpepqfshsq2y6ejy2ysxmq4gj8n8mzuzyulk9wh4n946jv5w2vpwdn2yuz3v0gx
+          pub_key: tmayapub1addwnpepqfshsq2y6ejy2ysxmq4gj8n8mzuzyulk9wh4n946jv5w2vpwdn2yuz3v0gx
+          status: ActiveVault
+          type: AsgardVault
+      streaming_swaps:
+        - tx_id: "${INBOUND_TXID=FD4CA0CEEE107E4A077BB178BC0A031EEB5BE6E55B6F529EE65C5A1A2487A621}"
+          interval: "${INTERVAL=1}"
+          quantity: "${QUANTITY=10}"
+          count: "1"
+          last_height: "1"
+          trade_target: "0"
+          deposit: "${INPUT_AMOUNT=5000000}"
+          in: "500000"
+          out: "4901721"
+          failed_swaps: []
+          failed_swap_reasons: []
+      swap_queue_items:
+        - tx:
+            id: "${INBOUND_TXID}"
+            chain: BTC
+            from_address: {{ addr_btc_fox }}
+            to_address: {{ addr_btc_dog }}
+            coins:
+              - asset: "${INPUT_ASSET=BTC.BTC}"
+                amount: "${INPUT_AMOUNT}"
+            gas:
+              - asset: "BTC.BTC"
+                amount: "10000"
+            memo: "=:${OUTPUT_ASSET=ETH.ETH}:${OLD_DESTINATION={{ addr_eth_fox }}}:0/${INTERVAL}/${QUANTITY}:wr:20"
+          target_asset: "${OUTPUT_ASSET}"
+          destination: "${OLD_DESTINATION}"
+          trade_target: "0"
+          stream_interval: "${INTERVAL}"
+          affiliate_address: "maya1awn7l5a8u9a7mlypcsgevrjfe2gtyhjwn8dyuy"
+          affiliate_basis_points: "20"
+          signer: {{ addr_maya_dog }}
+        - tx:
+            id: "${INBOUND_TXID}"
+            chain: BTC
+            from_address: {{ addr_btc_fox }}
+            to_address: {{ addr_btc_dog }}
+            coins:
+              - asset: "${INPUT_ASSET=BTC.BTC}"
+                amount: "${INPUT_AMOUNT}"
+            gas:
+              - asset: "BTC.BTC"
+                amount: "10000"
+            memo: "=:${OUTPUT_ASSET=ETH.ETH}:${NEW_DESTINATION=0xEf1C6F153afaf86424fd984728d32535902F1c3D}:0/${INTERVAL}/${QUANTITY}:wr:20"
+          target_asset: "${OUTPUT_ASSET}"
+          destination: "${NEW_DESTINATION}"
+          trade_target: "0"
+          stream_interval: "${INTERVAL}"
+          affiliate_address: "maya1awn7l5a8u9a7mlypcsgevrjfe2gtyhjwn8dyuy"
+          affiliate_basis_points: "20"
+          signer: {{ addr_maya_dog }}
+      observed_tx_in_voters:
+        - tx_id: "${INBOUND_TXID}"
+          height: "1"
+          tx:
+            status: "done"
+            block_height: "1"
+            signers: []
+            observed_pub_key: {{ pubkey_dog }}
+            keysign_ms: "0"
+            finalise_height: "1"
+            tx:
+              id: "${INBOUND_TXID}"
+              chain: BTC
+              from_address: {{ addr_btc_fox }}
+              to_address: {{ addr_btc_dog }}
+              coins:
+                - amount: "${INPUT_AMOUNT}"
+                  asset: "${INPUT_ASSET}"
+                  decimals: "8"
+              gas:
+                - amount: "10000"
+                  asset: "BTC.BTC"
+              memo: "=:${OUTPUT_ASSET}:${NEW_DESTINATION}:0/${INTERVAL}/${QUANTITY}:wr:20"
+          txs:
+            - status: "done"
+              block_height: "1"
+              signers: []
+              observed_pub_key: {{ pubkey_dog }}
+              keysign_ms: "0"
+              finalise_height: "1"
+              tx:
+                id: "${INBOUND_TXID}"
+                chain: BTC
+                from_address: {{ addr_btc_fox }}
+                to_address: {{ addr_btc_dog }}
+                coins:
+                  - amount: "${INPUT_AMOUNT}"
+                    asset: "${INPUT_ASSET}"
+                    decimals: "8"
+                gas:
+                  - amount: "10000"
+                    asset: "BTC.BTC"
+                memo: "=:${OUTPUT_ASSET}:${NEW_DESTINATION}:0/${INTERVAL}/${QUANTITY}:wr:20"
+          actions:
+            - chain: "MAYA"
+              to_address: "maya1awn7l5a8u9a7mlypcsgevrjfe2gtyhjwn8dyuy"
+              coin:
+                asset: "MAYA.CACAO"
+                amount: "85494718964738"
+              memo: "OUT:${INBOUND_TXID}"
+              max_gas:
+                - asset: "MAYA.CACAO"
+                  amount: "0"
+                  decimals: "8"
+              gas_rate: "2000000000"
+              in_hash: "${INBOUND_TXID}"
+          out_txs:
+            - id: "0000000000000000000000000000000000000000000000000000000000000000"
+              chain: "MAYA"
+              from_address: "maya1g98cy3n9mmjrpn0sxmn63lztelera37n8yyjwl"
+              to_address: "maya1awn7l5a8u9a7mlypcsgevrjfe2gtyhjwn8dyuy"
+              coins:
+                - asset: "MAYA.CACAO"
+                  amount: "85494718964738"
+              gas:
+                - asset: "MAYA.CACAO"
+                  amount: "2000000000"
+              memo: "OUT:${INBOUND_TXID}"
+          finalised_height: "1"
+
+---
+type: create-blocks
+count: 2
+---
+type: check
+endpoint: http://localhost:1317/mayachain/swap/streaming/${INBOUND_TXID}
+asserts:
+  - .source_asset == "${INPUT_ASSET}"
+  - .deposit == "${INPUT_AMOUNT}"
+  - .count == ${COUNT=3} # double counts due to the duplication on the swap queue
+  - .quantity == ${QUANTITY}
+  - .in == (( ${INPUT_AMOUNT} * ${COUNT} / ${QUANTITY} )|tostring)
+  - .tx_id == "${INBOUND_TXID}"
+  - .interval == ${INTERVAL}
+  - .target_asset == "${OUTPUT_ASSET}"
+  - .out == "14609989"
+  - .last_height == 2
+  - .trade_target == "0"
+  - .failed_swaps|length == 0
+  - .failed_swap_reasons|length == 0
+---
+type: check
+endpoint: http://localhost:1317/mayachain/swaps/streaming
+asserts:
+  - .|length == 1
+---
+type: create-blocks
+count: 1
+---
+type: check
+endpoint: http://localhost:1317/mayachain/swap/streaming/${INBOUND_TXID}
+asserts:
+  - .count == 5 # double counts due to the duplication on the swap queue
+  # - .count == 3 # double counts due to the duplication on the swap queue
+---
+type: check
+endpoint: http://localhost:1317/mayachain/tx/${INBOUND_TXID}
+asserts:
+  - .observed_tx.tx.memo == "=:${OUTPUT_ASSET}:${NEW_DESTINATION}:0/${INTERVAL}/${QUANTITY}:wr:20" # the memo in the tx voter should already be updated
+---
+type: check
+endpoint: http://localhost:1317/mayachain/queue/swap
+asserts:
+  - .|length == 2
+---
+type: tx-version
+signer: {{ addr_maya_dog }}
+version: "1.117.0"
+---
+type: create-blocks
+count: 2
+---
+type: check
+endpoint: http://localhost:1317/mayachain/queue/swap
+asserts:
+  - .|length == 1
+---
+type: check
+endpoint: http://localhost:1317/mayachain/swaps/streaming
+asserts:
+  - .|length == 1
+---
+type: check
+endpoint: http://localhost:1317/mayachain/swap/streaming/${INBOUND_TXID}
+asserts:
+  - .count == 8
+---
+type: check
+endpoint: http://localhost:1317/mayachain/tx/${INBOUND_TXID}
+asserts:
+  - .observed_tx.tx.memo == "=:${OUTPUT_ASSET}:${NEW_DESTINATION}:0/${INTERVAL}/${QUANTITY}:wr:20"
+---
+type: create-blocks
+count: 1
+---
+type: check
+endpoint: http://localhost:1317/mayachain/queue/swap
+asserts:
+  - .|length == 1
+---
+type: check
+endpoint: http://localhost:1317/mayachain/swap/streaming/${INBOUND_TXID}
+asserts:
+  - .count == 9
+---
+type: create-blocks
+count: 1
+---
+type: check
+endpoint: http://localhost:1317/mayachain/queue/outbound
+asserts:
+  - .|length == 1
+  - .[0]|.to_address == "${NEW_DESTINATION}"
+  - .[0]|.in_hash == "${INBOUND_TXID}"
+  - .[0]|.coin.asset == "${OUTPUT_ASSET}"
+  - .[0]|.coin.amount == "${OUTPUT_AMOUNT=44528725}"
+---
+type: check
+endpoint: http://localhost:1317/mayachain/swaps/streaming
+asserts:
+  - .|length == 0
+---
+type: check
+endpoint: http://localhost:1317/mayachain/tx/${INBOUND_TXID}
+asserts:
+  - .observed_tx.tx.memo == "=:${OUTPUT_ASSET}:${NEW_DESTINATION}:0/${INTERVAL}/${QUANTITY}:wr:20"
+---
+type: create-blocks
+count: 1
+---
+type: tx-observed-out
+signer: {{ addr_maya_dog }}
+txs:
+  - tx:
+      id: "{{ observe_txid 2 }}"
+      chain: ETH
+      from_address: {{ addr_eth_dog }}
+      to_address: "${NEW_DESTINATION}"
+      coins:
+        - amount: "${OUTPUT_AMOUNT}"
+          asset: "${OUTPUT_ASSET}"
+          decimals: 8
+      gas:
+        - amount: "960000"
+          asset: "ETH.ETH"
+      memo: "OUT:${INBOUND_TXID}"
+    block_height: 14
+    finalise_height: 14
+    observed_pub_key: {{ pubkey_dog }}
+---
+type: create-blocks
+count: 1
+---
+type: check
+endpoint: http://localhost:1317/mayachain/queue/outbound
+asserts:
+  - .|length == 0

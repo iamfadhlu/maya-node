@@ -1,0 +1,311 @@
+[
+  {
+    "id": {
+      "hash": "",
+      "parts": {
+        "total": 0,
+        "hash": ""
+      }
+    },
+    "header": {
+      "version": {
+        "block": "11",
+        "app": "0"
+      },
+      "chain_id": "mayachain",
+      "height": 1,
+      "time": "",
+      "last_block_id": {
+        "hash": "",
+        "parts": {
+          "total": 0,
+          "hash": ""
+        }
+      },
+      "last_commit_hash": "",
+      "data_hash": "E3B0C44298FC1C149AFBF4C8996FB92427AE41E4649B934CA495991B7852B855",
+      "validators_hash": "9A0FC1918CDCB81267B61959D511436CC2B19E3A48538EC664B2E46E3D6E61C6",
+      "next_validators_hash": "9A0FC1918CDCB81267B61959D511436CC2B19E3A48538EC664B2E46E3D6E61C6",
+      "consensus_hash": "048091BC7DDC283F77BFBF91D73C44DA58C3DF8A9CBC867405D8B7F3DAADA22F",
+      "app_hash": "E3B0C44298FC1C149AFBF4C8996FB92427AE41E4649B934CA495991B7852B855",
+      "last_results_hash": "E3B0C44298FC1C149AFBF4C8996FB92427AE41E4649B934CA495991B7852B855",
+      "evidence_hash": "E3B0C44298FC1C149AFBF4C8996FB92427AE41E4649B934CA495991B7852B855",
+      "proposer_address": "E557CD61B142A7E76E89BB3020D395A15D97C452"
+    },
+    "begin_block_events": [],
+    "end_block_events": [
+      {
+        "bond_reward": "0",
+        "type": "rewards"
+      }
+    ],
+    "txs": []
+  },
+  {
+    "id": {
+      "hash": "",
+      "parts": {
+        "total": 0,
+        "hash": ""
+      }
+    },
+    "header": {
+      "version": {
+        "block": "11",
+        "app": "0"
+      },
+      "chain_id": "mayachain",
+      "height": 2,
+      "time": "",
+      "last_block_id": {
+        "hash": "",
+        "parts": {
+          "total": 0,
+          "hash": ""
+        }
+      },
+      "last_commit_hash": "",
+      "data_hash": "1DCFBCADCB8C28B186C774A60084A29857BE3340E7F4D8E51F21C923FD19762B",
+      "validators_hash": "9A0FC1918CDCB81267B61959D511436CC2B19E3A48538EC664B2E46E3D6E61C6",
+      "next_validators_hash": "9A0FC1918CDCB81267B61959D511436CC2B19E3A48538EC664B2E46E3D6E61C6",
+      "consensus_hash": "048091BC7DDC283F77BFBF91D73C44DA58C3DF8A9CBC867405D8B7F3DAADA22F",
+      "app_hash": "239DDD2C95647E89C507BEF5EBE6F912FDA8DBC59C4865BAD720AA0679679C18",
+      "last_results_hash": "E3B0C44298FC1C149AFBF4C8996FB92427AE41E4649B934CA495991B7852B855",
+      "evidence_hash": "E3B0C44298FC1C149AFBF4C8996FB92427AE41E4649B934CA495991B7852B855",
+      "proposer_address": "E557CD61B142A7E76E89BB3020D395A15D97C452"
+    },
+    "begin_block_events": [],
+    "end_block_events": [
+      {
+        "bond_reward": "0",
+        "type": "rewards"
+      }
+    ],
+    "txs": [
+      {
+        "hash": "60E90F0FB9EFFB5AD7F087DE8F1169B2517382F4236270A28014FACA41B91D20",
+        "tx": {
+          "auth_info": {
+            "fee": {
+              "amount": [],
+              "gas_limit": "2000000",
+              "granter": "",
+              "payer": ""
+            },
+            "signer_infos": [
+              {
+                "mode_info": {
+                  "single": {
+                    "mode": "SIGN_MODE_DIRECT"
+                  }
+                },
+                "public_key": {
+                  "@type": "/cosmos.crypto.secp256k1.PubKey",
+                  "key": "AmF4AUTWZEUSBtgqiR5n2Lgic/Yrr1mWupMo5TAubNRO"
+                },
+                "sequence": "0"
+              }
+            ]
+          },
+          "body": {
+            "extension_options": [],
+            "memo": "",
+            "messages": [
+              {
+                "@type": "/types.MsgMimir",
+                "key": "OutboundTransactionFee",
+                "signer": "tmaya1zf3gsk7edzwl9syyefvfhle37cjtql35hdgtzt",
+                "value": "20000000"
+              }
+            ],
+            "non_critical_extension_options": [],
+            "timeout_height": "0"
+          },
+          "signatures": [
+            "k2wiqyRRe1/qMPv4Oq9eqmBhfwRo6W25hA5oq35w8kkBAx6WwBz+9AhWLexz45gtWHPWfSHQTxMpM/1XsNb3yw=="
+          ]
+        },
+        "result": {
+          "code": 0,
+          "data": "\n\u0011\n\u000f/types.MsgMimir",
+          "log": "[{\"events\":[{\"type\":\"message\",\"attributes\":[{\"key\":\"action\",\"value\":\"set_mimir_attr\"}]},{\"type\":\"set_mimir\",\"attributes\":[{\"key\":\"key\",\"value\":\"OUTBOUNDTRANSACTIONFEE\"},{\"key\":\"value\",\"value\":\"20000000\"}]}]}]",
+          "gas_wanted": "2000000",
+          "gas_used": "52811",
+          "events": [
+            {
+              "fee": "",
+              "fee_payer": "tmaya1zf3gsk7edzwl9syyefvfhle37cjtql35hdgtzt",
+              "type": "tx"
+            },
+            {
+              "acc_seq": "tmaya1zf3gsk7edzwl9syyefvfhle37cjtql35hdgtzt/0",
+              "type": "tx"
+            },
+            {
+              "signature": "k2wiqyRRe1/qMPv4Oq9eqmBhfwRo6W25hA5oq35w8kkBAx6WwBz+9AhWLexz45gtWHPWfSHQTxMpM/1XsNb3yw==",
+              "type": "tx"
+            },
+            {
+              "action": "set_mimir_attr",
+              "type": "message"
+            },
+            {
+              "key": "OUTBOUNDTRANSACTIONFEE",
+              "type": "set_mimir",
+              "value": "20000000"
+            }
+          ]
+        }
+      },
+      {
+        "hash": "627B98C7DF486533C993BD52CFAC3A10D8BBCF2DFFA792E0268A640849BDA94F",
+        "tx": {
+          "auth_info": {
+            "fee": {
+              "amount": [],
+              "gas_limit": "2000000",
+              "granter": "",
+              "payer": ""
+            },
+            "signer_infos": [
+              {
+                "mode_info": {
+                  "single": {
+                    "mode": "SIGN_MODE_DIRECT"
+                  }
+                },
+                "public_key": {
+                  "@type": "/cosmos.crypto.secp256k1.PubKey",
+                  "key": "Aw/2MBvAhnLEifCInxlpTjCXxV0I/nE8pI5jNI+Zblx6"
+                },
+                "sequence": "0"
+              }
+            ]
+          },
+          "body": {
+            "extension_options": [],
+            "memo": "",
+            "messages": [
+              {
+                "@type": "/types.MsgDeposit",
+                "coins": [
+                  {
+                    "amount": "120000000001",
+                    "asset": "MAYA.CACAO",
+                    "decimals": "0"
+                  }
+                ],
+                "memo": "~:f:MAYA:tmaya13wrmhnh2qe98rjse30pl7u6jxszjjwl4fd6gwn",
+                "signer": "tmaya13wrmhnh2qe98rjse30pl7u6jxszjjwl4fd6gwn"
+              }
+            ],
+            "non_critical_extension_options": [],
+            "timeout_height": "0"
+          },
+          "signatures": [
+            "O55uYDjU5im1pOp5FlGTov00nu2c7VUUS0GL9Sss3ktkq3v4zzkdy2GWgr8tEva3hJ0+YL6VApSVumgNvUKTGw=="
+          ]
+        },
+        "result": {
+          "code": 0,
+          "data": "\n\u0013\n\u0011/types.MsgDeposit",
+          "log": "[{\"events\":[{\"type\":\"coin_received\",\"attributes\":[{\"key\":\"receiver\",\"value\":\"tmaya1dheycdevq39qlkxs2a6wuuzyn4aqxhve3qfhf7\"},{\"key\":\"amount\",\"value\":\"1800000000cacao\"},{\"key\":\"receiver\",\"value\":\"tmaya1577sz8j7xnthm3cl3vgfvmdmkrp7dqrhfj6dsg\"},{\"key\":\"amount\",\"value\":\"200000000cacao\"},{\"key\":\"receiver\",\"value\":\"tmaya1dheycdevq39qlkxs2a6wuuzyn4aqxhve3qfhf7\"},{\"key\":\"amount\",\"value\":\"120000000001cacao\"}]},{\"type\":\"coin_spent\",\"attributes\":[{\"key\":\"spender\",\"value\":\"tmaya13wrmhnh2qe98rjse30pl7u6jxszjjwl4fd6gwn\"},{\"key\":\"amount\",\"value\":\"1800000000cacao\"},{\"key\":\"spender\",\"value\":\"tmaya13wrmhnh2qe98rjse30pl7u6jxszjjwl4fd6gwn\"},{\"key\":\"amount\",\"value\":\"200000000cacao\"},{\"key\":\"spender\",\"value\":\"tmaya13wrmhnh2qe98rjse30pl7u6jxszjjwl4fd6gwn\"},{\"key\":\"amount\",\"value\":\"120000000001cacao\"}]},{\"type\":\"mayaname\",\"attributes\":[{\"key\":\"name\",\"value\":\"f\"},{\"key\":\"chain\",\"value\":\"MAYA\"},{\"key\":\"address\",\"value\":\"tmaya13wrmhnh2qe98rjse30pl7u6jxszjjwl4fd6gwn\"},{\"key\":\"registration_fee\",\"value\":\"100000000000\"},{\"key\":\"fund_amount\",\"value\":\"20000000001\"},{\"key\":\"expire\",\"value\":\"15256002\"},{\"key\":\"owner\",\"value\":\"tmaya13wrmhnh2qe98rjse30pl7u6jxszjjwl4fd6gwn\"},{\"key\":\"affiliate_bps\",\"value\":\"501\"},{\"key\":\"subaffiliate_name\"},{\"key\":\"subaffiliate_bps\"}]},{\"type\":\"message\",\"attributes\":[{\"key\":\"action\",\"value\":\"deposit\"},{\"key\":\"sender\",\"value\":\"tmaya13wrmhnh2qe98rjse30pl7u6jxszjjwl4fd6gwn\"},{\"key\":\"sender\",\"value\":\"tmaya13wrmhnh2qe98rjse30pl7u6jxszjjwl4fd6gwn\"},{\"key\":\"sender\",\"value\":\"tmaya13wrmhnh2qe98rjse30pl7u6jxszjjwl4fd6gwn\"}]},{\"type\":\"transfer\",\"attributes\":[{\"key\":\"recipient\",\"value\":\"tmaya1dheycdevq39qlkxs2a6wuuzyn4aqxhve3qfhf7\"},{\"key\":\"sender\",\"value\":\"tmaya13wrmhnh2qe98rjse30pl7u6jxszjjwl4fd6gwn\"},{\"key\":\"amount\",\"value\":\"1800000000cacao\"},{\"key\":\"recipient\",\"value\":\"tmaya1577sz8j7xnthm3cl3vgfvmdmkrp7dqrhfj6dsg\"},{\"key\":\"sender\",\"value\":\"tmaya13wrmhnh2qe98rjse30pl7u6jxszjjwl4fd6gwn\"},{\"key\":\"amount\",\"value\":\"200000000cacao\"},{\"key\":\"recipient\",\"value\":\"tmaya1dheycdevq39qlkxs2a6wuuzyn4aqxhve3qfhf7\"},{\"key\":\"sender\",\"value\":\"tmaya13wrmhnh2qe98rjse30pl7u6jxszjjwl4fd6gwn\"},{\"key\":\"amount\",\"value\":\"120000000001cacao\"}]}]}]",
+          "gas_wanted": "2000000",
+          "gas_used": "143549",
+          "events": [
+            {
+              "fee": "",
+              "fee_payer": "tmaya13wrmhnh2qe98rjse30pl7u6jxszjjwl4fd6gwn",
+              "type": "tx"
+            },
+            {
+              "acc_seq": "tmaya13wrmhnh2qe98rjse30pl7u6jxszjjwl4fd6gwn/0",
+              "type": "tx"
+            },
+            {
+              "signature": "O55uYDjU5im1pOp5FlGTov00nu2c7VUUS0GL9Sss3ktkq3v4zzkdy2GWgr8tEva3hJ0+YL6VApSVumgNvUKTGw==",
+              "type": "tx"
+            },
+            {
+              "action": "deposit",
+              "type": "message"
+            },
+            {
+              "amount": "1800000000cacao",
+              "spender": "tmaya13wrmhnh2qe98rjse30pl7u6jxszjjwl4fd6gwn",
+              "type": "coin_spent"
+            },
+            {
+              "amount": "1800000000cacao",
+              "receiver": "tmaya1dheycdevq39qlkxs2a6wuuzyn4aqxhve3qfhf7",
+              "type": "coin_received"
+            },
+            {
+              "amount": "1800000000cacao",
+              "recipient": "tmaya1dheycdevq39qlkxs2a6wuuzyn4aqxhve3qfhf7",
+              "sender": "tmaya13wrmhnh2qe98rjse30pl7u6jxszjjwl4fd6gwn",
+              "type": "transfer"
+            },
+            {
+              "sender": "tmaya13wrmhnh2qe98rjse30pl7u6jxszjjwl4fd6gwn",
+              "type": "message"
+            },
+            {
+              "amount": "200000000cacao",
+              "spender": "tmaya13wrmhnh2qe98rjse30pl7u6jxszjjwl4fd6gwn",
+              "type": "coin_spent"
+            },
+            {
+              "amount": "200000000cacao",
+              "receiver": "tmaya1577sz8j7xnthm3cl3vgfvmdmkrp7dqrhfj6dsg",
+              "type": "coin_received"
+            },
+            {
+              "amount": "200000000cacao",
+              "recipient": "tmaya1577sz8j7xnthm3cl3vgfvmdmkrp7dqrhfj6dsg",
+              "sender": "tmaya13wrmhnh2qe98rjse30pl7u6jxszjjwl4fd6gwn",
+              "type": "transfer"
+            },
+            {
+              "sender": "tmaya13wrmhnh2qe98rjse30pl7u6jxszjjwl4fd6gwn",
+              "type": "message"
+            },
+            {
+              "amount": "120000000001cacao",
+              "spender": "tmaya13wrmhnh2qe98rjse30pl7u6jxszjjwl4fd6gwn",
+              "type": "coin_spent"
+            },
+            {
+              "amount": "120000000001cacao",
+              "receiver": "tmaya1dheycdevq39qlkxs2a6wuuzyn4aqxhve3qfhf7",
+              "type": "coin_received"
+            },
+            {
+              "amount": "120000000001cacao",
+              "recipient": "tmaya1dheycdevq39qlkxs2a6wuuzyn4aqxhve3qfhf7",
+              "sender": "tmaya13wrmhnh2qe98rjse30pl7u6jxszjjwl4fd6gwn",
+              "type": "transfer"
+            },
+            {
+              "sender": "tmaya13wrmhnh2qe98rjse30pl7u6jxszjjwl4fd6gwn",
+              "type": "message"
+            },
+            {
+              "address": "tmaya13wrmhnh2qe98rjse30pl7u6jxszjjwl4fd6gwn",
+              "affiliate_bps": "501",
+              "chain": "MAYA",
+              "expire": "15256002",
+              "fund_amount": "20000000001",
+              "name": "f",
+              "owner": "tmaya13wrmhnh2qe98rjse30pl7u6jxszjjwl4fd6gwn",
+              "registration_fee": "100000000000",
+              "subaffiliate_bps": "",
+              "subaffiliate_name": "",
+              "type": "mayaname"
+            }
+          ]
+        }
+      }
+    ]
+  }
+]

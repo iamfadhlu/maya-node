@@ -1,0 +1,21 @@
+{
+  "active_block_height": 1,
+  "bond": "0",
+  "bond_address": "tbnb1czyqwfxptfnk7aey99cu820ftr28hw2fcvrh74",
+  "node_address": "tmaya1tdfqy34uptx207scymqsy4k5uzfmry5sffuam7",
+  "observer_active": false,
+  "pub_key_set": {
+    "ed25519": "tmayapub1addwnpepqf98ry0fw7wsyuz5uash48vmmylec3ervfsh70xplx70p95m3ac56tzhnww",
+    "secp256k1": "tmayapub1addwnpepqf98ry0fw7wsyuz5uash48vmmylec3ervfsh70xplx70p95m3ac56tzhnww"
+  },
+  "requested_to_leave": false,
+  "signer_active": false,
+  "signer_membership": [
+    "tmayapub1addwnpepq2kdyjkm6y9aa3kxl8wfaverka6pvkek2ygrmhx6sj3ec6h0fegwsuewymv"
+  ],
+  "slash_points": 0,
+  "status": "active",
+  "status_since": 1,
+  "validator_cons_pub_key": "tmayacpub1zcjduepqmfu6urfdeewa35250fjhwq2h0daljs7w20wvqc3p5c0tpzx60jcqytzhmm",
+  "version": "0.1.0"
+}

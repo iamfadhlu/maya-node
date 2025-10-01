@@ -1,0 +1,100 @@
+{{ template "5-validators-btc-eth-pool-state.yaml" }}
+---
+type: create-blocks
+count: 1
+---
+########################################################################################
+# check with CACAOPoolRewards disabled
+# make swap to generate rewards
+########################################################################################
+type: tx-mimir
+key: CACAOPoolRewardsEnabled
+value: 0
+signer: {{ addr_maya_dog }}
+---
+type: create-blocks
+count: 1
+---
+type: tx-deposit
+signer: {{ addr_maya_fox }}
+coins:
+  - amount: "1000000000000"
+    asset: "cacao"
+memo: "=:BTC.BTC:{{ addr_btc_fox }}"
+---
+type: create-blocks
+count: 1
+---
+########################################################################################
+# check CACAOPool - should be zero
+########################################################################################
+type: check
+endpoint: http://localhost:1317/mayachain/balance/module/cacao_pool
+asserts:
+  - .name == "cacao_pool"
+  - .address == "{{ addr_module_cacao_pool }}" # "tmaya167q2uvp3pzqjkefx3qd275yfdgee9fadhejgwg"
+  - .coins|length == 0
+---
+########################################################################################
+# check Reserve - should get 10% of rewards
+########################################################################################
+type: check
+endpoint: http://localhost:1317/mayachain/balance/module/reserve
+asserts:
+  - .name == "reserve"
+  - .address == "{{ addr_module_reserve }}" # "tmaya1dheycdevq39qlkxs2a6wuuzyn4aqxhve3qfhf7"
+  - .coins|length == 1
+  - .coins[0].amount|tonumber == 35000000000000 + ${RESERVE_GAS=1800000000} + ${TEN_PERCENT_REWARD=980200000} + ${OTHER=14277967428}
+  - .coins[0].amount|tonumber == ${RESERVE_BAL=35017058167428}
+---
+########################################################################################
+# now enable CACAOPool Rewards
+########################################################################################
+type: tx-mimir
+key: CACAOPoolRewardsEnabled
+value: 1
+signer: {{ addr_maya_dog }}
+---
+type: create-blocks
+count: 1
+---
+type: check
+endpoint: http://localhost:1317/mayachain/pools
+asserts:
+  - .|length == 3
+---
+########################################################################################
+# make swap to generate rewards
+########################################################################################
+type: tx-deposit
+signer: {{ addr_maya_fox }}
+coins:
+  - amount: "1000000000000"
+    asset: "cacao"
+memo: "=:BTC.BTC:{{ addr_btc_fox }}"
+---
+type: create-blocks
+count: 1
+---
+########################################################################################
+# check CACAOPool - should receive 5% of rewards
+########################################################################################
+type: check
+endpoint: http://localhost:1317/mayachain/balance/module/cacao_pool
+asserts:
+  - .name == "cacao_pool"
+  - .address == "{{ addr_module_cacao_pool }}" # "tmaya167q2uvp3pzqjkefx3qd275yfdgee9fadhejgwg"
+  - .coins|length == 1
+  - .coins[0].amount|tonumber == ${FIVE_PERCENT_REWARD=485488095}
+---
+########################################################################################
+# check Reserve - should receive 5% of rewards
+########################################################################################
+type: check
+endpoint: http://localhost:1317/mayachain/balance/module/reserve
+asserts:
+  - .name == "reserve"
+  - .address == "{{ addr_module_reserve }}" # "tmaya1dheycdevq39qlkxs2a6wuuzyn4aqxhve3qfhf7"
+  - .coins|length == 1
+  - .coins[0].amount|tonumber == ${RESERVE_BAL} + ${RESERVE_GAS} + ${FIVE_PERCENT_REWARD} + ${OTHER=14503228284}
+

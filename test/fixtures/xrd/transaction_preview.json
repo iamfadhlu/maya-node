@@ -1,0 +1,587 @@
+{
+  "at_ledger_state": {
+    "state_version": 161345434,
+    "header_summary": {
+      "epoch_round": {
+        "epoch": 148868,
+        "round": 1402
+      },
+      "ledger_hashes": {
+        "state_tree_hash": "3afa85184aa400be2b8fd69653a788ecdd745e8773d739d258dc434c7af6ac58",
+        "transaction_tree_hash": "a1629961887c58eda19c028aebbcf0f0d2e4fbf20690908877e2961771f6a9b5",
+        "receipt_tree_hash": "dcd5b42ed78d6681820dd051ba186efde22df7e8915850567c2215110286b01e"
+      },
+      "proposer_timestamp": {
+        "unix_timestamp_ms": 1730902727856,
+        "date_time": "2024-11-06T14:18:47.856Z"
+      }
+    }
+  },
+  "encoded_receipt": "5c22000121062108a000743ba40b000000000000000000000000000000000000000900e1f5050900093d00a000743ba40b000000000000000000000000000000000000000980f0fa02a0aaaa829007e54be700000000000000000000000000000000a080cdc975bc56000000000000000000000000000000000000a080cdc975bc560000000000000000000000000000000000002102080000a00000000000000000000000000000000000000000000000002107093f9a440009389a0100a0008c69fe73a31e0300000000000000000000000000000000a00060c92493a7120000000000000000000000000000000000a0000000000000000000000000000000000000000000000000a000bfbf32b73a750000000000000000000000000000000000a00000000000000000000000000000000000000000000000002201012102230c091d0b4166746572496e766f6b657a0000000e416c6c6f636174654e6f64654964a70200000c4265666f7265496e766f6b65e80200000d436c6f73655375627374617465ef3700000a4372656174654e6f6465081800000844726f704e6f6465d12a000009456d69744576656e742c020000074c6f636b466565f4010000174d61726b537562737461746541735472616e7369656e74370000002b4f70656e53756273746174653a3a476c6f62616c46756e6769626c655265736f757263654d616e6167657203e30100244f70656e53756273746174653a3a476c6f62616c47656e65726963436f6d706f6e656e74daaa00001b4f70656e53756273746174653a3a476c6f62616c5061636b616765a3202000294f70656e53756273746174653a3a476c6f62616c5669727475616c456432353531394163636f756e74435704002b4f70656e53756273746174653a3a476c6f62616c5669727475616c536563703235366b314163636f756e7485a00000234f70656e53756273746174653a3a496e7465726e616c46756e6769626c655661756c74d1960200264f70656e53756273746174653a3a496e7465726e616c47656e65726963436f6d706f6e656e74812a0000234f70656e53756273746174653a3a496e7465726e616c4b657956616c756553746f7265f37802000750696e4e6f6465540000000f507265706172655761736d436f6465842a09000a51756572794163746f72e80300000c526561645375627374617465f4760a0008526566436865636b4c9c00001b52756e4e6174697665436f64653a3a576f726b746f705f64726f70fe4500002752756e4e6174697665436f64653a3a6765745f616d6f756e745f46756e6769626c655661756c74733800001752756e4e6174697665436f64653a3a6c6f636b5f6665654fc501002952756e5761736d436f64653a3a4d617961526f757465725f6765745f7661756c745f62616c616e6365267600001156616c696461746554785061796c6f6164582a00001256657269667954785369676e617475726573000000000d577269746553756273746174654c0e0000230c09030c436f6d6d69744576656e74738f1300000a436f6d6d69744c6f67730000000029436f6d6d69745374617465557064617465733a3a496e7465726e616c46756e6769626c655661756c74a9860100220001210921012320220f071e860c6318c6318c6c4e1b40cc6318c6318cf7bca52eb54a6a86318c6318c6000123072201400001232222010001070200012007e0015c220001210222000121022307a00716a013a84d175dd601000000000000000000000000000000000140c2b15868139d02000000000000000000000000000000004260a7797713f81b03000000000000000000000000000000000640cbabde5fe29d02000000000000000000000000000000005060348dfde6afa1020000000000000000000000000000000004602211b68ac41d030000000000000000000000000000000038c0aa7c956fa1e900000000000000000000000000000000009058619833de031de3aad69cad02a22656e083e307fb617b28e1b275bd7ed7220000071e82cc6318c6318c659963ed8c6318c6318cf7e8f5ae8f4a96a6318c6318c6000123072202400001232222010001070000012007265c220001210222000121050a51450200000000000750074107ff0a64000000000000002200005000012322220101012007245c200720dacc55ea620538fadce9a28a27baa190a052808103fa4e9ff485d5758d78944d00012007125c2200012102220101220001220000220000071ec07d71dbd67865d64c2ba5f4d867ef2eac2fc8ba19f967288e021b8a2fec0001230722020000012322220040000123222200071e0d906318c6318c659a6130cc6318c6318cf7a8ba5295eabf46318c6318c6000123072206440001232222004200012322220041000123222200010001232222004500012322220046000123222200071e51bb6a97bd7e978a170deb36b0e6daf6727cfdb94768bc5f93a4145395d600012307220400000123222200060001232222000500012322220041000123222200071e0d906318c6318c6ee313598c6318c6318cf7bcaa2e954a9626318c6318c60001230722084400012322220000000123222200430001232222004200012322220041000123222200010001232222004500012322220046000123222200071e5da66318c6318c61f5a61b4c6318c6318cf794aa8d295f14e6318c6318c6000123072203000001232222000600012322220040000123222200071e583de7866cd4cd0a142b5ece7bc0fef5c2fa420cdbe75a5de9366f3463c900012307220200000123222200400001232222010001070000012007255c2200012102220001a060527bb1b2c40793e0320000000000000000000000000000220000071e0d906318c6318c61e603c64c6318c6318cf7be913d63aafbc6318c6318c600012307220744000123222200000001232222004200012322220041000123222200010001232222004500012322220046000123222200071e0dc723eb9d17e3d7de96897ad0635c7736ce51327a295d7e7286fa56c9800001230722084400012322220000000123222200430001232222004200012322220041000123222200010001232222004500012322220047000123222200071ed17698d0ca4c82e748c8cbded1f95c33121357e4cab2a9379b7acb8908a300012307220100000123222200071eb0899ee13d4c2d21d70aeb09dcc16de1d0079cc9cd99889c2a88643653bf0001230722020000012322220040000123222200071eb0627e531d55abad4ed0df5184c17abf95c37a3942405c0531e1cd3e12720001230722020000012322220040000123222200071e5890082b092b970ecb88e66a500085b3236fd3d4e27cb89108d69870a56c0001230722020000012322220040000123222200071e58619833de031de3aad69cad02a22656e083e307fb617b28e1b275bd7ed7000123072201400001232222010001070000012007255c2200012102220001a0c5a0a9dba8c1ac2100000000000000000000000000000000220000210520800020800020800020800023202102071e583de7866cd4cd0a142b5ece7bc0fef5c2fa420cdbe75a5de9366f3463c902805da66318c6318c61f5a61b4c6318c6318cf794aa8d295f14e6318c6318c6220001a000550daa417a59fcffffffffffffffffffffffffffffffff071e58619833de031de3aad69cad02a22656e083e307fb617b28e1b275bd7ed702805da66318c6318c61f5a61b4c6318c6318cf794aa8d295f14e6318c6318c6220001a08055f92adf42d3010000000000000000000000000000000021012320a001071e583de7866cd4cd0a142b5ece7bc0fef5c2fa420cdbe75a5de9366f3463c900abf255be85a603000000000000000000000000000000002104a0c0aa7c956fa1e90000000000000000000000000000000000a0c0aa7c956fa1e90000000000000000000000000000000000a08055f92adf42d301000000000000000000000000000000002322a00022000120220200012007035c2100000120071a5ca021c3c2e4b4c29cc408d8000000000000000000000000000020210402210222010220071e583de7866cd4cd0a142b5ece7bc0fef5c2fa420cdbe75a5de9366f3463c92200000c0c4c6f636b4665654576656e7420071c5c2101a000002059dd64f00c0f01000000000000000000000000000002210222010220071e583de7866cd4cd0a142b5ece7bc0fef5c2fa420cdbe75a5de9366f3463c92200000c0b5061794665654576656e7420071c5c2101a000abf255be85a6030000000000000000000000000000000002210222010220071e58619833de031de3aad69cad02a22656e083e307fb617b28e1b275bd7ed72200000c0c4465706f7369744576656e7420071c5c2101a08055f92adf42d3010000000000000000000000000000000002210222010220071e5da66318c6318c61f5a61b4c6318c6318cf794aa8d295f14e6318c6318c62200000c194275726e46756e6769626c655265736f757263654576656e7420071c5c2101a08055f92adf42d30100000000000000000000000000000000202100210223202304071e860c6318c6318c6c4e1b40cc6318c6318cf7bca52eb54a6a86318c6318c607230140222201000107020301210122000121012103800d906318c6318c6c4e1b40cc6318c6318cf7bfd5d45f48c686318c6318c6200720d8510877df1d820f4752b3c033baf656f62e0e612731718865d048b9d16300b32201010a0900000000000000071e82cc6318c6318c659963ed8c6318c6318cf7e8f5ae8f4a96a6318c6318c607230240222201000107000301210122000121012103800d906318c6318c659963ed8c6318c6318cf7be85a17d48bca6318c6318c6200720bd71c021e525c608eaf7291c8c0eb2519993241a8e8d6d58c62e3ae0565355922201010a03000000000000005022220101012007245c200720dacc55ea620538fadce9a28a27baa190a052808103fa4e9ff485d5758d78944d0401210222000121012103800d906318c6318c659963ed8c6318c6318cf7be85a17d48bca6318c6318c6200720bd71c021e525c608eaf7291c8c0eb2519993241a8e8d6d58c62e3ae0565355922201010a000000000000000022000121012103800d906318c6318c659963ed8c6318c6318cf7be85a17d48bca6318c6318c6200720bd71c021e525c608eaf7291c8c0eb2519993241a8e8d6d58c62e3ae0565355922201010a0100000000000000071e583de7866cd4cd0a142b5ece7bc0fef5c2fa420cdbe75a5de9366f3463c907230140222201000107000301210122000121012103800d906318c6318c61e603c64c6318c6318cf7be913d63aafbc6318c6318c6200720462a3fea283117aab2b01c297812bdc0fa9060b29eb5e68b847f361bc12019332201010a0000000000000000071e58619833de031de3aad69cad02a22656e083e307fb617b28e1b275bd7ed707230140222201000107000301210122000121012103800d906318c6318c61e603c64c6318c6318cf7be913d63aafbc6318c6318c6200720462a3fea283117aab2b01c297812bdc0fa9060b29eb5e68b847f361bc12019332201010a0000000000000000232121040222010220071e583de7866cd4cd0a142b5ece7bc0fef5c2fa420cdbe75a5de9366f3463c92200000c0c4c6f636b4665654576656e740121012103800d906318c6318c61e603c64c6318c6318cf7be913d63aafbc6318c6318c6200720462a3fea283117aab2b01c297812bdc0fa9060b29eb5e68b847f361bc12019332201010a16000000000000000222010220071e583de7866cd4cd0a142b5ece7bc0fef5c2fa420cdbe75a5de9366f3463c92200000c0b5061794665654576656e740121012103800d906318c6318c61e603c64c6318c6318cf7be913d63aafbc6318c6318c6200720462a3fea283117aab2b01c297812bdc0fa9060b29eb5e68b847f361bc12019332201010a17000000000000000222010220071e58619833de031de3aad69cad02a22656e083e307fb617b28e1b275bd7ed72200000c0c4465706f7369744576656e740121012103800d906318c6318c61e603c64c6318c6318cf7be913d63aafbc6318c6318c6200720462a3fea283117aab2b01c297812bdc0fa9060b29eb5e68b847f361bc12019332201010a19000000000000000222010220071e5da66318c6318c61f5a61b4c6318c6318cf794aa8d295f14e6318c6318c62200000c194275726e46756e6769626c655265736f757263654576656e740121012103800d906318c6318c61e603c64c6318c6318cf7be913d63aafbc6318c6318c6200720ba27cc155884d6e1aa7a41346fd8c11f18cc99775653caef1fd3455d625fd1472201010a3a000000000000002201012103202100230a2001000000000000000021010420071e51bb6a97bd7e978a170deb36b0e6daf6727cfdb94768bc5f93a4145395d620071e583de7866cd4cd0a142b5ece7bc0fef5c2fa420cdbe75a5de9366f3463c9805da66318c6318c61f5a61b4c6318c6318cf794aa8d295f14e6318c6318c6a000550daa417a59fcffffffffffffffffffffffffffffffff2102a000002059dd64f00c0f010000000000000000000000000000a0000000000000000000000000000000000000000000000000220000",
+  "receipt": {
+    "status": "Succeeded",
+    "fee_summary": {
+      "execution_cost_units_consumed": 4495935,
+      "finalization_cost_units_consumed": 105016,
+      "xrd_total_execution_cost": "0.22479675",
+      "xrd_total_finalization_cost": "0.0052508",
+      "xrd_total_royalty_cost": "0",
+      "xrd_total_storage_cost": "0.03299713078",
+      "xrd_total_tipping_cost": "0"
+    },
+    "costing_parameters": {
+      "execution_cost_unit_price": "0.00000005",
+      "execution_cost_unit_limit": 100000000,
+      "execution_cost_unit_loan": 4000000,
+      "finalization_cost_unit_price": "0.00000005",
+      "finalization_cost_unit_limit": 50000000,
+      "xrd_usd_price": "16.666666666666666666",
+      "xrd_storage_price": "0.00009536743",
+      "xrd_archive_storage_price": "0.00009536743",
+      "tip_percentage": 0
+    },
+    "fee_source": {
+      "from_vaults": [
+        {
+          "vault_entity": {
+            "entity_type": "InternalFungibleVault",
+            "is_global": false,
+            "entity_address": "internal_vault_rdx1tq770pnv6nxs59pttm88hs877hp05ssvm0n45h0fxehngc7fvwpttw"
+          },
+          "xrd_amount": "0.26304468078"
+        }
+      ]
+    },
+    "fee_destination": {
+      "to_proposer": "0.065761170195",
+      "to_validator_set": "0.065761170195",
+      "to_burn": "0.13152234039",
+      "to_royalty_recipients": []
+    },
+    "state_updates": {
+      "deleted_partitions": [],
+      "created_substates": [
+        {
+          "substate_id": {
+            "entity_type": "GlobalTransactionTracker",
+            "entity_address": "transactiontracker_rdx1stxxxxxxxxxxtxtrakxxxxxxxxx006844685494xxxxxxxxxtxtrak",
+            "entity_module": "Main",
+            "partition_kind": "KeyValue",
+            "partition_number": 80,
+            "substate_type": "TransactionTrackerCollectionEntry",
+            "substate_key": {
+              "key_type": "Map",
+              "db_sort_key_hex": "f07b4bec040727b6764dcfc7a12c52cea5e7b2e05c200720dacc55ea620538fadce9a28a27baa190a052808103fa4e9ff485d5758d78944d",
+              "key_hex": "5c200720dacc55ea620538fadce9a28a27baa190a052808103fa4e9ff485d5758d78944d"
+            }
+          },
+          "value": {
+            "substate_data": {
+              "substate_type": "TransactionTrackerCollectionEntry",
+              "is_locked": false,
+              "key": {
+                "intent_hash": "dacc55ea620538fadce9a28a27baa190a052808103fa4e9ff485d5758d78944d",
+                "intent_hash_bech32m": "txid_rdx1mtx9t6nzq5u04h8f529z0w4pjzs99qypq0aya8l5sh2htrtcj3xsamclks"
+              },
+              "value": {
+                "status": "CommittedSuccess"
+              }
+            }
+          },
+          "system_structure": {
+            "type": "ObjectKeyValuePartitionEntry",
+            "key_schema": {
+              "type": "Package",
+              "full_type_id": {
+                "entity_address": "package_rdx1pkgxxxxxxxxxtxtrakxxxxxxxxx000595975309xxxxxxxxxtxtrak",
+                "schema_hash": "bd71c021e525c608eaf7291c8c0eb2519993241a8e8d6d58c62e3ae056535592",
+                "local_type_id": {
+                  "kind": "SchemaLocal",
+                  "id": 0,
+                  "as_sbor": {
+                    "hex": "5c2201010a0000000000000000",
+                    "programmatic_json": {
+                      "kind": "Enum",
+                      "variant_id": "1",
+                      "fields": [
+                        {
+                          "kind": "U64",
+                          "value": "0"
+                        }
+                      ]
+                    }
+                  }
+                }
+              }
+            },
+            "value_schema": {
+              "type": "Package",
+              "full_type_id": {
+                "entity_address": "package_rdx1pkgxxxxxxxxxtxtrakxxxxxxxxx000595975309xxxxxxxxxtxtrak",
+                "schema_hash": "bd71c021e525c608eaf7291c8c0eb2519993241a8e8d6d58c62e3ae056535592",
+                "local_type_id": {
+                  "kind": "SchemaLocal",
+                  "id": 1,
+                  "as_sbor": {
+                    "hex": "5c2201010a0100000000000000",
+                    "programmatic_json": {
+                      "kind": "Enum",
+                      "variant_id": "1",
+                      "fields": [
+                        {
+                          "kind": "U64",
+                          "value": "1"
+                        }
+                      ]
+                    }
+                  }
+                }
+              }
+            }
+          }
+        }
+      ],
+      "updated_substates": [
+        {
+          "substate_id": {
+            "entity_type": "GlobalConsensusManager",
+            "entity_address": "consensusmanager_rdx1scxxxxxxxxxxcnsmgrxxxxxxxxx000999665565xxxxxxxxxcnsmgr",
+            "entity_module": "Main",
+            "partition_kind": "Field",
+            "partition_number": 64,
+            "substate_type": "ConsensusManagerFieldValidatorRewards",
+            "substate_key": {
+              "key_type": "Field",
+              "db_sort_key_hex": "02",
+              "id": 2
+            }
+          },
+          "new_value": {
+            "substate_data": {
+              "substate_type": "ConsensusManagerFieldValidatorRewards",
+              "is_locked": false,
+              "value": {
+                "proposer_rewards": [
+                  {
+                    "validator_index": {
+                      "index": 22
+                    },
+                    "xrd_amount": "0.1323955937225"
+                  },
+                  {
+                    "validator_index": {
+                      "index": 1
+                    },
+                    "xrd_amount": "0.188328098305"
+                  },
+                  {
+                    "validator_index": {
+                      "index": 66
+                    },
+                    "xrd_amount": "0.2240453689775"
+                  },
+                  {
+                    "validator_index": {
+                      "index": 6
+                    },
+                    "xrd_amount": "0.188555660805"
+                  },
+                  {
+                    "validator_index": {
+                      "index": 80
+                    },
+                    "xrd_amount": "0.1896260659575"
+                  },
+                  {
+                    "validator_index": {
+                      "index": 4
+                    },
+                    "xrd_amount": "0.2245516564775"
+                  },
+                  {
+                    "validator_index": {
+                      "index": 56
+                    },
+                    "xrd_amount": "0.065761170195"
+                  }
+                ],
+                "rewards_vault": {
+                  "entity_type": "InternalFungibleVault",
+                  "is_global": false,
+                  "entity_address": "internal_vault_rdx1tpsesv77qvw782kknjks9g3x2msg8cc8ldshk28pkf6m6lkhzcw3fr"
+                }
+              }
+            }
+          },
+          "system_structure": {
+            "type": "ObjectField",
+            "value_schema": {
+              "type": "Package",
+              "full_type_id": {
+                "entity_address": "package_rdx1pkgxxxxxxxxxcnsmgrxxxxxxxxx000746305335xxxxxxxxxcnsmgr",
+                "schema_hash": "d8510877df1d820f4752b3c033baf656f62e0e612731718865d048b9d16300b3",
+                "local_type_id": {
+                  "kind": "SchemaLocal",
+                  "id": 9,
+                  "as_sbor": {
+                    "hex": "5c2201010a0900000000000000",
+                    "programmatic_json": {
+                      "kind": "Enum",
+                      "variant_id": "1",
+                      "fields": [
+                        {
+                          "kind": "U64",
+                          "value": "9"
+                        }
+                      ]
+                    }
+                  }
+                }
+              }
+            }
+          }
+        },
+        {
+          "substate_id": {
+            "entity_type": "InternalFungibleVault",
+            "entity_address": "internal_vault_rdx1tq770pnv6nxs59pttm88hs877hp05ssvm0n45h0fxehngc7fvwpttw",
+            "entity_module": "Main",
+            "partition_kind": "Field",
+            "partition_number": 64,
+            "substate_type": "FungibleVaultFieldBalance",
+            "substate_key": {
+              "key_type": "Field",
+              "db_sort_key_hex": "00",
+              "id": 0
+            }
+          },
+          "new_value": {
+            "substate_data": {
+              "substate_type": "FungibleVaultFieldBalance",
+              "is_locked": false,
+              "value": {
+                "amount": "240260.9894689133735"
+              }
+            }
+          },
+          "system_structure": {
+            "type": "ObjectField",
+            "value_schema": {
+              "type": "Package",
+              "full_type_id": {
+                "entity_address": "package_rdx1pkgxxxxxxxxxresrcexxxxxxxxx000538436477xxxxxxxxxresrce",
+                "schema_hash": "462a3fea283117aab2b01c297812bdc0fa9060b29eb5e68b847f361bc1201933",
+                "local_type_id": {
+                  "kind": "SchemaLocal",
+                  "id": 0,
+                  "as_sbor": {
+                    "hex": "5c2201010a0000000000000000",
+                    "programmatic_json": {
+                      "kind": "Enum",
+                      "variant_id": "1",
+                      "fields": [
+                        {
+                          "kind": "U64",
+                          "value": "0"
+                        }
+                      ]
+                    }
+                  }
+                }
+              }
+            }
+          }
+        },
+        {
+          "substate_id": {
+            "entity_type": "InternalFungibleVault",
+            "entity_address": "internal_vault_rdx1tpsesv77qvw782kknjks9g3x2msg8cc8ldshk28pkf6m6lkhzcw3fr",
+            "entity_module": "Main",
+            "partition_kind": "Field",
+            "partition_number": 64,
+            "substate_type": "FungibleVaultFieldBalance",
+            "substate_key": {
+              "key_type": "Field",
+              "db_sort_key_hex": "00",
+              "id": 0
+            }
+          },
+          "new_value": {
+            "substate_data": {
+              "substate_type": "FungibleVaultFieldBalance",
+              "is_locked": false,
+              "value": {
+                "amount": "2.426527230229848261"
+              }
+            }
+          },
+          "system_structure": {
+            "type": "ObjectField",
+            "value_schema": {
+              "type": "Package",
+              "full_type_id": {
+                "entity_address": "package_rdx1pkgxxxxxxxxxresrcexxxxxxxxx000538436477xxxxxxxxxresrce",
+                "schema_hash": "462a3fea283117aab2b01c297812bdc0fa9060b29eb5e68b847f361bc1201933",
+                "local_type_id": {
+                  "kind": "SchemaLocal",
+                  "id": 0,
+                  "as_sbor": {
+                    "hex": "5c2201010a0000000000000000",
+                    "programmatic_json": {
+                      "kind": "Enum",
+                      "variant_id": "1",
+                      "fields": [
+                        {
+                          "kind": "U64",
+                          "value": "0"
+                        }
+                      ]
+                    }
+                  }
+                }
+              }
+            }
+          }
+        }
+      ],
+      "deleted_substates": [],
+      "new_global_entities": []
+    },
+    "events": [
+      {
+        "type": {
+          "emitter": {
+            "type": "Method",
+            "entity": {
+              "entity_type": "InternalFungibleVault",
+              "is_global": false,
+              "entity_address": "internal_vault_rdx1tq770pnv6nxs59pttm88hs877hp05ssvm0n45h0fxehngc7fvwpttw"
+            },
+            "object_module_id": "Main"
+          },
+          "type_reference": {
+            "full_type_id": {
+              "entity_address": "package_rdx1pkgxxxxxxxxxresrcexxxxxxxxx000538436477xxxxxxxxxresrce",
+              "schema_hash": "462a3fea283117aab2b01c297812bdc0fa9060b29eb5e68b847f361bc1201933",
+              "local_type_id": {
+                "kind": "SchemaLocal",
+                "id": 22,
+                "as_sbor": {
+                  "hex": "5c2201010a1600000000000000",
+                  "programmatic_json": {
+                    "kind": "Enum",
+                    "variant_id": "1",
+                    "fields": [
+                      {
+                        "kind": "U64",
+                        "value": "22"
+                      }
+                    ]
+                  }
+                }
+              }
+            }
+          },
+          "name": "LockFeeEvent"
+        },
+        "data": {
+          "hex": "5c2101a000002059dd64f00c0f010000000000000000000000000000",
+          "programmatic_json": {
+            "kind": "Tuple",
+            "fields": [
+              {
+                "kind": "Decimal",
+                "value": "5000"
+              }
+            ]
+          }
+        }
+      },
+      {
+        "type": {
+          "emitter": {
+            "type": "Method",
+            "entity": {
+              "entity_type": "InternalFungibleVault",
+              "is_global": false,
+              "entity_address": "internal_vault_rdx1tq770pnv6nxs59pttm88hs877hp05ssvm0n45h0fxehngc7fvwpttw"
+            },
+            "object_module_id": "Main"
+          },
+          "type_reference": {
+            "full_type_id": {
+              "entity_address": "package_rdx1pkgxxxxxxxxxresrcexxxxxxxxx000538436477xxxxxxxxxresrce",
+              "schema_hash": "462a3fea283117aab2b01c297812bdc0fa9060b29eb5e68b847f361bc1201933",
+              "local_type_id": {
+                "kind": "SchemaLocal",
+                "id": 23,
+                "as_sbor": {
+                  "hex": "5c2201010a1700000000000000",
+                  "programmatic_json": {
+                    "kind": "Enum",
+                    "variant_id": "1",
+                    "fields": [
+                      {
+                        "kind": "U64",
+                        "value": "23"
+                      }
+                    ]
+                  }
+                }
+              }
+            }
+          },
+          "name": "PayFeeEvent"
+        },
+        "data": {
+          "hex": "5c2101a000abf255be85a60300000000000000000000000000000000",
+          "programmatic_json": {
+            "kind": "Tuple",
+            "fields": [
+              {
+                "kind": "Decimal",
+                "value": "0.26304468078"
+              }
+            ]
+          }
+        }
+      },
+      {
+        "type": {
+          "emitter": {
+            "type": "Method",
+            "entity": {
+              "entity_type": "InternalFungibleVault",
+              "is_global": false,
+              "entity_address": "internal_vault_rdx1tpsesv77qvw782kknjks9g3x2msg8cc8ldshk28pkf6m6lkhzcw3fr"
+            },
+            "object_module_id": "Main"
+          },
+          "type_reference": {
+            "full_type_id": {
+              "entity_address": "package_rdx1pkgxxxxxxxxxresrcexxxxxxxxx000538436477xxxxxxxxxresrce",
+              "schema_hash": "462a3fea283117aab2b01c297812bdc0fa9060b29eb5e68b847f361bc1201933",
+              "local_type_id": {
+                "kind": "SchemaLocal",
+                "id": 25,
+                "as_sbor": {
+                  "hex": "5c2201010a1900000000000000",
+                  "programmatic_json": {
+                    "kind": "Enum",
+                    "variant_id": "1",
+                    "fields": [
+                      {
+                        "kind": "U64",
+                        "value": "25"
+                      }
+                    ]
+                  }
+                }
+              }
+            }
+          },
+          "name": "DepositEvent"
+        },
+        "data": {
+          "hex": "5c2101a08055f92adf42d30100000000000000000000000000000000",
+          "programmatic_json": {
+            "kind": "Tuple",
+            "fields": [
+              {
+                "kind": "Decimal",
+                "value": "0.13152234039"
+              }
+            ]
+          }
+        }
+      },
+      {
+        "type": {
+          "emitter": {
+            "type": "Method",
+            "entity": {
+              "entity_type": "GlobalFungibleResource",
+              "is_global": true,
+              "entity_address": "resource_rdx1tknxxxxxxxxxradxrdxxxxxxxxx009923554798xxxxxxxxxradxrd"
+            },
+            "object_module_id": "Main"
+          },
+          "type_reference": {
+            "full_type_id": {
+              "entity_address": "package_rdx1pkgxxxxxxxxxresrcexxxxxxxxx000538436477xxxxxxxxxresrce",
+              "schema_hash": "ba27cc155884d6e1aa7a41346fd8c11f18cc99775653caef1fd3455d625fd147",
+              "local_type_id": {
+                "kind": "SchemaLocal",
+                "id": 58,
+                "as_sbor": {
+                  "hex": "5c2201010a3a00000000000000",
+                  "programmatic_json": {
+                    "kind": "Enum",
+                    "variant_id": "1",
+                    "fields": [
+                      {
+                        "kind": "U64",
+                        "value": "58"
+                      }
+                    ]
+                  }
+                }
+              }
+            }
+          },
+          "name": "BurnFungibleResourceEvent"
+        },
+        "data": {
+          "hex": "5c2101a08055f92adf42d30100000000000000000000000000000000",
+          "programmatic_json": {
+            "kind": "Tuple",
+            "fields": [
+              {
+                "kind": "Decimal",
+                "value": "0.13152234039"
+              }
+            ]
+          }
+        }
+      }
+    ],
+    "output": [
+      {
+        "hex": "5c2100",
+        "programmatic_json": {
+          "kind": "Tuple",
+          "fields": []
+        }
+      },
+      {
+        "hex": "5ca021c3c2e4b4c29cc408d80000000000000000000000000000",
+        "programmatic_json": {
+          "kind": "Decimal",
+          "value": "1020192.901665043031180065"
+        }
+      }
+    ]
+  },
+  "instruction_resource_changes": [
+    {
+      "index": 0,
+      "resource_changes": [
+        {
+          "resource_address": "resource_rdx1tknxxxxxxxxxradxrdxxxxxxxxx009923554798xxxxxxxxxradxrd",
+          "component_entity": {
+            "entity_type": "GlobalVirtualEd25519Account",
+            "is_global": true,
+            "entity_address": "account_rdx12xak49aa06tc59cdavmtpek67ee8eldega5tchun5s2989wkqwreus"
+          },
+          "vault_entity": {
+            "entity_type": "InternalFungibleVault",
+            "is_global": false,
+            "entity_address": "internal_vault_rdx1tq770pnv6nxs59pttm88hs877hp05ssvm0n45h0fxehngc7fvwpttw"
+          },
+          "amount": "-0.26304468078"
+        }
+      ]
+    }
+  ],
+  "logs": []
+}

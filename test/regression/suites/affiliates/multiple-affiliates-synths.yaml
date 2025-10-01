@@ -1,0 +1,371 @@
+{{ template "default-state.yaml" }}
+---
+{{ template "btc-eth-big-pool-state.yaml" }}
+---
+type: state
+genesis:
+  app_state:
+    auth:
+      accounts:
+        - "@type": /cosmos.auth.v1beta1.BaseAccount
+          address: {{ addr_maya_pig }}
+          pub_key: null
+          account_number: "9"
+          sequence: "0"
+        - "@type": /cosmos.auth.v1beta1.BaseAccount
+          address: {{ addr_maya_frog }}
+          pub_key: null
+          account_number: "10"
+          sequence: "0"
+        - "@type": /cosmos.auth.v1beta1.BaseAccount
+          address: {{ addr_maya_goat }}
+          pub_key: null
+          account_number: "11"
+          sequence: "0"
+    bank:
+      balances:
+        - address: {{ addr_maya_pig }}
+          coins:
+            - denom: cacao
+              amount: "2500000000000"
+        - address: {{ addr_maya_frog }}
+          coins:
+            - denom: cacao
+              amount: "2500000000000"
+        - address: {{ addr_maya_goat }}
+          coins:
+            - denom: cacao
+              amount: "2500000000000"
+    mayachain:
+      mimirs:
+        - key: PREFERREDASSETOUTBOUNDFEEMULTIPLIER
+          value: "5"
+---
+type: create-blocks
+count: 1
+---
+type: check
+endpoint: http://localhost:1317/mayachain/mimir
+asserts:
+  - .PREFERREDASSETOUTBOUNDFEEMULTIPLIER == 5
+---
+type: tx-deposit
+signer: {{ addr_maya_dog }}
+coins:
+  - amount: "5000000000000"
+    asset: "cacao"
+memo: "=:BTC/BTC"
+---
+type: create-blocks
+count: 1
+---
+#######################################################################################
+# Prepare all affiliates and subaffiliates for test
+# The 'cat' affiliate operates with a 1.5% fee. From this, fox receives 30% and pig gets 20%.
+# Additionally, fox passes 40% of its share to its sub-sub-affiliate, frog.
+# Resulting distribution: 
+# cat: 0.75%
+# fox: 0.27% (60% of 30% of 1.5%)
+# pig: 0.3% (20% of 1.5%)
+# frog: 0.18% (40% of 30% of 1.5%).
+######################################################################################
+# create cat MAYAName with ETH.ETH as the preferred asset and 1.5 bps affiliate fee
+type: tx-deposit
+signer: {{ addr_maya_cat }}
+coins:
+  - amount: "200000000000"
+    asset: "cacao"
+memo: "~:cat:MAYA:{{ addr_maya_cat }}"
+---
+type: create-blocks
+count: 1
+---
+type: tx-deposit
+signer: {{ addr_maya_cat }}
+coins:
+  - amount: "200000000000"
+    asset: "cacao"
+memo: "~:cat:ETH:{{ addr_eth_cat }}::ETH.ETH"
+---
+type: create-blocks
+count: 1
+---
+type: tx-deposit
+signer: {{ addr_maya_cat }}
+coins:
+  - amount: "200000000000"
+    asset: "cacao"
+memo: "~:cat::::::150"
+---
+type: create-blocks
+count: 1
+---
+# create fox MAYAName with ETH.ETH as the preferred asset
+type: tx-deposit
+signer: {{ addr_maya_fox }}
+coins:
+  - amount: "200000000000"
+    asset: "cacao"
+memo: "~:fox:ETH:{{ addr_eth_fox }}::ETH.ETH"
+---
+type: create-blocks
+count: 1
+---
+type: tx-deposit
+signer: {{ addr_maya_fox }}
+coins:
+  - amount: "200000000000"
+    asset: "cacao"
+memo: "~:fox:MAYA:{{ addr_maya_fox }}"
+---
+type: create-blocks
+count: 1
+---
+# create pig MAYAName with ETH.ETH as the preferred asset
+type: tx-deposit
+signer: {{ addr_maya_pig }}
+coins:
+  - amount: "200000000000"
+    asset: "cacao"
+memo: "~:pig:ETH:{{ addr_eth_pig }}::ETH.ETH"
+---
+type: create-blocks
+count: 1
+---
+# create frog MAYAName with ETH.ETH as the preferred asset
+type: tx-deposit
+signer: {{ addr_maya_frog }}
+coins:
+  - amount: "200000000000"
+    asset: "cacao"
+memo: "~:frog:ETH:{{ addr_eth_frog }}"
+---
+type: create-blocks
+count: 1
+---
+########################################################################################
+# Set affiliate->subaffiliate relations
+# MAYAName memo format:
+# ~:name:chain:address:?owner:?preferredAsset:?expiry:?affbps:?subaff:?subaffbps
+########################################################################################
+# set fox as cat's affiliate with 30% fee share
+type: tx-deposit
+signer: {{ addr_maya_cat }}
+coins:
+  - amount: "2"
+    asset: "cacao"
+memo: "~:cat:::::::fox:3000"
+---
+type: create-blocks
+count: 1
+---
+# set pig as cat's affiliate with 20% fee share
+type: tx-deposit
+signer: {{ addr_maya_cat }}
+coins:
+  - amount: "200000000000"
+    asset: "cacao"
+memo: "~:cat:::::::pig:2000"
+---
+type: create-blocks
+count: 1
+---
+# set frog as fox's affiliate with 40% fee share (of fox's share)
+type: tx-deposit
+signer: {{ addr_maya_fox }}
+coins:
+  - amount: "200000000000"
+    asset: "cacao"
+memo: "~:fox:ETH:{{ addr_eth_fox }}:::::frog:4000"
+---
+type: create-blocks
+count: 1
+---
+########################################################################################
+# Check MAYANames's settings
+########################################################################################
+type: check
+endpoint: http://localhost:1317/mayachain/mayaname/cat
+asserts:
+  - .aliases[0].address == "{{ addr_maya_cat }}"
+  - .aliases[1].address == "{{ addr_eth_cat }}"
+  - .owner == "{{ addr_maya_cat }}"
+  - .preferred_asset == "ETH.ETH"
+  - .subaffiliates[0].name == "fox"
+  - .subaffiliates[0].bps == 3000
+  - .subaffiliates[1].name == "pig"
+  - .subaffiliates[1].bps == 2000
+---
+type: check
+endpoint: http://localhost:1317/mayachain/mayaname/fox
+asserts:
+  - .aliases[0].address == "{{ addr_eth_fox }}"
+  - .owner == "{{ addr_maya_fox }}"
+  - .preferred_asset == "ETH.ETH"
+  - .subaffiliates[0].name == "frog"
+  - .subaffiliates[0].bps == 4000
+---
+type: check
+endpoint: http://localhost:1317/mayachain/mayaname/pig
+asserts:
+  - .aliases[0].address == "{{ addr_eth_pig }}"
+  - .owner == "{{ addr_maya_pig }}"
+  - .preferred_asset == "ETH.ETH"
+---
+type: check
+endpoint: http://localhost:1317/mayachain/mayaname/frog
+asserts:
+  - .aliases[0].address == "{{ addr_eth_frog }}"
+  - .owner == "{{ addr_maya_frog }}"
+  - .preferred_asset == "."
+---
+type: check
+endpoint: http://localhost:1317/cosmos/bank/v1beta1/balances/{{ addr_maya_frog }}
+asserts:
+  - .balances[]|select(.denom=="cacao")|.amount|tonumber == ${FROG_BALANCE=2298000000000}
+  - 2000000000 == ${GAS=2000000000}
+---
+type: create-blocks
+count: 1
+---
+########################################################################################
+# Now, here's where the magic happens: a swap with the 'cat' affiliate that includes sub- and sub-sub-affiliates.
+# The 'cat' affiliate operates with a 1.5% fee. From this, fox receives 30% and pig gets 20%.
+# Additionally, fox passes 40% of its share to its sub-sub-affiliate, frog.
+# Resulting distribution: 
+# cat: 0.75%
+# fox: 0.27% (60% of 30% of 1.5%)
+# pig: 0.3% (20% of 1.5%)
+# frog: 0.18% (40% of 30% of 1.5%).
+#
+# use small amount to swap not to trigger preferred asset swaps so affiliate fees remain in affiliate collector
+########################################################################################
+type: tx-deposit
+signer: {{ addr_maya_dog }}
+coins:
+# small btc/btc swap
+  - amount: "${SWAP_AMT_BTC=200000000}"
+    asset: "btc/btc"
+memo: "=:BTC.BTC:{{ addr_btc_fox }}::cat"
+---
+type: create-blocks
+count: 1
+---
+# Check affiliate collectors
+type: check
+endpoint: http://localhost:1317/mayachain/mayaname/cat
+asserts:
+  - ${SWAP_AMT=200000000000} # SWAP_AMT_BTC * btc pool ratio (1:10000)
+  - (${SWAP_AMT} * 0.0075 - ${GAS}) - (.affiliate_collector_cacao|tonumber) < (${SWAP_AMT} * 0.0075 - ${GAS}) * 0.001 # 10 bps tolerance
+---
+type: check
+endpoint: http://localhost:1317/mayachain/mayaname/fox
+asserts:
+  - (${SWAP_AMT} * 0.0027 - ${GAS}) - (.affiliate_collector_cacao|tonumber) < (${SWAP_AMT} * 0.0027 - ${GAS}) * 0.001 # 10 bps tolerance
+---
+type: check
+endpoint: http://localhost:1317/mayachain/mayaname/pig
+asserts:
+  - (${SWAP_AMT} * 0.003 - ${GAS}) - (.affiliate_collector_cacao|tonumber) < (${SWAP_AMT} * 0.003 - ${GAS}) * 0.001 # 10 bps tolerance
+---
+# frog doesn't have preferred asset, fee moves directly to the maya alias
+type: check
+endpoint: http://localhost:1317/mayachain/mayaname/frog
+asserts:
+  - .affiliate_collector_cacao|tonumber == 0
+---
+type: check
+endpoint: http://localhost:1317/cosmos/bank/v1beta1/balances/{{ addr_maya_frog }}
+asserts:
+  - (${SWAP_AMT} * 0.0018 - ${GAS}) - (.balances[]|select(.denom=="cacao")|.amount|tonumber - ${FROG_BALANCE}) < (${SWAP_AMT} * 0.0018 - ${GAS}) * 0.001 # 10 bps tolerance
+---
+# check the outbound queue and then clear it
+type: check
+endpoint: http://localhost:1317/mayachain/queue/outbound
+asserts:
+  - .|length == 1
+  - .[0]|.in_hash == "{{ native_txid -1 }}"
+---
+type: tx-observed-out
+signer: {{ addr_maya_dog }}  
+txs:
+- tx:
+    id: '{{ observe_txid 5 }}'
+    chain: BTC
+    from_address: {{ addr_btc_dog }}
+    to_address: {{ addr_btc_fox }}
+    coins:
+      - amount: "76796"
+        asset: "BTC.BTC"
+        decimals: 8
+    gas:
+      - amount: "960000"
+        asset: "BTC.BTC"
+    memo: "OUT:{{ native_txid -1 }}"
+  block_height: 21
+  finalise_height: 21
+  observed_pub_key: {{ pubkey_dog }}
+---
+type: create-blocks
+count: 1
+---
+# check the outbound queue - only the main swap should be there, affiliate fees are in collectors
+type: check
+endpoint: http://localhost:1317/mayachain/queue/outbound
+asserts:
+  - .|length == 1
+---
+########################################################################################
+# now use larger amount to trigger preferred asset swaps
+########################################################################################
+type: tx-deposit
+signer: {{ addr_maya_dog }}
+coins:
+# big cacap swap
+  - amount: "${SWAP_AMT=40000000000000}"
+    asset: "cacao"
+memo: "=:BTC.BTC:{{ addr_btc_fox }}::cat"
+---
+type: create-blocks
+count: 3 # main, aff, pref
+---
+# Check affiliate collectors
+type: check
+endpoint: http://localhost:1317/mayachain/mayaname/cat
+asserts:
+  - .affiliate_collector_cacao|tonumber == 0
+---
+type: check
+endpoint: http://localhost:1317/mayachain/mayaname/fox
+asserts:
+  - .affiliate_collector_cacao|tonumber == 0
+---
+type: check
+endpoint: http://localhost:1317/mayachain/mayaname/pig
+asserts:
+  - .affiliate_collector_cacao|tonumber == 0
+---
+type: check
+endpoint: http://localhost:1317/mayachain/mayaname/frog
+asserts:
+  - .affiliate_collector_cacao|tonumber == 0
+---
+# check the outbound queue, there should be 54 outbound transactions
+# first is the the normal swap tx from previous swap,
+# second is the normal swap tx from this swap,
+# then three preferred asset swaps from
+# the affiliate collectors (frog doesn't have preferred assert)
+type: check
+endpoint: http://localhost:1317/mayachain/queue/outbound
+asserts:
+  - .|length == 5
+  - .[0]|.chain == "BTC"
+  - .[0]|.to_address == "{{ addr_btc_fox }}"
+  - .[1]|.chain == "BTC"
+  - .[1]|.to_address == "{{ addr_btc_fox }}"
+  - .[2]|.chain == "ETH"
+  - .[2]|.to_address == "{{ addr_eth_cat }}"
+  - .[3]|.chain == "ETH"
+  - .[3]|.to_address == "{{ addr_eth_pig }}"
+  - .[4]|.chain == "ETH"
+  - .[4]|.to_address == "{{ addr_eth_fox }}"

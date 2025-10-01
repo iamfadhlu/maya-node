@@ -1,0 +1,388 @@
+{{ template "5-validators-btc-eth-pool-state.yaml" }}
+---
+type: create-blocks
+count: 1
+---
+########################################################################################
+# check with disabled CACAOPool
+# check balances before deposit
+########################################################################################
+type: check
+endpoint: http://localhost:1317/bank/balances/{{ addr_maya_fox }}
+asserts:
+  - .result[0].denom == "cacao"
+  - .result[0].amount == "${INITIAL_FOX_CACAO=2500000000000}" # 25,000 CACAO
+---
+type: check
+endpoint: http://localhost:1317/bank/balances/{{ addr_maya_cat }}
+asserts:
+  - .result[0].denom == "cacao"
+  - .result[0].amount == "${INITIAL_CAT_CACAO=2500000000000}" # 25,000 CACAO
+---
+########################################################################################
+# deposit cacao
+########################################################################################
+type: tx-deposit
+signer: {{ addr_maya_fox }}
+coins:
+  - amount: "${DEPOSIT_FOX_CACAO=667700000000}" # 6,667 CACAO
+    asset: "MAYA.CACAO"
+memo: "pool+"
+---
+type: create-blocks
+count: 1
+---
+########################################################################################
+# check balances after deposit - fox sent the funds which are refunded and CACAOPool should be zero
+########################################################################################
+type: check
+endpoint: http://localhost:1317/bank/balances/{{ addr_maya_fox }}
+asserts:
+  - .result[0].denom == "cacao"
+  - .result[0].amount|tonumber == ${INITIAL_FOX_CACAO}-2*${TX_FEE=2000000000} # 25,000 CACAO - 2x (send and refund) 0.2 CACAO tx fee
+  - .result[0].amount == "${INITIAL_FOX_CACAO=2496000000000}" # 24,960 CACAO
+---
+type: check
+endpoint: http://localhost:1317/mayachain/balance/module/cacao_pool
+asserts:
+  - .name == "cacao_pool"
+  - .address == "{{ addr_module_cacao_pool }}" # "tmaya167q2uvp3pzqjkefx3qd275yfdgee9fadhejgwg"
+  - .coins|length == 0
+---
+type: check
+endpoint: http://localhost:1317/mayachain/cacao_provider/{{ addr_maya_fox }}
+asserts:
+  - .cacao_address == "{{ addr_maya_fox }}"
+  - .deposit_amount == "0"
+  - .last_deposit_height == 0
+---
+type: check
+endpoint: http://localhost:1317/mayachain/block
+asserts:
+  - '[.txs[].result.events[]|select(.type=="refund")]|length == 1'
+  - .txs[].result.events[]|select(.type=="refund").code == "1"
+  - .txs[].result.events[]|select(.type=="refund").reason| contains("CACAOPool disabled")
+---
+########################################################################################
+# now enable CACAOPool
+########################################################################################
+type: tx-mimir
+key: CACAOPoolEnabled
+value: 1
+signer: {{ addr_maya_dog }}
+---
+type: check
+endpoint: http://localhost:1317/mayachain/pools
+asserts:
+  - .|length == 3
+---
+########################################################################################
+# check balances before deposit
+########################################################################################
+type: check
+endpoint: http://localhost:1317/bank/balances/{{ addr_maya_fox }}
+asserts:
+  - .result[0].denom == "cacao"
+  - .result[0].amount == "${INITIAL_FOX_CACAO=2496000000000}" # 24,960 CACAO
+---
+type: check
+endpoint: http://localhost:1317/bank/balances/{{ addr_maya_cat }}
+asserts:
+  - .result[0].denom == "cacao"
+  - .result[0].amount == "${INITIAL_CAT_CACAO=2500000000000}" # 25,000 CACAO
+---
+########################################################################################
+# deposit cacao
+########################################################################################
+type: tx-deposit
+signer: {{ addr_maya_fox }}
+coins:
+  - amount: "${DEPOSIT_FOX_CACAO=667700000000}" # 6,667 CACAO
+    asset: "MAYA.CACAO"
+memo: "pool+"
+---
+type: create-blocks
+count: 1
+---
+########################################################################################
+# check balances after deposit
+########################################################################################
+type: check
+endpoint: http://localhost:1317/bank/balances/{{ addr_maya_fox }}
+asserts:
+  - .result[0].denom == "cacao"
+  - .result[0].amount|tonumber == ${INITIAL_FOX_CACAO}-${DEPOSIT_FOX_CACAO}-${TX_FEE=2000000000} # 24,960 CACAO - 6677 CACAO - 0.2 CACAO tx fee
+---
+type: check
+endpoint: http://localhost:1317/mayachain/balance/module/cacao_pool
+asserts:
+  - .name == "cacao_pool"
+  - .address == "{{ addr_module_cacao_pool }}" # "tmaya167q2uvp3pzqjkefx3qd275yfdgee9fadhejgwg"
+  - .coins[0].denom == "cacao"
+  - .coins[0].amount == "${DEPOSIT_FOX_CACAO}"
+---
+type: check
+endpoint: http://localhost:1317/mayachain/cacao_provider/{{ addr_maya_fox }}
+asserts:
+  - .cacao_address == "{{ addr_maya_fox }}"
+  - .deposit_amount == "${DEPOSIT_FOX_CACAO}"
+  - .last_deposit_height == 3
+---
+########################################################################################
+# withdraw cacao without affiliate
+########################################################################################
+type: tx-deposit
+signer: {{ addr_maya_fox }}
+coins:
+  - amount: "0"
+    asset: "MAYA.CACAO"
+memo: "pool-:5000"
+---
+type: create-blocks
+count: 1
+---
+type: check
+endpoint: http://localhost:1317/mayachain/cacao_provider/{{ addr_maya_fox }}
+asserts:
+  - .cacao_address == "{{ addr_maya_fox }}"
+  - .deposit_amount == "${DEPOSIT_FOX_CACAO}"
+  - .withdraw_amount|tonumber == ${DEPOSIT_FOX_CACAO}/2 # 667700000000 / 2 (5000 bps)
+  - .last_deposit_height == 3
+  - .last_withdraw_height == 4
+---
+type: check
+endpoint: http://localhost:1317/bank/balances/{{ addr_maya_fox }}
+asserts:
+  - .result[0].denom == "cacao"
+  - .result[0].amount|tonumber == ${INITIAL_FOX_CACAO}-${DEPOSIT_FOX_CACAO}/2-2*${TX_FEE} # 24,960 CACAO - 6677 CACAO + 50% withdraw - 2x 0.2 CACAO tx fee
+---
+type: check
+endpoint: http://localhost:1317/mayachain/balance/module/cacao_pool
+asserts:
+  - .name == "cacao_pool"
+  - .address == "{{ addr_module_cacao_pool }}" # "tmaya167q2uvp3pzqjkefx3qd275yfdgee9fadhejgwg"
+  - .coins[0].denom == "cacao"
+  - .coins[0].amount|tonumber == ${DEPOSIT_FOX_CACAO}/2 # 6,667 CACAO deposit - 50% withdraw
+---
+########################################################################################
+# withdraw cacao with affiliate
+########################################################################################
+type: tx-deposit
+signer: {{ addr_maya_fox }}
+coins:
+  - amount: "0"
+    asset: "MAYA.CACAO"
+memo: "pool-:10000"
+---
+type: create-blocks
+count: 1
+---
+# type: tx-deposit
+# signer: {{ addr_maya_fox }}
+# coins:
+#   - amount: "0"
+#     asset: "MAYA.CACAO"
+# memo: "pool-:10000:{{ addr_maya_cat }}:15"
+# ---
+# type: create-blocks
+# count: 1
+# ---
+# type: check
+# endpoint: http://localhost:1317/mayachain/cacao_provider/{{ addr_maya_fox }}
+# asserts:
+#   - .cacao_address == "{{ addr_maya_fox }}"
+#   - .deposit_amount == "667700000000"
+#   - .withdraw_amount == "667700000000" # remainder
+#   - .last_deposit_height == 3
+#   - .last_withdraw_height == 5
+# ---
+# type: check
+# endpoint: http://localhost:1317/bank/balances/{{ addr_maya_fox }}
+# asserts:
+#   - .result[0].denom == "cacao"
+#   - .result[0].amount == "2499994000000" # 25k CACAO - 3x0.02 CACAO tx fee
+# ---
+# type: check
+# endpoint: http://localhost:1317/bank/balances/{{ addr_maya_cat }}
+# asserts:
+#   - .result[0].denom == "cacao"
+#   - .result[0].amount == "2500000000000" # no profit, so no affiliate fee
+# ---
+# type: check
+# endpoint: http://localhost:1317/mayachain/balance/module/cacao_pool
+# asserts:
+#   - .name == "cacao_pool"
+#   - .address == "tmaya1rzqfv62dzu585607s5awqtgnvvwz5rzhfuaw80"
+#   - .coins | length == 0 # 100% withdrawn
+# ---
+# type: check
+# endpoint: http://localhost:1317/mayachain/cacaopool
+# asserts:
+#   - .pol.cacao_deposited == "0"
+#   - .pol.cacao_withdrawn == "0"
+#   - .pol.value == "0"
+#   - .pol.pnl == "0"
+#   - .pol.current_deposit == "0"
+#   - 'all(.reserve|.[]; . == "0")'
+#   - 'all(.providers|.[]; . == "0")'
+# ---
+# type: check
+# endpoint: http://localhost:1317/mayachain/block
+# asserts:
+#   - .txs[0].result.events[-1].type == "cacao_pool_withdraw"
+#   - .txs[0].result.events[-1].cacao_address == "{{ addr_maya_fox }}"
+#   - .txs[0].result.events[-1].cacao_amount == "333850000000"
+#   - .txs[0].result.events[-1].basis_points == "10000"
+#   - .txs[0].result.events[-1].units == "333850000000"
+#   - .txs[0].result.events[-1].affiliate_address == "{{ addr_maya_cat }}"
+#   - .txs[0].result.events[-1].affiliate_amount == "0"
+#   - .txs[0].result.events[-1].affiliate_basis_points == "15"
+#   - .txs[0].result.events[-1]|keys|length == 9
+########################################################################################
+# withdraw cacao with invalid affiliate pts
+########################################################################################
+# ---
+# type: tx-mimir
+# key: MaxAffiliateFeeBasisPoints
+# value: 10
+# signer: {{ addr_maya_dog }}
+# ---
+# type: create-blocks
+# count: 1
+# ---
+# type: tx-deposit
+# signer: {{ addr_maya_fox }}
+# coins:
+#   - amount: "0"
+#     asset: "MAYA.CACAO"
+# memo: "pool-:10000:{{ addr_maya_cat }}:11"
+# ---
+# type: create-blocks
+# count: 1
+# ---
+# type: check
+# endpoint: http://localhost:1317/mayachain/block
+# asserts:
+#   - >
+#     select(.txs[].result.log | contains("invalid affiliate basis points, max: 10, request: 11"))
+# ---
+# type: check
+# endpoint: http://localhost:1317/mayachain/cacaopool
+# asserts:
+#   - .pol.cacao_deposited == "0"
+#   - .pol.cacao_withdrawn == "0"
+#   - .pol.value == "0"
+#   - .pol.pnl == "0"
+#   - .pol.current_deposit == "0"
+#   - 'all(.reserve|.[]; . == "0")'
+#   - 'all(.providers|.[]; . == "0")'
+# ---
+########################################################################################
+# attempt to withdraw cacao with insufficient maturity
+########################################################################################
+type: tx-mimir
+key: CACAOPoolDepositMaturityBlocks
+value: 2
+signer: {{ addr_maya_dog }}
+---
+type: create-blocks
+count: 1
+---
+type: check
+endpoint: http://localhost:1317/mayachain/mimir
+asserts:
+  - .CACAOPOOLDEPOSITMATURITYBLOCKS == 2
+---
+type: tx-deposit
+signer: {{ addr_maya_pig }}
+coins:
+  - amount: "10"
+    asset: "MAYA.CACAO"
+memo: "pool+"
+---
+type: create-blocks
+count: 1
+---
+type: check
+endpoint: http://localhost:1317/mayachain/cacao_provider/{{ addr_maya_pig }}
+asserts:
+  - .cacao_address == "{{ addr_maya_pig }}"
+  - .deposit_amount == "10"
+  - .last_deposit_height == 7
+  - .last_withdraw_height == 0
+---
+type: check
+endpoint: http://localhost:1317/mayachain/cacaopool
+asserts:
+  - .pol.cacao_deposited == "0"
+  - .pol.cacao_withdrawn == "0"
+  - .pol.value == "0"
+  - .pol.pnl == "0"
+  - .pol.current_deposit == "0"
+  - 'all(.reserve|.[]; . == "0")'
+  - .reserve.units == "0"
+  - .reserve.value == "0"
+  - .reserve.pnl == "0"
+  - .reserve.current_deposit == "0"
+  - .providers.units == "10"
+  - .providers.value == "10"
+  - .providers.pnl == "0"
+  - .providers.pending_units == "10"
+---
+type: tx-deposit
+signer: {{ addr_maya_pig }}
+coins:
+  - amount: "0"
+    asset: "MAYA.CACAO"
+memo: "pool-:10000"
+---
+type: create-blocks
+count: 1
+---
+type: check
+endpoint: http://localhost:1317/mayachain/cacao_provider/{{ addr_maya_pig }}
+asserts:
+  - .cacao_address == "{{ addr_maya_pig }}"
+  - .deposit_amount == "10" # no change
+  - .last_deposit_height == 7 # no change
+  - .last_withdraw_height == 0
+---
+type: check
+endpoint: http://localhost:1317/mayachain/block
+asserts:
+#  - select(.txs[0].result.log | contains("deposit reaches maturity in 1 blocks"))
+---
+########################################################################################
+# withdraw after maturity
+########################################################################################
+type: tx-deposit
+signer: {{ addr_maya_pig }}
+coins:
+  - amount: "0"
+    asset: "MAYA.CACAO"
+memo: "pool-:10000"
+---
+type: create-blocks
+count: 1
+---
+type: check
+endpoint: http://localhost:1317/mayachain/cacao_provider/{{ addr_maya_pig }}
+asserts:
+  - .cacao_address == "{{ addr_maya_pig }}"
+  - .value == "0"
+  - .withdraw_amount == "10"
+  - .deposit_amount == "10" # no change
+  - .last_deposit_height == 7 # no change
+  - .last_withdraw_height == 9
+---
+type: check
+endpoint: http://localhost:1317/mayachain/cacaopool
+asserts:
+  - 'all(.pol|.[]; . == "0")'
+  - .pol.cacao_deposited == "0"
+  - .pol.cacao_withdrawn == "0"
+  - .pol.value == "0"
+  - .pol.pnl == "0"
+  - .pol.current_deposit == "0"
+  - 'all(.reserve|.[]; . == "0")'
+  - 'all(.providers|.[]; . == "0")'

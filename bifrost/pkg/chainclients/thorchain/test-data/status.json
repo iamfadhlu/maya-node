@@ -1,0 +1,42 @@
+{
+  "jsonrpc": "2.0",
+  "id": -1,
+  "result": {
+    "node_info": {
+      "protocol_version": {
+        "p2p": "8",
+        "block": "11",
+        "app": "0"
+      },
+      "id": "f8f980f8cee4b9cfa0cbe71ab444bb1cc35f4627",
+      "listen_addr": "tcp://0.0.0.0:27146",
+      "network": "thorchain-mainnet-v2",
+      "version": "0.34.15",
+      "channels": "40202122233038606100",
+      "moniker": "local",
+      "other": {
+        "tx_index": "on",
+        "rpc_address": "tcp://0.0.0.0:27147"
+      }
+    },
+    "sync_info": {
+      "latest_block_hash": "FDF4CAF8532B37D8EEBBAB3E6CF3542DF7BF718ECB699A9DC834A028164CDDF9",
+      "latest_app_hash": "8E04D7C759952EDD7BE6B8F9AFFC39DB89CBC5F9376360381F34D40A63A76B67",
+      "latest_block_height": "17010613",
+      "latest_block_time": "2024-07-27T19:33:37.42225171Z",
+      "earliest_block_hash": "3812CC12F5A8BF71101A7923BB39E0B1D91D513D262C1D9CE4E6CE056953BFCD",
+      "earliest_app_hash": "D656A452F1E979593828B50F19B8C90743DF4B86AF59D74B3766114E4BEF6A9F",
+      "earliest_block_height": "16950001",
+      "earliest_block_time": "2024-07-23T12:11:17.042846324Z",
+      "catching_up": false
+    },
+    "validator_info": {
+      "address": "DCDCBA80E7D0F37B7D17D78098A66DF501BEB838",
+      "pub_key": {
+        "type": "tendermint/PubKeyEd25519",
+        "value": "0E6Gb7++vOeQFYQ33OQsPjagHOSHHV7br1ffKOsPvqI="
+      },
+      "voting_power": "0"
+    }
+  }
+}

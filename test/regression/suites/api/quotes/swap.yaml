@@ -1,0 +1,980 @@
+{{ template "default-state.yaml" }}
+---
+{{ template "btc-eth-pool-state.yaml" }}
+---
+type: create-blocks
+count: 1
+---
+type: check
+endpoint: http://localhost:1317/mayachain/pools
+asserts:
+  - .|length == 2
+---
+########################################################################################
+# quote and swap cacao to btc
+########################################################################################
+type: check
+endpoint: http://localhost:1317/mayachain/quote/swap
+params:
+  from_asset: MAYA.CACAO
+  to_asset: BTC.BTC
+  amount: 100000000000000
+  destination: {{ addr_btc_fox }}
+asserts:
+  - .expected_amount_out|tonumber == 8250462
+  - .memo == "=:BTC.BTC:{{ addr_btc_fox }}"
+  - .inbound_address == null
+  - .recommended_min_amount_in == "8000000000"
+  - .fees.liquidity == "82644628"
+  - .fees.outbound == "14000"
+  - (.fees.total|tonumber) == (.fees.liquidity|tonumber)+(.fees.outbound|tonumber)
+  - .fees.slippage_bps == 9090
+  - .fees.total_bps == 9091
+  - has("recommended_gas_rate")|not # skipped for native
+  - has("gas_rate_units")|not
+---
+type: tx-deposit
+signer: {{ addr_maya_fox }}
+coins:
+  - amount: "100000000000"
+    asset: "cacao"
+memo: "=:BTC.BTC:{{ addr_btc_fox }}"
+---
+type: create-blocks
+count: 1
+---
+type: check
+endpoint: http://localhost:1317/cosmos/bank/v1beta1/balances/{{ addr_maya_fox }}
+asserts:
+  - .balances|length == 1
+  - .balances[]|select(.denom == "cacao")|.amount|tonumber == 2499898000000000
+---
+type: check
+endpoint: http://localhost:1317/mayachain/queue/outbound
+asserts:
+  - .|length == 1
+  - .[0]|.in_hash == "{{ native_txid -1 }}"
+---
+type: tx-observed-out
+signer: {{ addr_maya_dog }}
+txs:
+  - tx:
+      id: "{{ observe_txid 1 }}"
+      chain: BTC
+      from_address: {{ addr_btc_dog }}
+      to_address: {{ addr_btc_fox }}
+      coins:
+        - amount: "966296"
+          asset: "BTC.BTC"
+          decimals: 8
+      gas:
+        - amount: "10500"
+          asset: "BTC.BTC"
+      memo: "OUT:{{ native_txid -1 }}"
+    block_height: 2
+    finalise_height: 2
+    observed_pub_key: {{ pubkey_dog }}
+---
+type: create-blocks
+count: 1
+---
+type: check
+endpoint: http://localhost:1317/mayachain/queue/outbound
+asserts:
+  - .|length == 0
+---
+########################################################################################
+# quote and swap btc to cacao
+########################################################################################
+type: check
+endpoint: http://localhost:1317/mayachain/quote/swap
+params:
+  from_asset: BTC.BTC
+  to_asset: MAYA.CACAO
+  amount: 5000000
+  destination: {{ addr_maya_fox }}
+asserts:
+  - .expected_amount_out|tonumber == 460072782909
+  - .memo == "=:c:{{ addr_maya_fox }}"
+  - .inbound_address == "{{ addr_btc_dog }}"
+  - .recommended_min_amount_in == "78444"
+  - .fees.liquidity == "23331540701"
+  - .fees.outbound == "2000000000"
+  - (.fees.total|tonumber) == (.fees.liquidity|tonumber)+(.fees.outbound|tonumber)
+  - .fees.slippage_bps == 480
+  - .fees.total_bps == 519
+  - .recommended_gas_rate == "10"
+  - .gas_rate_units == "satsperbyte"
+---
+type: tx-observed-in
+signer: {{ addr_maya_dog }}
+txs:
+  - tx:
+      id: "{{ observe_txid 2 }}"
+      chain: BTC
+      from_address: {{ addr_btc_fox }}
+      to_address: {{ addr_btc_dog }}
+      coins:
+        - amount: "5000000"
+          asset: "BTC.BTC"
+          decimals: 8
+      gas:
+        - amount: "10500"
+          asset: "BTC.BTC"
+      memo: "=:c:{{ addr_maya_fox }}"
+    block_height: 3
+    finalise_height: 3
+    observed_pub_key: {{ pubkey_dog }}
+---
+type: create-blocks
+count: 1
+---
+type: check
+endpoint: http://localhost:1317/cosmos/bank/v1beta1/balances/{{ addr_maya_fox }}
+asserts:
+  - .balances|length == 1
+  - .balances[]|select(.denom == "cacao")|.amount|tonumber == 2500358072782909
+---
+########################################################################################
+# quote and swap cacao to btc synth
+########################################################################################
+type: check
+endpoint: http://localhost:1317/mayachain/quote/swap
+params:
+  from_asset: MAYA.CACAO
+  to_asset: BTC/BTC
+  amount: 100000000000
+asserts:
+  - .expected_amount_out|tonumber == 1047628
+  - .recommended_min_amount_in == "4000000000"
+  - .fees.liquidity == "5550"
+  - .fees.outbound == "21381"
+  - (.fees.total|tonumber) == (.fees.liquidity|tonumber)+(.fees.outbound|tonumber)
+  - .fees.slippage_bps == 51
+  - .fees.total_bps == 245
+---
+type: tx-deposit
+signer: {{ addr_maya_fox }}
+coins:
+  - amount: "10000000000"
+    asset: "cacao"
+memo: "=:BTC/BTC"
+---
+type: create-blocks
+count: 1
+---
+type: check
+endpoint: http://localhost:1317/cosmos/bank/v1beta1/balances/{{ addr_maya_fox }}
+asserts:
+  - .balances|length == 2
+  - .balances[]|select(.denom == "cacao")|.amount|tonumber == 2500346072782909
+  - .balances[]|select(.denom == "btc/btc")|.amount|tonumber == 86321
+---
+########################################################################################
+# quote and swap cacao to btc synth with tolerance
+########################################################################################
+type: check
+endpoint: http://localhost:1317/mayachain/quote/swap
+params:
+  from_asset: MAYA.CACAO
+  to_asset: BTC/BTC
+  amount: 200000000000
+  tolerance_bps: 200
+asserts:
+  - .error|length > 0
+---
+type: check
+endpoint: http://localhost:1317/mayachain/quote/swap
+params:
+  from_asset: MAYA.CACAO
+  to_asset: BTC/BTC
+  amount: 200000000000
+  tolerance_bps: 350
+asserts:
+  - .expected_amount_out|tonumber == 2093237
+  - .recommended_min_amount_in == "4000000000"
+  - .fees.liquidity == "21936"
+  - .fees.outbound == "21146"
+  - (.fees.total|tonumber) == (.fees.liquidity|tonumber)+(.fees.outbound|tonumber)
+  - .fees.slippage_bps == 102
+  - .fees.total_bps == 199
+---
+type: tx-deposit
+signer: {{ addr_maya_fox }}
+coins:
+  - amount: "200000000000"
+    asset: "cacao"
+memo: "=:BTC/BTC"
+---
+type: create-blocks
+count: 1
+---
+type: check
+endpoint: http://localhost:1317/cosmos/bank/v1beta1/balances/{{ addr_maya_fox }}
+asserts:
+  - .balances|length == 2
+  - .balances[]|select(.denom == "cacao")|.amount|tonumber == 2500144072782909
+  - .balances[]|select(.denom == "btc/btc")|.amount|tonumber == 2179558
+---
+########################################################################################
+# quote and swap cacao to btc with tolerance & no affiliate
+########################################################################################
+type: check
+endpoint: http://localhost:1317/mayachain/quote/swap
+params:
+  from_asset: MAYA.CACAO
+  to_asset: BTC.BTC
+  amount: 200000000000
+  tolerance_bps: 1000
+  destination: {{ addr_btc_fox }}
+asserts:
+  - .memo == "=:BTC.BTC:{{ addr_btc_fox }}:1903621"
+  - .expected_amount_out|tonumber == ${AMT_OUT=2017674}
+  - .recommended_min_amount_in == "8000000000"
+  - .fees.affiliate == "0"
+  - .fees.liquidity == "41310"
+  - .fees.outbound == "${OF=13999}"
+  - (.fees.total|tonumber) == (.fees.liquidity|tonumber)+(.fees.outbound|tonumber)+(.fees.affiliate|tonumber)
+  - .fees.slippage_bps == 199
+  - .fees.total_bps == 265
+---
+########################################################################################
+# quote and swap cacao to btc with tolerance and affiliate
+########################################################################################
+type: check
+endpoint: http://localhost:1317/mayachain/quote/swap
+params:
+  from_asset: MAYA.CACAO
+  to_asset: BTC.BTC
+  amount: 200000000000
+  tolerance_bps: 1000
+  affiliate: {{ addr_maya_pig }}
+  affiliate_bps: 5000
+asserts:
+  - .error|contains("bad affiliate params")
+  - .error|contains("total affiliate fee basis points must not exceed 500")  
+---
+type: check
+endpoint: http://localhost:1317/mayachain/quote/swap
+params:
+  from_asset: MAYA.CACAO
+  to_asset: BTC.BTC
+  amount: 200000000000
+  tolerance_bps: 1000
+  destination: {{ addr_btc_fox }}
+  affiliate: {{ addr_maya_pig }}
+  affiliate_bps: 150
+asserts:
+  - .memo == "=:BTC.BTC:{{ addr_btc_fox }}:1903621:{{ addr_maya_pig }}:150"
+  - .expected_amount_out|tonumber == (${AMT_OUT} - (${AMT_OUT} + ${OF}) * 0.015 | round)
+  - .recommended_min_amount_in == "266666666666"
+  - .fees.affiliate == "30475"
+  - .fees.liquidity == "41310"
+  - .fees.outbound == "13999"
+  - (.fees.total|tonumber) == (.fees.liquidity|tonumber)+(.fees.outbound|tonumber)+(.fees.affiliate|tonumber)
+  - .fees.slippage_bps == 199
+  - .fees.total_bps == 405
+---
+type: tx-deposit
+signer: {{ addr_maya_fox }}
+coins:
+  - amount: "200000000000"
+    asset: "cacao"
+memo: "=:BTC.BTC:{{ addr_btc_fox }}:1093930:{{ addr_maya_pig }}:150"
+---
+type: create-blocks
+count: 1
+---
+type: check
+endpoint: http://localhost:1317/mayachain/queue/outbound
+asserts:
+  - .|length == 1
+  - .[0]|.in_hash == "{{ native_txid -1 }}"
+---
+type: tx-observed-out
+signer: {{ addr_maya_dog }}
+txs:
+  - tx:
+      id: "{{ observe_txid 3 }}"
+      chain: BTC
+      from_address: {{ addr_btc_dog }}
+      to_address: {{ addr_btc_fox }}
+      coins:
+        - amount: "1987199"
+          asset: "BTC.BTC"
+          decimals: 8
+      gas:
+        - amount: "10500"
+          asset: "BTC.BTC"
+      memo: "OUT:{{ native_txid -1 }}"
+    block_height: 4
+    finalise_height: 4
+    observed_pub_key: {{ pubkey_dog }}
+---
+type: create-blocks
+count: 1
+---
+type: check
+endpoint: http://localhost:1317/mayachain/queue/outbound
+asserts:
+  - .|length == 0
+---
+type: check
+endpoint: http://localhost:1317/cosmos/bank/v1beta1/balances/{{ addr_maya_pig }}
+asserts:
+  - .balances|length == 1
+  - .balances[]|select(.denom == "cacao")|.amount|tonumber == 994994374
+---
+########################################################################################
+# quote and swap eth to btc with tolerance and affiliate
+########################################################################################
+type: check
+endpoint: http://localhost:1317/mayachain/quote/swap
+params:
+  from_asset: BTC.BTC
+  to_asset: ETH.ETH
+  amount: 5000000
+  tolerance_bps: 2000
+  affiliate: {{ addr_maya_pig }}
+  affiliate_bps: 150
+asserts:
+  - .error|test("memo too long")
+---
+type: check
+endpoint: http://localhost:1317/mayachain/quote/swap
+params:
+  from_asset: BTC/BTC
+  to_asset: ETH/ETH
+  amount: 5000000
+  tolerance_bps: 1000
+  affiliate: {{ addr_maya_pig }}
+  affiliate_bps: 200
+asserts:
+  - .error|not
+---
+type: check
+endpoint: http://localhost:1317/mayachain/quote/swap
+params:
+  from_asset: ETH.ETH
+  to_asset: BTC.BTC
+  amount: 100000000
+  tolerance_bps: 3000
+  affiliate: {{ addr_maya_pig }}
+  affiliate_bps: 150
+  destination: {{ addr_btc_fox }}
+asserts:
+  - .memo == "=:b:{{ addr_btc_fox }}:7121251:{{ addr_maya_pig }}:150"
+  - .expected_amount_out|tonumber == 7054515
+  - .recommended_min_amount_in == "26666667"
+  - .fees.affiliate == "107642"
+  - .fees.liquidity == "1432127"
+  - .fees.outbound == "13997"
+  - (.fees.total|tonumber) == (.fees.liquidity|tonumber)+(.fees.outbound|tonumber)+(.fees.affiliate|tonumber)
+  - .fees.slippage_bps == 1663
+  - .fees.total_bps == 1779
+---
+type: tx-observed-in
+signer: {{ addr_maya_dog }}
+txs:
+  - tx:
+      id: "{{ observe_txid 4 }}"
+      chain: ETH
+      from_address: {{ addr_eth_fox }}
+      to_address: {{ addr_eth_dog }}
+      coins:
+        - amount: "10000000"
+          asset: "ETH.ETH"
+          decimals: 8
+      gas:
+        - amount: "100000"
+          asset: "ETH.ETH"
+      memo: "=:b:{{ addr_btc_fox }}:890879:{{ addr_maya_pig }}:150"
+    block_height: 5
+    finalise_height: 5
+    observed_pub_key: {{ pubkey_dog }}
+---
+type: create-blocks
+count: 1
+---
+type: check
+endpoint: http://localhost:1317/mayachain/queue/outbound
+asserts:
+  - .|length == 1
+  - .[0]|.in_hash == "{{ observe_txid 4 }}"
+---
+type: tx-observed-out
+signer: {{ addr_maya_dog }}
+txs:
+  - tx:
+      id: "{{ observe_txid 5 }}"
+      chain: BTC
+      from_address: {{ addr_btc_dog }}
+      to_address: {{ addr_btc_fox }}
+      coins:
+        - amount: "964065"
+          asset: "BTC.BTC"
+          decimals: 8
+      gas:
+        - amount: "10500"
+          asset: "BTC.BTC"
+      memo: "OUT:{{ observe_txid 4 }}"
+    block_height: 6
+    finalise_height: 6
+    observed_pub_key: {{ pubkey_dog }}
+---
+type: create-blocks
+count: 1
+---
+type: check
+endpoint: http://localhost:1317/mayachain/queue/outbound
+asserts:
+  - .|length == 0
+---
+########################################################################################
+# quote and swap eth to cacao with tolerance and mayaname affiliate
+########################################################################################
+type: tx-send
+from_address: {{ addr_maya_fox }}
+to_address: {{ addr_maya_pig }}
+amount:
+  - amount: "150000000000"
+    denom: "cacao"
+---
+type: tx-deposit
+signer: {{ addr_maya_pig }}
+coins:
+  - amount: "120000000001"
+    asset: "cacao"
+memo: "~:xx:MAYA:{{ addr_maya_pig }}"
+---
+type: create-blocks
+count: 1
+---
+type: check
+endpoint: http://localhost:1317/mayachain/mayaname/xx
+asserts:
+  - .aliases[0].address == "{{ addr_maya_pig }}"
+  - .owner == "{{ addr_maya_pig }}"
+---
+type: check
+endpoint: http://localhost:1317/mayachain/quote/swap
+params:
+  from_asset: ETH.ETH
+  to_asset: MAYA.CACAO
+  amount: 20000000
+  tolerance_bps: 1000
+  affiliate: xx
+  affiliate_bps: 150
+  destination: {{ addr_maya_fox }}
+asserts:
+  - .memo == "=:c:{{ addr_maya_fox }}:176453288892:xx:150"
+  - .expected_amount_out|tonumber == 183691394099
+  - .recommended_min_amount_in == "27202667"
+  - .fees.affiliate == "2827787727"
+  - .fees.liquidity == "3733053105"
+  - .fees.outbound == "2000000000"
+  - (.fees.total|tonumber) == (.fees.liquidity|tonumber)+(.fees.outbound|tonumber)+(.fees.affiliate|tonumber)
+  - .fees.slippage_bps == 194
+  - .fees.total_bps == 434
+---
+type: tx-observed-in
+signer: {{ addr_maya_dog }}
+txs:
+  - tx:
+      id: "{{ observe_txid 6 }}"
+      chain: ETH
+      from_address: {{ addr_eth_fox }}
+      to_address: {{ addr_eth_dog }}
+      coins:
+        - amount: "10000000"
+          asset: "ETH.ETH"
+          decimals: 8
+      gas:
+        - amount: "100000"
+          asset: "ETH.ETH"
+      memo: "=:c:{{ addr_maya_fox }}:838252233:xx:150"
+    block_height: 7
+    finalise_height: 7
+    observed_pub_key: {{ pubkey_dog }}
+---
+type: check
+endpoint: http://localhost:1317/cosmos/bank/v1beta1/balances/{{ addr_maya_fox }}
+asserts:
+  - .balances|length == 2
+  - .balances[]|select(.denom == "btc/btc")|.amount|tonumber == 2179558
+  - .balances[]|select(.denom == "cacao")|.amount|tonumber == 2499790072782909
+---
+type: check
+endpoint: http://localhost:1317/cosmos/bank/v1beta1/balances/{{ addr_maya_pig }}
+asserts:
+  - .balances|length == 1
+  - .balances[]|select(.denom == "cacao")|.amount|tonumber == 28994994373
+---
+type: create-blocks
+count: 1
+---
+type: check
+endpoint: http://localhost:1317/cosmos/bank/v1beta1/balances/{{ addr_maya_fox }}
+asserts:
+  - .balances|length == 2
+  - .balances[]|select(.denom == "btc/btc")|.amount|tonumber == 2179558
+  - .balances[]|select(.denom == "cacao")|.amount|tonumber == 2499882747907860
+---
+type: check
+endpoint: http://localhost:1317/cosmos/bank/v1beta1/balances/{{ addr_maya_pig }}
+asserts:
+  - .balances|length == 1
+  - .balances[]|select(.denom == "cacao")|.amount|tonumber == 30436747545
+---
+########################################################################################
+# quote btc/btc to cacao when from_address doesn't have enough btc/btc - quote should still be returned
+########################################################################################
+type: check
+endpoint: http://localhost:1317/mayachain/quote/swap
+params:
+  from_asset: BTC/BTC
+  from_address: {{ addr_maya_fox }}
+  to_asset: MAYA.CACAO
+  amount: 10000000
+  destination: {{ addr_maya_fox }}
+asserts:
+  - .memo == "=:MAYA.CACAO:{{ addr_maya_fox }}"
+  - .inbound_address == null
+  - .recommended_min_amount_in == "39920"
+  - .fees.liquidity == "45015343382"
+  - .fees.outbound == "2000000000"
+  - (.fees.total|tonumber) == (.fees.liquidity|tonumber)+(.fees.outbound|tonumber)
+  - .fees.slippage_bps == 471
+  - .fees.total_bps == 491
+---
+type: check
+endpoint: http://localhost:1317/mayachain/quote/swap
+params:
+  from_asset: BTC/BTC
+  to_asset: MAYA.CACAO
+  amount: 10000000
+  destination: {{ addr_maya_fox }}
+asserts:
+  - .memo == "=:MAYA.CACAO:{{ addr_maya_fox }}"
+  - .inbound_address == null
+  - .recommended_min_amount_in == "39920"
+  - .fees.liquidity == "45015343382"
+  - .fees.outbound == "2000000000"
+  - (.fees.total|tonumber) == (.fees.liquidity|tonumber)+(.fees.outbound|tonumber)
+  - .fees.slippage_bps == 471
+  - .fees.total_bps == 491
+---
+########################################################################################
+# quote and swap a streaming swap
+########################################################################################
+type: check
+endpoint: http://localhost:1317/mayachain/quote/swap
+params:
+  from_asset: ETH.ETH
+  to_asset: BTC.BTC
+  amount: 100000000
+  destination: {{ addr_btc_fox }}
+  streaming_interval: 10
+asserts:
+  - .memo == "=:b:{{ addr_btc_fox }}:0/10/0"
+  - .max_streaming_quantity == 19
+  - .streaming_swap_blocks == 180
+  - .fees.liquidity == "95456"
+  - .fees.outbound == "13997"
+  - (.fees.total|tonumber) == (.fees.liquidity|tonumber)+(.fees.outbound|tonumber)
+  - .fees.slippage_bps == 100
+  - .fees.total_bps == 115
+  - .streaming_swap_seconds == 1080
+  - .total_swap_seconds == 1104
+  - .expected_amount_out == "9386804"
+---
+type: check
+endpoint: http://localhost:1317/mayachain/quote/swap
+params:
+  from_asset: ETH.ETH
+  to_asset: BTC.BTC
+  amount: 100000000
+  destination: {{ addr_btc_fox }}
+asserts:
+  # same as last quote, just sanity check higher slippage without streaming
+  - .fees.liquidity == "1318255"
+  - .fees.slippage_bps == 1616
+  - .fees.total_bps == 1630
+---
+########################################################################################
+# quote and swap a streaming swap with specified quantity and tolerance
+########################################################################################
+type: check
+endpoint: http://localhost:1317/mayachain/quote/swap
+params:
+  from_asset: ETH.ETH
+  to_asset: BTC.BTC
+  amount: 100000000
+  destination: {{ addr_btc_fox }}
+  streaming_interval: 10
+  streaming_quantity: 10
+  tolerance_bps: 3500
+asserts:
+  - .memo == "=:b:{{ addr_btc_fox }}:6234961/10/10"
+  - .max_streaming_quantity == 19
+  - .streaming_swap_blocks == 90
+  - .streaming_swap_seconds == 540
+  - .fees.liquidity == "178180"
+  - .fees.outbound == "13997"
+  - (.fees.total|tonumber) == (.fees.liquidity|tonumber)+(.fees.outbound|tonumber)
+  - .fees.slippage_bps == 189
+  - .fees.total_bps == 203
+  - .total_swap_seconds == 564
+  - .expected_amount_out == "9220173"
+---
+# necessary to avoid race to hang on block creation
+type: create-blocks
+count: 1
+---
+type: create-blocks
+count: 1
+---
+########################################################################################
+# quote and swap a streaming swap with too large quantity
+########################################################################################
+type: check
+endpoint: http://localhost:1317/mayachain/quote/swap
+params:
+  from_asset: ETH.ETH
+  to_asset: BTC.BTC
+  amount: 100000000
+  destination: {{ addr_btc_fox }}
+  streaming_interval: 10
+  streaming_quantity: 50
+asserts:
+  - .memo == "=:b:{{ addr_btc_fox }}:0/10/19" # auto adjusted down from 50
+  - .max_streaming_quantity == 19
+  - .streaming_swap_blocks == 180
+  - .streaming_swap_seconds == 1080
+  - .fees.liquidity == "95456"
+  - .fees.outbound == "13997"
+  - (.fees.total|tonumber) == (.fees.liquidity|tonumber)+(.fees.outbound|tonumber)
+  - .fees.slippage_bps == 100
+  - .fees.total_bps == 115
+  - .total_swap_seconds == 1104
+  - .expected_amount_out == "9386804"
+---
+########################################################################################
+# quote and massive swap should have accurate slippage less than 100%
+########################################################################################
+type: check
+endpoint: http://localhost:1317/mayachain/quote/swap
+params:
+  from_asset: ETH.ETH
+  to_asset: BTC.BTC
+  amount: 1000000000000
+  destination: {{ addr_btc_fox }}
+asserts:
+  - .fees.liquidity == "97641738"
+  - .fees.outbound == "13997"
+  - (.fees.total|tonumber) == (.fees.liquidity|tonumber)+(.fees.outbound|tonumber)
+  - .fees.slippage_bps == 9989
+  - .fees.total_bps == 9989
+  - .expected_amount_out == "85401"
+---
+type: create-blocks
+count: 1
+---
+########################################################################################
+# from ETH - affiliate swap fails, should return error
+########################################################################################
+type: check
+endpoint: http://localhost:1317/mayachain/quote/swap
+params:
+  from_asset: ETH.ETH
+  to_asset: MAYA.CACAO
+  amount: 10000
+  affiliate: xx
+  affiliate_bps: 10
+  destination: {{ addr_maya_fox }}
+asserts:
+  - .error|contains("not enough asset to pay for fees")
+---
+########################################################################################
+# quote and swap eth to cacao with tolerance and mayaname affiliate
+########################################################################################
+type: tx-deposit
+signer: {{ addr_maya_pig }}
+coins:
+  - amount: "200000000"
+    asset: "cacao"
+memo: "~:xx:MAYA:{{ addr_maya_pig }}::::${XX_BPS=150}"
+---
+type: create-blocks
+count: 1
+---
+type: check
+endpoint: http://localhost:1317/mayachain/mayaname/xx
+asserts:
+  - .aliases[0].address == "{{ addr_maya_pig }}"
+  - .owner == "{{ addr_maya_pig }}"
+  - .affiliate_bps == ${XX_BPS}
+---
+type: check
+endpoint: http://localhost:1317/mayachain/quote/swap
+params:
+  from_asset: ETH.ETH
+  to_asset: MAYA.CACAO
+  amount: 20000000
+  tolerance_bps: 1000
+  affiliate: xx
+  destination: {{ addr_maya_fox }}
+asserts:
+  - .memo == "=:c:{{ addr_maya_fox }}:173010380623:xx"
+  - .expected_amount_out|tonumber == 180137573964
+  - .recommended_min_amount_in == "27744000"
+  - .fees.affiliate == "2773668639"
+  - (.expected_amount_out|tonumber)+(.fees.total|tonumber) == 188536953242
+  - ((.expected_amount_out|tonumber)+(.fees.total|tonumber)) * ${XX_BPS} == 28280542986300
+# following two checks verify that the affiliate fee is within a 2% tolerance of the expected value
+  - ((((.expected_amount_out|tonumber)+(.fees.total|tonumber)) * ${XX_BPS}) / (.fees.affiliate|tonumber)) < 10200 # (total * aff_bps / aff_fee < 1.01 )
+  - ((((.expected_amount_out|tonumber)+(.fees.total|tonumber)) * ${XX_BPS}) / (.fees.affiliate|tonumber)) > 10000 # (total * aff_bps / aff_fee > 0.1 )
+  - .fees.liquidity == "3625710639"
+  - .fees.outbound == "2000000000"
+  - (.fees.total|tonumber) == (.fees.liquidity|tonumber)+(.fees.outbound|tonumber)+(.fees.affiliate|tonumber)
+  - .fees.slippage_bps == 192
+  - .fees.total_bps == 434
+---
+type: tx-observed-in
+signer: {{ addr_maya_dog }}
+txs:
+  - tx:
+      id: "{{ observe_txid 6 }}"
+      chain: ETH
+      from_address: {{ addr_eth_fox }}
+      to_address: {{ addr_eth_dog }}
+      coins:
+        - amount: "10000000"
+          asset: "ETH.ETH"
+          decimals: 8
+      gas:
+        - amount: "100000"
+          asset: "ETH.ETH"
+      memo: "=:MAYA.CACAO:{{ addr_maya_fox }}:84342553193:xx"
+    block_height: 7
+    finalise_height: 7
+    observed_pub_key: {{ pubkey_dog }}
+---
+type: create-blocks
+count: 1
+---
+type: check
+endpoint: http://localhost:1317/cosmos/bank/v1beta1/balances/{{ addr_maya_fox }}
+asserts:
+  - .balances|length == 2
+  - .balances[]|select(.denom == "btc/btc")|.amount|tonumber == 2179558
+  - .balances[]|select(.denom == "cacao")|.amount|tonumber == 2499882747907860
+---
+type: check
+endpoint: http://localhost:1317/cosmos/bank/v1beta1/balances/{{ addr_maya_pig }}
+asserts:
+  - .balances|length == 1
+  - .balances[]|select(.denom == "cacao")|.amount|tonumber == ${PIG_BALANCE=28236747545}
+---
+########################################################################################
+# from CACAO - affiliate swap smaller than native fee, affiliate fee should be 0
+########################################################################################
+type: check
+endpoint: http://localhost:1317/mayachain/quote/swap
+params:
+  from_asset: MAYA.CACAO
+  to_asset: ETH.ETH
+  amount: 50000000000
+  affiliate: xx
+  affiliate_bps: 2
+  destination: {{ addr_eth_fox }}
+asserts:
+  - .memo == "=:ETH.ETH:{{ addr_eth_fox }}::xx:2"
+  - .expected_amount_out|tonumber == 3869662
+  - .recommended_min_amount_in == "20000000000000"
+  - .fees.affiliate == "0"
+  - .fees.liquidity == "26261"
+  - .fees.outbound == "1279680"
+  - (.fees.total|tonumber) == (.fees.liquidity|tonumber)+(.fees.outbound|tonumber)+(.fees.affiliate|tonumber)
+  - .fees.slippage_bps == 50
+  - .fees.total_bps == 2023
+---
+type: tx-deposit
+signer: {{ addr_maya_fox }}
+coins:
+  - amount: "50000000000"
+    asset: "cacao"
+memo: "=:ETH.ETH:{{ addr_eth_fox }}::xx:2"
+---
+type: create-blocks
+count: 1
+---
+# verify that the small affiliate fee (10_000_000) hasn't been added to the affiliate address, as it is less than native fee (2_000_000_000)
+type: check
+endpoint: http://localhost:1317/cosmos/bank/v1beta1/balances/{{ addr_maya_pig }}
+asserts:
+  - .balances[]|select(.denom == "cacao")|.amount|tonumber == ${PIG_BALANCE}
+---
+########################################################################################
+# multiple affiliates - only one valid affiliate, should return error
+########################################################################################
+type: check
+endpoint: http://localhost:1317/mayachain/quote/swap
+params:
+  from_asset: MAYA.CACAO
+  to_asset: ETH.ETH
+  amount: 1000000000
+  affiliate: xx,yy,zz
+  affiliate_bps: 10,20,30
+  destination: {{ addr_eth_fox }}
+asserts:
+  - .error|test("invalid affiliate mayaname or address")
+  - .error|test("yy is not recognizable")
+---
+########################################################################################
+# multiple affiliates - 3 valid mayanames
+########################################################################################
+type: tx-deposit
+signer: {{ addr_maya_dog }}
+coins:
+  - amount: "100000000001"
+    asset: "cacao"
+memo: "~:yy:MAYA:{{ addr_maya_dog }}"
+---
+type: create-blocks
+count: 1
+---
+type: tx-deposit
+signer: {{ addr_maya_dog }}
+coins:
+  - amount: "100000000001"
+    asset: "cacao"
+memo: "~:zz:MAYA:{{ addr_maya_dog }}"
+---
+type: create-blocks
+count: 1
+---
+type: check
+endpoint: http://localhost:1317/mayachain/quote/swap
+params:
+  from_asset: MAYA.CACAO
+  to_asset: ETH.ETH
+  amount: 100000000000
+  affiliate: xx,yy,zz
+  affiliate_bps: 10,20,30
+  destination: {{ addr_eth_fox }}
+asserts:
+  - .memo == "=:ETH.ETH:{{ addr_eth_fox }}::xx/yy/zz:10/20/30"
+---
+# new affiliate parameter format
+type: check
+endpoint: http://localhost:1317/mayachain/quote/swap
+params:
+  from_asset: MAYA.CACAO
+  to_asset: ETH.ETH
+  amount: 100000000000
+  affiliate: xx/yy/zz
+  affiliate_bps: 10/20/30
+  destination: {{ addr_eth_fox }}
+asserts:
+  - .memo == "=:ETH.ETH:{{ addr_eth_fox }}::xx/yy/zz:10/20/30"
+---
+# combined affiliate parameter format
+type: check
+endpoint: http://localhost:1317/mayachain/quote/swap
+params:
+  from_asset: MAYA.CACAO
+  to_asset: ETH.ETH
+  amount: 100000000000
+  affiliate: xx/yy,zz
+  affiliate_bps: 10/20,30
+  destination: {{ addr_eth_fox }}
+asserts:
+  - .memo == "=:ETH.ETH:{{ addr_eth_fox }}::xx/yy/zz:10/20/30"
+---
+########################################################################################
+# Inbound below dust threshold should error
+########################################################################################
+type: check
+endpoint: http://localhost:1317/mayachain/quote/swap
+params:
+  from_asset: BTC.BTC
+  to_asset: MAYA.CACAO
+  amount: 9000
+  destination: {{ addr_thor_fox }}
+asserts:
+  - .error|contains("amount less than dust threshold")
+---
+########################################################################################
+# liquidity_tolerance_bps too high
+########################################################################################
+type: check
+endpoint: http://localhost:1317/mayachain/quote/swap
+params:
+  from_asset: BTC.BTC
+  to_asset: MAYA.CACAO
+  amount: 1000000
+  destination: {{ addr_maya_fox }}
+  liquidity_tolerance_bps: 10001
+asserts:
+  - .error|test("liquidity tolerance basis points must be less than 10000")
+---
+########################################################################################
+# both liquidity_tolerance_bps and tolerance_bps
+########################################################################################
+type: check
+endpoint: http://localhost:1317/mayachain/quote/swap
+params:
+  from_asset: BTC.BTC
+  to_asset: MAYA.CACAO
+  amount: 1000000
+  destination: {{ addr_maya_fox }}
+  liquidity_tolerance_bps: 100
+  tolerance_bps: 100
+asserts:
+  - .error|test("must only include one of")
+---
+########################################################################################
+# valid liquidity_tolerance_bps should update the limit in the memo
+########################################################################################
+type: check
+endpoint: http://localhost:1317/mayachain/quote/swap
+params:
+  from_asset: ETH.ETH
+  to_asset: MAYA.CACAO
+  amount: 10000000
+  affiliate: xx
+  affiliate_bps: 500
+  destination: {{ addr_maya_fox }}
+asserts:
+  - .memo == "=:c:{{ addr_maya_fox }}::xx:500"
+  - .expected_amount_out|tonumber == 88223287898
+---
+type: check
+endpoint: http://localhost:1317/mayachain/quote/swap
+params:
+  from_asset: ETH.ETH
+  to_asset: MAYA.CACAO
+  amount: 10000000
+  affiliate: xx
+  affiliate_bps: 500
+  destination: {{ addr_maya_fox }}
+  liquidity_tolerance_bps: 100
+asserts:
+  - .memo == "=:c:{{ addr_maya_fox }}:87341055019:xx:500"
+  - .expected_amount_out|tonumber == 88223287898
+---
+########################################################################################
+# Trade Asset swap quote with affiliate
+########################################################################################
+type: check
+endpoint: http://localhost:1317/mayachain/quote/swap
+params:
+  from_asset: BTC~BTC
+  to_asset: MAYA.CACAO
+  amount: 1000000
+  affiliate: xx
+  affiliate_bps: 10
+  destination: {{ addr_maya_fox }}
+asserts:
+  - .memo == "=:MAYA.CACAO:tmaya13wrmhnh2qe98rjse30pl7u6jxszjjwl4fd6gwn::xx:10"

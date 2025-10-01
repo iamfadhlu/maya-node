@@ -1,0 +1,2025 @@
+[
+    {
+        "TX": 18,
+        "OUT": 0,
+        "CONTRIB": {},
+        "USER-1": {},
+        "PROVIDER-1": {},
+        "PROVIDER-2": {},
+        "VAULT": {},
+        "POOL.KUJI.KUJI": {
+            "KUJI.KUJI": 0,
+            "MAYA.CACAO": 0
+        }
+    },
+    {
+        "TX": 19,
+        "OUT": 0,
+        "CONTRIB": {},
+        "USER-1": {},
+        "PROVIDER-1": {},
+        "PROVIDER-2": {},
+        "VAULT": {},
+        "POOL.KUJI.KUJI": {
+            "KUJI.KUJI": 150000000000,
+            "MAYA.CACAO": 100000000000
+        }
+    },
+    {
+        "TX": 20,
+        "OUT": 0,
+        "CONTRIB": {},
+        "USER-1": {},
+        "PROVIDER-1": {},
+        "PROVIDER-2": {},
+        "VAULT": {},
+        "POOL.KUJI.KUJI": {
+            "KUJI.KUJI": 150000000000,
+            "MAYA.CACAO": 100000000000
+        },
+        "POOL.KUJI.USK": {
+            "KUJI.USK": 0,
+            "MAYA.CACAO": 0
+        }
+    },
+    {
+        "TX": 21,
+        "OUT": 0,
+        "CONTRIB": {},
+        "USER-1": {},
+        "PROVIDER-1": {},
+        "PROVIDER-2": {},
+        "VAULT": {},
+        "POOL.KUJI.KUJI": {
+            "KUJI.KUJI": 150000000000,
+            "MAYA.CACAO": 100000000000
+        },
+        "POOL.KUJI.USK": {
+            "KUJI.USK": 150000000000,
+            "MAYA.CACAO": 100000000000
+        }
+    },
+    {
+        "TX": 22,
+        "OUT": 0,
+        "CONTRIB": {},
+        "USER-1": {},
+        "PROVIDER-1": {},
+        "PROVIDER-2": {},
+        "VAULT": {},
+        "POOL.KUJI.KUJI": {
+            "KUJI.KUJI": 150000000000,
+            "MAYA.CACAO": 100000000000
+        },
+        "POOL.KUJI.USK": {
+            "KUJI.USK": 150000000000,
+            "MAYA.CACAO": 100000000000
+        },
+        "POOL.DASH.DASH": {
+            "DASH.DASH": 0,
+            "MAYA.CACAO": 0
+        }
+    },
+    {
+        "TX": 23,
+        "OUT": 0,
+        "CONTRIB": {},
+        "USER-1": {},
+        "PROVIDER-1": {},
+        "PROVIDER-2": {},
+        "VAULT": {},
+        "POOL.KUJI.KUJI": {
+            "KUJI.KUJI": 150000000000,
+            "MAYA.CACAO": 100000000000
+        },
+        "POOL.KUJI.USK": {
+            "KUJI.USK": 150000000000,
+            "MAYA.CACAO": 100000000000
+        },
+        "POOL.DASH.DASH": {
+            "DASH.DASH": 35000000000,
+            "MAYA.CACAO": 300000000000
+        }
+    },
+    {
+        "TX": 24,
+        "OUT": 0,
+        "CONTRIB": {},
+        "USER-1": {},
+        "PROVIDER-1": {},
+        "PROVIDER-2": {},
+        "VAULT": {},
+        "POOL.KUJI.KUJI": {
+            "KUJI.KUJI": 150000000000,
+            "MAYA.CACAO": 100000000000
+        },
+        "POOL.KUJI.USK": {
+            "KUJI.USK": 150000000000,
+            "MAYA.CACAO": 100000000000
+        },
+        "POOL.DASH.DASH": {
+            "DASH.DASH": 35000000000,
+            "MAYA.CACAO": 300000000000
+        },
+        "POOL.XRD.XRD": {
+            "XRD.XRD": 0,
+            "MAYA.CACAO": 0
+        }
+    },
+    {
+        "TX": 25,
+        "OUT": 0,
+        "CONTRIB": {},
+        "USER-1": {},
+        "PROVIDER-1": {},
+        "PROVIDER-2": {},
+        "VAULT": {},
+        "POOL.KUJI.KUJI": {
+            "KUJI.KUJI": 150000000000,
+            "MAYA.CACAO": 100000000000
+        },
+        "POOL.KUJI.USK": {
+            "KUJI.USK": 150000000000,
+            "MAYA.CACAO": 100000000000
+        },
+        "POOL.DASH.DASH": {
+            "DASH.DASH": 35000000000,
+            "MAYA.CACAO": 300000000000
+        },
+        "POOL.XRD.XRD": {
+            "XRD.XRD": 100000000000,
+            "MAYA.CACAO": 100000000000
+        }
+    },
+    {
+        "TX": 26,
+        "OUT": 1,
+        "CONTRIB": {},
+        "USER-1": {},
+        "PROVIDER-1": {},
+        "PROVIDER-2": {},
+        "VAULT": {},
+        "POOL.KUJI.KUJI": {
+            "KUJI.KUJI": 150000000000,
+            "MAYA.CACAO": 100000000000
+        },
+        "POOL.KUJI.USK": {
+            "KUJI.USK": 150000000000,
+            "MAYA.CACAO": 100000000000
+        },
+        "POOL.DASH.DASH": {
+            "DASH.DASH": 35000000000,
+            "MAYA.CACAO": 300000000000
+        },
+        "POOL.XRD.XRD": {
+            "XRD.XRD": 200000000000,
+            "MAYA.CACAO": 75000000000
+        }
+    },
+    {
+        "TX": 27,
+        "OUT": 1,
+        "CONTRIB": {},
+        "USER-1": {},
+        "PROVIDER-1": {},
+        "PROVIDER-2": {},
+        "VAULT": {},
+        "POOL.KUJI.KUJI": {
+            "KUJI.KUJI": 150000000000,
+            "MAYA.CACAO": 100000000000
+        },
+        "POOL.KUJI.USK": {
+            "KUJI.USK": 150000000000,
+            "MAYA.CACAO": 100000000000
+        },
+        "POOL.DASH.DASH": {
+            "DASH.DASH": 35000000000,
+            "MAYA.CACAO": 300000000000
+        },
+        "POOL.XRD.XRD": {
+            "XRD.XRD": 150957505696,
+            "MAYA.CACAO": 175072890322
+        }
+    },
+    {
+        "TX": 28,
+        "OUT": 2,
+        "CONTRIB": {},
+        "USER-1": {},
+        "PROVIDER-1": {},
+        "PROVIDER-2": {},
+        "VAULT": {},
+        "POOL.KUJI.KUJI": {
+            "KUJI.KUJI": 150000000000,
+            "MAYA.CACAO": 100000000000
+        },
+        "POOL.KUJI.USK": {
+            "KUJI.USK": 150000000000,
+            "MAYA.CACAO": 100000000000
+        },
+        "POOL.DASH.DASH": {
+            "DASH.DASH": 35000000000,
+            "MAYA.CACAO": 300000000000
+        },
+        "POOL.XRD.XRD": {
+            "XRD.XRD": 135798852658,
+            "MAYA.CACAO": 157638552352
+        }
+    },
+    {
+        "TX": 29,
+        "OUT": 0,
+        "CONTRIB": {},
+        "USER-1": {},
+        "PROVIDER-1": {},
+        "PROVIDER-2": {},
+        "VAULT": {},
+        "POOL.KUJI.KUJI": {
+            "KUJI.KUJI": 150000000000,
+            "MAYA.CACAO": 100000000000
+        },
+        "POOL.KUJI.USK": {
+            "KUJI.USK": 150000000000,
+            "MAYA.CACAO": 100000000000
+        },
+        "POOL.DASH.DASH": {
+            "DASH.DASH": 35000000000,
+            "MAYA.CACAO": 300000000000
+        },
+        "POOL.XRD.XRD": {
+            "XRD.XRD": 135798852658,
+            "MAYA.CACAO": 157638552352
+        },
+        "POOL.XRD.TEST-RESOURCE_LOC1TH5R2TN083J0WJ8PQS2Y44A39HVXN6GCYGFELH97YFF69SJA08U0RC": {
+            "XRD.TEST-RESOURCE_LOC1TH5R2TN083J0WJ8PQS2Y44A39HVXN6GCYGFELH97YFF69SJA08U0RC": 0,
+            "MAYA.CACAO": 0
+        }
+    },
+    {
+        "TX": 30,
+        "OUT": 0,
+        "CONTRIB": {},
+        "USER-1": {},
+        "PROVIDER-1": {},
+        "PROVIDER-2": {},
+        "VAULT": {},
+        "POOL.KUJI.KUJI": {
+            "KUJI.KUJI": 150000000000,
+            "MAYA.CACAO": 100000000000
+        },
+        "POOL.KUJI.USK": {
+            "KUJI.USK": 150000000000,
+            "MAYA.CACAO": 100000000000
+        },
+        "POOL.DASH.DASH": {
+            "DASH.DASH": 35000000000,
+            "MAYA.CACAO": 300000000000
+        },
+        "POOL.XRD.XRD": {
+            "XRD.XRD": 135798852658,
+            "MAYA.CACAO": 157638552352
+        },
+        "POOL.XRD.TEST-RESOURCE_LOC1TH5R2TN083J0WJ8PQS2Y44A39HVXN6GCYGFELH97YFF69SJA08U0RC": {
+            "XRD.TEST-RESOURCE_LOC1TH5R2TN083J0WJ8PQS2Y44A39HVXN6GCYGFELH97YFF69SJA08U0RC": 100000000000,
+            "MAYA.CACAO": 100000000000
+        }
+    },
+    {
+        "TX": 31,
+        "OUT": 1,
+        "CONTRIB": {},
+        "USER-1": {},
+        "PROVIDER-1": {},
+        "PROVIDER-2": {},
+        "VAULT": {},
+        "POOL.KUJI.KUJI": {
+            "KUJI.KUJI": 150000000000,
+            "MAYA.CACAO": 100000000000
+        },
+        "POOL.KUJI.USK": {
+            "KUJI.USK": 150000000000,
+            "MAYA.CACAO": 100000000000
+        },
+        "POOL.DASH.DASH": {
+            "DASH.DASH": 35000000000,
+            "MAYA.CACAO": 300000000000
+        },
+        "POOL.XRD.XRD": {
+            "XRD.XRD": 135798852658,
+            "MAYA.CACAO": 157638552352
+        },
+        "POOL.XRD.TEST-RESOURCE_LOC1TH5R2TN083J0WJ8PQS2Y44A39HVXN6GCYGFELH97YFF69SJA08U0RC": {
+            "XRD.TEST-RESOURCE_LOC1TH5R2TN083J0WJ8PQS2Y44A39HVXN6GCYGFELH97YFF69SJA08U0RC": 200000000000,
+            "MAYA.CACAO": 75000000000
+        }
+    },
+    {
+        "TX": 32,
+        "OUT": 1,
+        "CONTRIB": {},
+        "USER-1": {},
+        "PROVIDER-1": {},
+        "PROVIDER-2": {},
+        "VAULT": {},
+        "POOL.KUJI.KUJI": {
+            "KUJI.KUJI": 150000000000,
+            "MAYA.CACAO": 100000000000
+        },
+        "POOL.KUJI.USK": {
+            "KUJI.USK": 150000000000,
+            "MAYA.CACAO": 100000000000
+        },
+        "POOL.DASH.DASH": {
+            "DASH.DASH": 35000000000,
+            "MAYA.CACAO": 300000000000
+        },
+        "POOL.XRD.XRD": {
+            "XRD.XRD": 135733629620,
+            "MAYA.CACAO": 157714264813
+        },
+        "POOL.XRD.TEST-RESOURCE_LOC1TH5R2TN083J0WJ8PQS2Y44A39HVXN6GCYGFELH97YFF69SJA08U0RC": {
+            "XRD.TEST-RESOURCE_LOC1TH5R2TN083J0WJ8PQS2Y44A39HVXN6GCYGFELH97YFF69SJA08U0RC": 151020448234,
+            "MAYA.CACAO": 174999953568
+        }
+    },
+    {
+        "TX": 33,
+        "OUT": 2,
+        "CONTRIB": {},
+        "USER-1": {},
+        "PROVIDER-1": {},
+        "PROVIDER-2": {},
+        "VAULT": {},
+        "POOL.KUJI.KUJI": {
+            "KUJI.KUJI": 150000000000,
+            "MAYA.CACAO": 100000000000
+        },
+        "POOL.KUJI.USK": {
+            "KUJI.USK": 150000000000,
+            "MAYA.CACAO": 100000000000
+        },
+        "POOL.DASH.DASH": {
+            "DASH.DASH": 35000000000,
+            "MAYA.CACAO": 300000000000
+        },
+        "POOL.XRD.XRD": {
+            "XRD.XRD": 135668406582,
+            "MAYA.CACAO": 157790050037
+        },
+        "POOL.XRD.TEST-RESOURCE_LOC1TH5R2TN083J0WJ8PQS2Y44A39HVXN6GCYGFELH97YFF69SJA08U0RC": {
+            "XRD.TEST-RESOURCE_LOC1TH5R2TN083J0WJ8PQS2Y44A39HVXN6GCYGFELH97YFF69SJA08U0RC": 135918443520,
+            "MAYA.CACAO": 157499911733
+        }
+    },
+    {
+        "TX": 34,
+        "OUT": 2,
+        "CONTRIB": {},
+        "USER-1": {},
+        "PROVIDER-1": {},
+        "PROVIDER-2": {},
+        "VAULT": {},
+        "POOL.KUJI.KUJI": {
+            "KUJI.KUJI": 150000000000,
+            "MAYA.CACAO": 100000000000
+        },
+        "POOL.KUJI.USK": {
+            "KUJI.USK": 150000000000,
+            "MAYA.CACAO": 100000000000
+        },
+        "POOL.DASH.DASH": {
+            "DASH.DASH": 35000000000,
+            "MAYA.CACAO": 300000000000
+        },
+        "POOL.XRD.XRD": {
+            "XRD.XRD": 135603183314,
+            "MAYA.CACAO": 157865908396
+        },
+        "POOL.XRD.TEST-RESOURCE_LOC1TH5R2TN083J0WJ8PQS2Y44A39HVXN6GCYGFELH97YFF69SJA08U0RC": {
+            "XRD.TEST-RESOURCE_LOC1TH5R2TN083J0WJ8PQS2Y44A39HVXN6GCYGFELH97YFF69SJA08U0RC": 0,
+            "MAYA.CACAO": 0
+        }
+    },
+    {
+        "TX": 35,
+        "OUT": 2,
+        "CONTRIB": {},
+        "USER-1": {},
+        "PROVIDER-1": {},
+        "PROVIDER-2": {},
+        "VAULT": {},
+        "POOL.KUJI.KUJI": {
+            "KUJI.KUJI": 150000000000,
+            "MAYA.CACAO": 100000000000
+        },
+        "POOL.KUJI.USK": {
+            "KUJI.USK": 150000000000,
+            "MAYA.CACAO": 100000000000
+        },
+        "POOL.DASH.DASH": {
+            "DASH.DASH": 35000000000,
+            "MAYA.CACAO": 300000000000
+        },
+        "POOL.XRD.XRD": {
+            "XRD.XRD": 0,
+            "MAYA.CACAO": 0
+        },
+        "POOL.XRD.TEST-RESOURCE_LOC1TH5R2TN083J0WJ8PQS2Y44A39HVXN6GCYGFELH97YFF69SJA08U0RC": {
+            "XRD.TEST-RESOURCE_LOC1TH5R2TN083J0WJ8PQS2Y44A39HVXN6GCYGFELH97YFF69SJA08U0RC": 0,
+            "MAYA.CACAO": 0
+        }
+    },
+    {
+        "TX": 36,
+        "OUT": 0,
+        "CONTRIB": {},
+        "USER-1": {},
+        "PROVIDER-1": {},
+        "PROVIDER-2": {},
+        "VAULT": {},
+        "POOL.KUJI.KUJI": {
+            "KUJI.KUJI": 150000000000,
+            "MAYA.CACAO": 100000000000
+        },
+        "POOL.KUJI.USK": {
+            "KUJI.USK": 150000000000,
+            "MAYA.CACAO": 100000000000
+        },
+        "POOL.DASH.DASH": {
+            "DASH.DASH": 35000000000,
+            "MAYA.CACAO": 300000000000
+        },
+        "POOL.XRD.XRD": {
+            "XRD.XRD": 0,
+            "MAYA.CACAO": 0
+        },
+        "POOL.XRD.TEST-RESOURCE_LOC1TH5R2TN083J0WJ8PQS2Y44A39HVXN6GCYGFELH97YFF69SJA08U0RC": {
+            "XRD.TEST-RESOURCE_LOC1TH5R2TN083J0WJ8PQS2Y44A39HVXN6GCYGFELH97YFF69SJA08U0RC": 0,
+            "MAYA.CACAO": 0
+        },
+        "POOL.THOR.RUNE": {
+            "THOR.RUNE": 0,
+            "MAYA.CACAO": 0
+        }
+    },
+    {
+        "TX": 37,
+        "OUT": 0,
+        "CONTRIB": {},
+        "USER-1": {},
+        "PROVIDER-1": {},
+        "PROVIDER-2": {},
+        "VAULT": {},
+        "POOL.KUJI.KUJI": {
+            "KUJI.KUJI": 150000000000,
+            "MAYA.CACAO": 100000000000
+        },
+        "POOL.KUJI.USK": {
+            "KUJI.USK": 150000000000,
+            "MAYA.CACAO": 100000000000
+        },
+        "POOL.DASH.DASH": {
+            "DASH.DASH": 35000000000,
+            "MAYA.CACAO": 300000000000
+        },
+        "POOL.XRD.XRD": {
+            "XRD.XRD": 0,
+            "MAYA.CACAO": 0
+        },
+        "POOL.XRD.TEST-RESOURCE_LOC1TH5R2TN083J0WJ8PQS2Y44A39HVXN6GCYGFELH97YFF69SJA08U0RC": {
+            "XRD.TEST-RESOURCE_LOC1TH5R2TN083J0WJ8PQS2Y44A39HVXN6GCYGFELH97YFF69SJA08U0RC": 0,
+            "MAYA.CACAO": 0
+        },
+        "POOL.THOR.RUNE": {
+            "THOR.RUNE": 20000000000,
+            "MAYA.CACAO": 100000000000
+        }
+    },
+    {
+        "TX": 38,
+        "OUT": 1,
+        "CONTRIB": {},
+        "USER-1": {},
+        "PROVIDER-1": {},
+        "PROVIDER-2": {},
+        "VAULT": {},
+        "POOL.KUJI.KUJI": {
+            "KUJI.KUJI": 150000000000,
+            "MAYA.CACAO": 100000000000
+        },
+        "POOL.KUJI.USK": {
+            "KUJI.USK": 150000000000,
+            "MAYA.CACAO": 100000000000
+        },
+        "POOL.DASH.DASH": {
+            "DASH.DASH": 35000000000,
+            "MAYA.CACAO": 300000000000
+        },
+        "POOL.XRD.XRD": {
+            "XRD.XRD": 0,
+            "MAYA.CACAO": 0
+        },
+        "POOL.XRD.TEST-RESOURCE_LOC1TH5R2TN083J0WJ8PQS2Y44A39HVXN6GCYGFELH97YFF69SJA08U0RC": {
+            "XRD.TEST-RESOURCE_LOC1TH5R2TN083J0WJ8PQS2Y44A39HVXN6GCYGFELH97YFF69SJA08U0RC": 0,
+            "MAYA.CACAO": 0
+        },
+        "POOL.THOR.RUNE": {
+            "THOR.RUNE": 15000040000,
+            "MAYA.CACAO": 199999466668
+        }
+    },
+    {
+        "TX": 39,
+        "OUT": 1,
+        "CONTRIB": {},
+        "USER-1": {},
+        "PROVIDER-1": {},
+        "PROVIDER-2": {},
+        "VAULT": {},
+        "POOL.KUJI.KUJI": {
+            "KUJI.KUJI": 150000000000,
+            "MAYA.CACAO": 100000000000
+        },
+        "POOL.KUJI.USK": {
+            "KUJI.USK": 150000000000,
+            "MAYA.CACAO": 100000000000
+        },
+        "POOL.DASH.DASH": {
+            "DASH.DASH": 35000000000,
+            "MAYA.CACAO": 300000000000
+        },
+        "POOL.XRD.XRD": {
+            "XRD.XRD": 0,
+            "MAYA.CACAO": 0
+        },
+        "POOL.XRD.TEST-RESOURCE_LOC1TH5R2TN083J0WJ8PQS2Y44A39HVXN6GCYGFELH97YFF69SJA08U0RC": {
+            "XRD.TEST-RESOURCE_LOC1TH5R2TN083J0WJ8PQS2Y44A39HVXN6GCYGFELH97YFF69SJA08U0RC": 0,
+            "MAYA.CACAO": 0
+        },
+        "POOL.THOR.RUNE": {
+            "THOR.RUNE": 16000040000,
+            "MAYA.CACAO": 188280775262
+        }
+    },
+    {
+        "TX": 40,
+        "OUT": 0,
+        "CONTRIB": {},
+        "USER-1": {},
+        "PROVIDER-1": {},
+        "PROVIDER-2": {},
+        "VAULT": {},
+        "POOL.KUJI.KUJI": {
+            "KUJI.KUJI": 150000000000,
+            "MAYA.CACAO": 100000000000
+        },
+        "POOL.KUJI.USK": {
+            "KUJI.USK": 150000000000,
+            "MAYA.CACAO": 100000000000
+        },
+        "POOL.DASH.DASH": {
+            "DASH.DASH": 35000000000,
+            "MAYA.CACAO": 300000000000
+        },
+        "POOL.XRD.XRD": {
+            "XRD.XRD": 0,
+            "MAYA.CACAO": 0
+        },
+        "POOL.XRD.TEST-RESOURCE_LOC1TH5R2TN083J0WJ8PQS2Y44A39HVXN6GCYGFELH97YFF69SJA08U0RC": {
+            "XRD.TEST-RESOURCE_LOC1TH5R2TN083J0WJ8PQS2Y44A39HVXN6GCYGFELH97YFF69SJA08U0RC": 0,
+            "MAYA.CACAO": 0
+        },
+        "POOL.THOR.RUNE": {
+            "THOR.RUNE": 16000040000,
+            "MAYA.CACAO": 188280775262
+        },
+        "POOL.ETH.ETH": {
+            "ETH.ETH": 0,
+            "MAYA.CACAO": 0
+        }
+    },
+    {
+        "TX": 41,
+        "OUT": 0,
+        "CONTRIB": {},
+        "USER-1": {},
+        "PROVIDER-1": {},
+        "PROVIDER-2": {},
+        "VAULT": {},
+        "POOL.KUJI.KUJI": {
+            "KUJI.KUJI": 150000000000,
+            "MAYA.CACAO": 100000000000
+        },
+        "POOL.KUJI.USK": {
+            "KUJI.USK": 150000000000,
+            "MAYA.CACAO": 100000000000
+        },
+        "POOL.DASH.DASH": {
+            "DASH.DASH": 35000000000,
+            "MAYA.CACAO": 300000000000
+        },
+        "POOL.XRD.XRD": {
+            "XRD.XRD": 0,
+            "MAYA.CACAO": 0
+        },
+        "POOL.XRD.TEST-RESOURCE_LOC1TH5R2TN083J0WJ8PQS2Y44A39HVXN6GCYGFELH97YFF69SJA08U0RC": {
+            "XRD.TEST-RESOURCE_LOC1TH5R2TN083J0WJ8PQS2Y44A39HVXN6GCYGFELH97YFF69SJA08U0RC": 0,
+            "MAYA.CACAO": 0
+        },
+        "POOL.THOR.RUNE": {
+            "THOR.RUNE": 16000040000,
+            "MAYA.CACAO": 188280775262
+        },
+        "POOL.ETH.ETH": {
+            "ETH.ETH": 20000000,
+            "MAYA.CACAO": 5000000000000
+        }
+    },
+    {
+        "TX": 42,
+        "OUT": 0,
+        "CONTRIB": {},
+        "USER-1": {},
+        "PROVIDER-1": {},
+        "PROVIDER-2": {},
+        "VAULT": {},
+        "POOL.KUJI.KUJI": {
+            "KUJI.KUJI": 150000000000,
+            "MAYA.CACAO": 100000000000
+        },
+        "POOL.KUJI.USK": {
+            "KUJI.USK": 150000000000,
+            "MAYA.CACAO": 100000000000
+        },
+        "POOL.DASH.DASH": {
+            "DASH.DASH": 35000000000,
+            "MAYA.CACAO": 300000000000
+        },
+        "POOL.XRD.XRD": {
+            "XRD.XRD": 0,
+            "MAYA.CACAO": 0
+        },
+        "POOL.XRD.TEST-RESOURCE_LOC1TH5R2TN083J0WJ8PQS2Y44A39HVXN6GCYGFELH97YFF69SJA08U0RC": {
+            "XRD.TEST-RESOURCE_LOC1TH5R2TN083J0WJ8PQS2Y44A39HVXN6GCYGFELH97YFF69SJA08U0RC": 0,
+            "MAYA.CACAO": 0
+        },
+        "POOL.THOR.RUNE": {
+            "THOR.RUNE": 16000040000,
+            "MAYA.CACAO": 188280775262
+        },
+        "POOL.ETH.ETH": {
+            "ETH.ETH": 20000000,
+            "MAYA.CACAO": 5000000000000
+        },
+        "POOL.ARB.ETH": {
+            "ARB.ETH": 0,
+            "MAYA.CACAO": 0
+        }
+    },
+    {
+        "TX": 43,
+        "OUT": 0,
+        "CONTRIB": {},
+        "USER-1": {},
+        "PROVIDER-1": {},
+        "PROVIDER-2": {},
+        "VAULT": {},
+        "POOL.KUJI.KUJI": {
+            "KUJI.KUJI": 150000000000,
+            "MAYA.CACAO": 100000000000
+        },
+        "POOL.KUJI.USK": {
+            "KUJI.USK": 150000000000,
+            "MAYA.CACAO": 100000000000
+        },
+        "POOL.DASH.DASH": {
+            "DASH.DASH": 35000000000,
+            "MAYA.CACAO": 300000000000
+        },
+        "POOL.XRD.XRD": {
+            "XRD.XRD": 0,
+            "MAYA.CACAO": 0
+        },
+        "POOL.XRD.TEST-RESOURCE_LOC1TH5R2TN083J0WJ8PQS2Y44A39HVXN6GCYGFELH97YFF69SJA08U0RC": {
+            "XRD.TEST-RESOURCE_LOC1TH5R2TN083J0WJ8PQS2Y44A39HVXN6GCYGFELH97YFF69SJA08U0RC": 0,
+            "MAYA.CACAO": 0
+        },
+        "POOL.THOR.RUNE": {
+            "THOR.RUNE": 16000040000,
+            "MAYA.CACAO": 188280775262
+        },
+        "POOL.ETH.ETH": {
+            "ETH.ETH": 20000000,
+            "MAYA.CACAO": 5000000000000
+        },
+        "POOL.ARB.ETH": {
+            "ARB.ETH": 200000000,
+            "MAYA.CACAO": 50000000000000
+        }
+    },
+    {
+        "TX": 44,
+        "OUT": 0,
+        "CONTRIB": {},
+        "USER-1": {},
+        "PROVIDER-1": {},
+        "PROVIDER-2": {},
+        "VAULT": {},
+        "POOL.KUJI.KUJI": {
+            "KUJI.KUJI": 150000000000,
+            "MAYA.CACAO": 100000000000
+        },
+        "POOL.KUJI.USK": {
+            "KUJI.USK": 150000000000,
+            "MAYA.CACAO": 100000000000
+        },
+        "POOL.DASH.DASH": {
+            "DASH.DASH": 35000000000,
+            "MAYA.CACAO": 300000000000
+        },
+        "POOL.XRD.XRD": {
+            "XRD.XRD": 0,
+            "MAYA.CACAO": 0
+        },
+        "POOL.XRD.TEST-RESOURCE_LOC1TH5R2TN083J0WJ8PQS2Y44A39HVXN6GCYGFELH97YFF69SJA08U0RC": {
+            "XRD.TEST-RESOURCE_LOC1TH5R2TN083J0WJ8PQS2Y44A39HVXN6GCYGFELH97YFF69SJA08U0RC": 0,
+            "MAYA.CACAO": 0
+        },
+        "POOL.THOR.RUNE": {
+            "THOR.RUNE": 16000040000,
+            "MAYA.CACAO": 188280775262
+        },
+        "POOL.ETH.ETH": {
+            "ETH.ETH": 20000000,
+            "MAYA.CACAO": 5000000000000
+        },
+        "POOL.ARB.ETH": {
+            "ARB.ETH": 200000000,
+            "MAYA.CACAO": 50000000000000
+        },
+        "POOL.ETH.TKN-0X52C84043CD9C865236F11D9FC9F56AA003C1F922": {
+            "ETH.TKN-0X52C84043CD9C865236F11D9FC9F56AA003C1F922": 0,
+            "MAYA.CACAO": 0
+        }
+    },
+    {
+        "TX": 45,
+        "OUT": 0,
+        "CONTRIB": {},
+        "USER-1": {},
+        "PROVIDER-1": {},
+        "PROVIDER-2": {},
+        "VAULT": {},
+        "POOL.KUJI.KUJI": {
+            "KUJI.KUJI": 150000000000,
+            "MAYA.CACAO": 100000000000
+        },
+        "POOL.KUJI.USK": {
+            "KUJI.USK": 150000000000,
+            "MAYA.CACAO": 100000000000
+        },
+        "POOL.DASH.DASH": {
+            "DASH.DASH": 35000000000,
+            "MAYA.CACAO": 300000000000
+        },
+        "POOL.XRD.XRD": {
+            "XRD.XRD": 0,
+            "MAYA.CACAO": 0
+        },
+        "POOL.XRD.TEST-RESOURCE_LOC1TH5R2TN083J0WJ8PQS2Y44A39HVXN6GCYGFELH97YFF69SJA08U0RC": {
+            "XRD.TEST-RESOURCE_LOC1TH5R2TN083J0WJ8PQS2Y44A39HVXN6GCYGFELH97YFF69SJA08U0RC": 0,
+            "MAYA.CACAO": 0
+        },
+        "POOL.THOR.RUNE": {
+            "THOR.RUNE": 16000040000,
+            "MAYA.CACAO": 188280775262
+        },
+        "POOL.ETH.ETH": {
+            "ETH.ETH": 20000000,
+            "MAYA.CACAO": 5000000000000
+        },
+        "POOL.ARB.ETH": {
+            "ARB.ETH": 200000000,
+            "MAYA.CACAO": 50000000000000
+        },
+        "POOL.ETH.TKN-0X52C84043CD9C865236F11D9FC9F56AA003C1F922": {
+            "ETH.TKN-0X52C84043CD9C865236F11D9FC9F56AA003C1F922": 400000000,
+            "MAYA.CACAO": 5000000000000
+        }
+    },
+    {
+        "TX": 46,
+        "OUT": 1,
+        "CONTRIB": {},
+        "USER-1": {},
+        "PROVIDER-1": {},
+        "PROVIDER-2": {},
+        "VAULT": {},
+        "POOL.KUJI.KUJI": {
+            "KUJI.KUJI": 150000000000,
+            "MAYA.CACAO": 100000000000
+        },
+        "POOL.KUJI.USK": {
+            "KUJI.USK": 150000000000,
+            "MAYA.CACAO": 100000000000
+        },
+        "POOL.DASH.DASH": {
+            "DASH.DASH": 35000000000,
+            "MAYA.CACAO": 300000000000
+        },
+        "POOL.XRD.XRD": {
+            "XRD.XRD": 0,
+            "MAYA.CACAO": 0
+        },
+        "POOL.XRD.TEST-RESOURCE_LOC1TH5R2TN083J0WJ8PQS2Y44A39HVXN6GCYGFELH97YFF69SJA08U0RC": {
+            "XRD.TEST-RESOURCE_LOC1TH5R2TN083J0WJ8PQS2Y44A39HVXN6GCYGFELH97YFF69SJA08U0RC": 0,
+            "MAYA.CACAO": 0
+        },
+        "POOL.THOR.RUNE": {
+            "THOR.RUNE": 16000040000,
+            "MAYA.CACAO": 188280775262
+        },
+        "POOL.ETH.ETH": {
+            "ETH.ETH": 20000000,
+            "MAYA.CACAO": 5000000000000
+        },
+        "POOL.ARB.ETH": {
+            "ARB.ETH": 200000000,
+            "MAYA.CACAO": 50000000000000
+        },
+        "POOL.ETH.TKN-0X52C84043CD9C865236F11D9FC9F56AA003C1F922": {
+            "ETH.TKN-0X52C84043CD9C865236F11D9FC9F56AA003C1F922": 400000000,
+            "MAYA.CACAO": 5000000000000
+        }
+    },
+    {
+        "TX": 47,
+        "OUT": 1,
+        "CONTRIB": {},
+        "USER-1": {},
+        "PROVIDER-1": {},
+        "PROVIDER-2": {},
+        "VAULT": {},
+        "POOL.KUJI.KUJI": {
+            "KUJI.KUJI": 150000000000,
+            "MAYA.CACAO": 100000000000
+        },
+        "POOL.KUJI.USK": {
+            "KUJI.USK": 150000000000,
+            "MAYA.CACAO": 100000000000
+        },
+        "POOL.DASH.DASH": {
+            "DASH.DASH": 35000000000,
+            "MAYA.CACAO": 300000000000
+        },
+        "POOL.XRD.XRD": {
+            "XRD.XRD": 0,
+            "MAYA.CACAO": 0
+        },
+        "POOL.XRD.TEST-RESOURCE_LOC1TH5R2TN083J0WJ8PQS2Y44A39HVXN6GCYGFELH97YFF69SJA08U0RC": {
+            "XRD.TEST-RESOURCE_LOC1TH5R2TN083J0WJ8PQS2Y44A39HVXN6GCYGFELH97YFF69SJA08U0RC": 0,
+            "MAYA.CACAO": 0
+        },
+        "POOL.THOR.RUNE": {
+            "THOR.RUNE": 16000040000,
+            "MAYA.CACAO": 188280775262
+        },
+        "POOL.ETH.ETH": {
+            "ETH.ETH": 20000000,
+            "MAYA.CACAO": 5000000000000
+        },
+        "POOL.ARB.ETH": {
+            "ARB.ETH": 200000000,
+            "MAYA.CACAO": 50000000000000
+        },
+        "POOL.ETH.TKN-0X52C84043CD9C865236F11D9FC9F56AA003C1F922": {
+            "ETH.TKN-0X52C84043CD9C865236F11D9FC9F56AA003C1F922": 400000000,
+            "MAYA.CACAO": 5000000000000
+        }
+    },
+    {
+        "TX": 48,
+        "OUT": 1,
+        "CONTRIB": {},
+        "USER-1": {},
+        "PROVIDER-1": {},
+        "PROVIDER-2": {},
+        "VAULT": {},
+        "POOL.KUJI.KUJI": {
+            "KUJI.KUJI": 150000000000,
+            "MAYA.CACAO": 100000000000
+        },
+        "POOL.KUJI.USK": {
+            "KUJI.USK": 150000000000,
+            "MAYA.CACAO": 100000000000
+        },
+        "POOL.DASH.DASH": {
+            "DASH.DASH": 35000000000,
+            "MAYA.CACAO": 300000000000
+        },
+        "POOL.XRD.XRD": {
+            "XRD.XRD": 0,
+            "MAYA.CACAO": 0
+        },
+        "POOL.XRD.TEST-RESOURCE_LOC1TH5R2TN083J0WJ8PQS2Y44A39HVXN6GCYGFELH97YFF69SJA08U0RC": {
+            "XRD.TEST-RESOURCE_LOC1TH5R2TN083J0WJ8PQS2Y44A39HVXN6GCYGFELH97YFF69SJA08U0RC": 0,
+            "MAYA.CACAO": 0
+        },
+        "POOL.THOR.RUNE": {
+            "THOR.RUNE": 16000040000,
+            "MAYA.CACAO": 188280775262
+        },
+        "POOL.ETH.ETH": {
+            "ETH.ETH": 20000000,
+            "MAYA.CACAO": 5000000000000
+        },
+        "POOL.ARB.ETH": {
+            "ARB.ETH": 200000000,
+            "MAYA.CACAO": 50000000000000
+        },
+        "POOL.ETH.TKN-0X52C84043CD9C865236F11D9FC9F56AA003C1F922": {
+            "ETH.TKN-0X52C84043CD9C865236F11D9FC9F56AA003C1F922": 400000000,
+            "MAYA.CACAO": 5000000000000
+        }
+    },
+    {
+        "TX": 49,
+        "OUT": 1,
+        "CONTRIB": {},
+        "USER-1": {},
+        "PROVIDER-1": {},
+        "PROVIDER-2": {},
+        "VAULT": {},
+        "POOL.KUJI.KUJI": {
+            "KUJI.KUJI": 160000000000,
+            "MAYA.CACAO": 94140625000
+        },
+        "POOL.KUJI.USK": {
+            "KUJI.USK": 150000000000,
+            "MAYA.CACAO": 100000000000
+        },
+        "POOL.DASH.DASH": {
+            "DASH.DASH": 35000000000,
+            "MAYA.CACAO": 300000000000
+        },
+        "POOL.XRD.XRD": {
+            "XRD.XRD": 0,
+            "MAYA.CACAO": 0
+        },
+        "POOL.XRD.TEST-RESOURCE_LOC1TH5R2TN083J0WJ8PQS2Y44A39HVXN6GCYGFELH97YFF69SJA08U0RC": {
+            "XRD.TEST-RESOURCE_LOC1TH5R2TN083J0WJ8PQS2Y44A39HVXN6GCYGFELH97YFF69SJA08U0RC": 0,
+            "MAYA.CACAO": 0
+        },
+        "POOL.THOR.RUNE": {
+            "THOR.RUNE": 16000040000,
+            "MAYA.CACAO": 188280775262
+        },
+        "POOL.ETH.ETH": {
+            "ETH.ETH": 20000000,
+            "MAYA.CACAO": 5000000000000
+        },
+        "POOL.ARB.ETH": {
+            "ARB.ETH": 200000000,
+            "MAYA.CACAO": 50000000000000
+        },
+        "POOL.ETH.TKN-0X52C84043CD9C865236F11D9FC9F56AA003C1F922": {
+            "ETH.TKN-0X52C84043CD9C865236F11D9FC9F56AA003C1F922": 400000000,
+            "MAYA.CACAO": 5000000000000
+        }
+    },
+    {
+        "TX": 50,
+        "OUT": 1,
+        "CONTRIB": {},
+        "USER-1": {},
+        "PROVIDER-1": {},
+        "PROVIDER-2": {},
+        "VAULT": {},
+        "POOL.KUJI.KUJI": {
+            "KUJI.KUJI": 160000000000,
+            "MAYA.CACAO": 94140625000
+        },
+        "POOL.KUJI.USK": {
+            "KUJI.USK": 160000000000,
+            "MAYA.CACAO": 94140625000
+        },
+        "POOL.DASH.DASH": {
+            "DASH.DASH": 35000000000,
+            "MAYA.CACAO": 300000000000
+        },
+        "POOL.XRD.XRD": {
+            "XRD.XRD": 0,
+            "MAYA.CACAO": 0
+        },
+        "POOL.XRD.TEST-RESOURCE_LOC1TH5R2TN083J0WJ8PQS2Y44A39HVXN6GCYGFELH97YFF69SJA08U0RC": {
+            "XRD.TEST-RESOURCE_LOC1TH5R2TN083J0WJ8PQS2Y44A39HVXN6GCYGFELH97YFF69SJA08U0RC": 0,
+            "MAYA.CACAO": 0
+        },
+        "POOL.THOR.RUNE": {
+            "THOR.RUNE": 16000040000,
+            "MAYA.CACAO": 188280775262
+        },
+        "POOL.ETH.ETH": {
+            "ETH.ETH": 20000000,
+            "MAYA.CACAO": 5000000000000
+        },
+        "POOL.ARB.ETH": {
+            "ARB.ETH": 200000000,
+            "MAYA.CACAO": 50000000000000
+        },
+        "POOL.ETH.TKN-0X52C84043CD9C865236F11D9FC9F56AA003C1F922": {
+            "ETH.TKN-0X52C84043CD9C865236F11D9FC9F56AA003C1F922": 400000000,
+            "MAYA.CACAO": 5000000000000
+        }
+    },
+    {
+        "TX": 51,
+        "OUT": 1,
+        "CONTRIB": {},
+        "USER-1": {},
+        "PROVIDER-1": {},
+        "PROVIDER-2": {},
+        "VAULT": {},
+        "POOL.KUJI.KUJI": {
+            "KUJI.KUJI": 160000000000,
+            "MAYA.CACAO": 94140625000
+        },
+        "POOL.KUJI.USK": {
+            "KUJI.USK": 160000000000,
+            "MAYA.CACAO": 94140625000
+        },
+        "POOL.DASH.DASH": {
+            "DASH.DASH": 36000000000,
+            "MAYA.CACAO": 291898148149
+        },
+        "POOL.XRD.XRD": {
+            "XRD.XRD": 0,
+            "MAYA.CACAO": 0
+        },
+        "POOL.XRD.TEST-RESOURCE_LOC1TH5R2TN083J0WJ8PQS2Y44A39HVXN6GCYGFELH97YFF69SJA08U0RC": {
+            "XRD.TEST-RESOURCE_LOC1TH5R2TN083J0WJ8PQS2Y44A39HVXN6GCYGFELH97YFF69SJA08U0RC": 0,
+            "MAYA.CACAO": 0
+        },
+        "POOL.THOR.RUNE": {
+            "THOR.RUNE": 16000040000,
+            "MAYA.CACAO": 188280775262
+        },
+        "POOL.ETH.ETH": {
+            "ETH.ETH": 20000000,
+            "MAYA.CACAO": 5000000000000
+        },
+        "POOL.ARB.ETH": {
+            "ARB.ETH": 200000000,
+            "MAYA.CACAO": 50000000000000
+        },
+        "POOL.ETH.TKN-0X52C84043CD9C865236F11D9FC9F56AA003C1F922": {
+            "ETH.TKN-0X52C84043CD9C865236F11D9FC9F56AA003C1F922": 400000000,
+            "MAYA.CACAO": 5000000000000
+        }
+    },
+    {
+        "TX": 52,
+        "OUT": 1,
+        "CONTRIB": {},
+        "USER-1": {},
+        "PROVIDER-1": {},
+        "PROVIDER-2": {},
+        "VAULT": {},
+        "POOL.KUJI.KUJI": {
+            "KUJI.KUJI": 160000000000,
+            "MAYA.CACAO": 94140625000
+        },
+        "POOL.KUJI.USK": {
+            "KUJI.USK": 160000000000,
+            "MAYA.CACAO": 94140625000
+        },
+        "POOL.DASH.DASH": {
+            "DASH.DASH": 36000000000,
+            "MAYA.CACAO": 291898148149
+        },
+        "POOL.XRD.XRD": {
+            "XRD.XRD": 0,
+            "MAYA.CACAO": 0
+        },
+        "POOL.XRD.TEST-RESOURCE_LOC1TH5R2TN083J0WJ8PQS2Y44A39HVXN6GCYGFELH97YFF69SJA08U0RC": {
+            "XRD.TEST-RESOURCE_LOC1TH5R2TN083J0WJ8PQS2Y44A39HVXN6GCYGFELH97YFF69SJA08U0RC": 0,
+            "MAYA.CACAO": 0
+        },
+        "POOL.THOR.RUNE": {
+            "THOR.RUNE": 17000040000,
+            "MAYA.CACAO": 177856949107
+        },
+        "POOL.ETH.ETH": {
+            "ETH.ETH": 20000000,
+            "MAYA.CACAO": 5000000000000
+        },
+        "POOL.ARB.ETH": {
+            "ARB.ETH": 200000000,
+            "MAYA.CACAO": 50000000000000
+        },
+        "POOL.ETH.TKN-0X52C84043CD9C865236F11D9FC9F56AA003C1F922": {
+            "ETH.TKN-0X52C84043CD9C865236F11D9FC9F56AA003C1F922": 400000000,
+            "MAYA.CACAO": 5000000000000
+        }
+    },
+    {
+        "TX": 53,
+        "OUT": 1,
+        "CONTRIB": {},
+        "USER-1": {},
+        "PROVIDER-1": {},
+        "PROVIDER-2": {},
+        "VAULT": {},
+        "POOL.KUJI.KUJI": {
+            "KUJI.KUJI": 160000000000,
+            "MAYA.CACAO": 94140625000
+        },
+        "POOL.KUJI.USK": {
+            "KUJI.USK": 160000000000,
+            "MAYA.CACAO": 94140625000
+        },
+        "POOL.DASH.DASH": {
+            "DASH.DASH": 36000000000,
+            "MAYA.CACAO": 291898148149
+        },
+        "POOL.XRD.XRD": {
+            "XRD.XRD": 0,
+            "MAYA.CACAO": 0
+        },
+        "POOL.XRD.TEST-RESOURCE_LOC1TH5R2TN083J0WJ8PQS2Y44A39HVXN6GCYGFELH97YFF69SJA08U0RC": {
+            "XRD.TEST-RESOURCE_LOC1TH5R2TN083J0WJ8PQS2Y44A39HVXN6GCYGFELH97YFF69SJA08U0RC": 0,
+            "MAYA.CACAO": 0
+        },
+        "POOL.THOR.RUNE": {
+            "THOR.RUNE": 17000040000,
+            "MAYA.CACAO": 177856949107
+        },
+        "POOL.ETH.ETH": {
+            "ETH.ETH": 15010564,
+            "MAYA.CACAO": 9992339578249
+        },
+        "POOL.ARB.ETH": {
+            "ARB.ETH": 200000000,
+            "MAYA.CACAO": 50000000000000
+        },
+        "POOL.ETH.TKN-0X52C84043CD9C865236F11D9FC9F56AA003C1F922": {
+            "ETH.TKN-0X52C84043CD9C865236F11D9FC9F56AA003C1F922": 400000000,
+            "MAYA.CACAO": 5000000000000
+        }
+    },
+    {
+        "TX": 54,
+        "OUT": 1,
+        "CONTRIB": {},
+        "USER-1": {},
+        "PROVIDER-1": {},
+        "PROVIDER-2": {},
+        "VAULT": {},
+        "POOL.KUJI.KUJI": {
+            "KUJI.KUJI": 160000000000,
+            "MAYA.CACAO": 94140625000
+        },
+        "POOL.KUJI.USK": {
+            "KUJI.USK": 160000000000,
+            "MAYA.CACAO": 94140625000
+        },
+        "POOL.DASH.DASH": {
+            "DASH.DASH": 36000000000,
+            "MAYA.CACAO": 291898148149
+        },
+        "POOL.XRD.XRD": {
+            "XRD.XRD": 0,
+            "MAYA.CACAO": 0
+        },
+        "POOL.XRD.TEST-RESOURCE_LOC1TH5R2TN083J0WJ8PQS2Y44A39HVXN6GCYGFELH97YFF69SJA08U0RC": {
+            "XRD.TEST-RESOURCE_LOC1TH5R2TN083J0WJ8PQS2Y44A39HVXN6GCYGFELH97YFF69SJA08U0RC": 0,
+            "MAYA.CACAO": 0
+        },
+        "POOL.THOR.RUNE": {
+            "THOR.RUNE": 17000040000,
+            "MAYA.CACAO": 177856949107
+        },
+        "POOL.ETH.ETH": {
+            "ETH.ETH": 30010564,
+            "MAYA.CACAO": 7494254993226
+        },
+        "POOL.ARB.ETH": {
+            "ARB.ETH": 200000000,
+            "MAYA.CACAO": 50000000000000
+        },
+        "POOL.ETH.TKN-0X52C84043CD9C865236F11D9FC9F56AA003C1F922": {
+            "ETH.TKN-0X52C84043CD9C865236F11D9FC9F56AA003C1F922": 400000000,
+            "MAYA.CACAO": 5000000000000
+        }
+    },
+    {
+        "TX": 55,
+        "OUT": 1,
+        "CONTRIB": {},
+        "USER-1": {},
+        "PROVIDER-1": {},
+        "PROVIDER-2": {},
+        "VAULT": {},
+        "POOL.KUJI.KUJI": {
+            "KUJI.KUJI": 160000000000,
+            "MAYA.CACAO": 94140625000
+        },
+        "POOL.KUJI.USK": {
+            "KUJI.USK": 160000000000,
+            "MAYA.CACAO": 94140625000
+        },
+        "POOL.DASH.DASH": {
+            "DASH.DASH": 36000000000,
+            "MAYA.CACAO": 291898148149
+        },
+        "POOL.XRD.XRD": {
+            "XRD.XRD": 0,
+            "MAYA.CACAO": 0
+        },
+        "POOL.XRD.TEST-RESOURCE_LOC1TH5R2TN083J0WJ8PQS2Y44A39HVXN6GCYGFELH97YFF69SJA08U0RC": {
+            "XRD.TEST-RESOURCE_LOC1TH5R2TN083J0WJ8PQS2Y44A39HVXN6GCYGFELH97YFF69SJA08U0RC": 0,
+            "MAYA.CACAO": 0
+        },
+        "POOL.THOR.RUNE": {
+            "THOR.RUNE": 17000040000,
+            "MAYA.CACAO": 177856949107
+        },
+        "POOL.ETH.ETH": {
+            "ETH.ETH": 30010564,
+            "MAYA.CACAO": 7494254993226
+        },
+        "POOL.ARB.ETH": {
+            "ARB.ETH": 183670275,
+            "MAYA.CACAO": 54940349628932
+        },
+        "POOL.ETH.TKN-0X52C84043CD9C865236F11D9FC9F56AA003C1F922": {
+            "ETH.TKN-0X52C84043CD9C865236F11D9FC9F56AA003C1F922": 400000000,
+            "MAYA.CACAO": 5000000000000
+        }
+    },
+    {
+        "TX": 56,
+        "OUT": 1,
+        "CONTRIB": {},
+        "USER-1": {},
+        "PROVIDER-1": {},
+        "PROVIDER-2": {},
+        "VAULT": {},
+        "POOL.KUJI.KUJI": {
+            "KUJI.KUJI": 160000000000,
+            "MAYA.CACAO": 94140625000
+        },
+        "POOL.KUJI.USK": {
+            "KUJI.USK": 160000000000,
+            "MAYA.CACAO": 94140625000
+        },
+        "POOL.DASH.DASH": {
+            "DASH.DASH": 36000000000,
+            "MAYA.CACAO": 291898148149
+        },
+        "POOL.XRD.XRD": {
+            "XRD.XRD": 0,
+            "MAYA.CACAO": 0
+        },
+        "POOL.XRD.TEST-RESOURCE_LOC1TH5R2TN083J0WJ8PQS2Y44A39HVXN6GCYGFELH97YFF69SJA08U0RC": {
+            "XRD.TEST-RESOURCE_LOC1TH5R2TN083J0WJ8PQS2Y44A39HVXN6GCYGFELH97YFF69SJA08U0RC": 0,
+            "MAYA.CACAO": 0
+        },
+        "POOL.THOR.RUNE": {
+            "THOR.RUNE": 17000040000,
+            "MAYA.CACAO": 177856949107
+        },
+        "POOL.ETH.ETH": {
+            "ETH.ETH": 30010564,
+            "MAYA.CACAO": 7494254993226
+        },
+        "POOL.ARB.ETH": {
+            "ARB.ETH": 198670275,
+            "MAYA.CACAO": 51105434399966
+        },
+        "POOL.ETH.TKN-0X52C84043CD9C865236F11D9FC9F56AA003C1F922": {
+            "ETH.TKN-0X52C84043CD9C865236F11D9FC9F56AA003C1F922": 400000000,
+            "MAYA.CACAO": 5000000000000
+        }
+    },
+    {
+        "TX": 57,
+        "OUT": 1,
+        "CONTRIB": {},
+        "USER-1": {},
+        "PROVIDER-1": {},
+        "PROVIDER-2": {},
+        "VAULT": {},
+        "POOL.KUJI.KUJI": {
+            "KUJI.KUJI": 160000000000,
+            "MAYA.CACAO": 94140625000
+        },
+        "POOL.KUJI.USK": {
+            "KUJI.USK": 160000000000,
+            "MAYA.CACAO": 94140625000
+        },
+        "POOL.DASH.DASH": {
+            "DASH.DASH": 36000000000,
+            "MAYA.CACAO": 291898148149
+        },
+        "POOL.XRD.XRD": {
+            "XRD.XRD": 0,
+            "MAYA.CACAO": 0
+        },
+        "POOL.XRD.TEST-RESOURCE_LOC1TH5R2TN083J0WJ8PQS2Y44A39HVXN6GCYGFELH97YFF69SJA08U0RC": {
+            "XRD.TEST-RESOURCE_LOC1TH5R2TN083J0WJ8PQS2Y44A39HVXN6GCYGFELH97YFF69SJA08U0RC": 0,
+            "MAYA.CACAO": 0
+        },
+        "POOL.THOR.RUNE": {
+            "THOR.RUNE": 17000040000,
+            "MAYA.CACAO": 177856949107
+        },
+        "POOL.ETH.ETH": {
+            "ETH.ETH": 23719108,
+            "MAYA.CACAO": 9065360939208
+        },
+        "POOL.ARB.ETH": {
+            "ARB.ETH": 198670275,
+            "MAYA.CACAO": 51105434399966
+        },
+        "POOL.ETH.TKN-0X52C84043CD9C865236F11D9FC9F56AA003C1F922": {
+            "ETH.TKN-0X52C84043CD9C865236F11D9FC9F56AA003C1F922": 300957593,
+            "MAYA.CACAO": 9968181796297
+        }
+    },
+    {
+        "TX": 58,
+        "OUT": 1,
+        "CONTRIB": {},
+        "USER-1": {},
+        "PROVIDER-1": {},
+        "PROVIDER-2": {},
+        "VAULT": {},
+        "POOL.KUJI.KUJI": {
+            "KUJI.KUJI": 160000000000,
+            "MAYA.CACAO": 94140625000
+        },
+        "POOL.KUJI.USK": {
+            "KUJI.USK": 160000000000,
+            "MAYA.CACAO": 94140625000
+        },
+        "POOL.DASH.DASH": {
+            "DASH.DASH": 36000000000,
+            "MAYA.CACAO": 291898148149
+        },
+        "POOL.XRD.XRD": {
+            "XRD.XRD": 0,
+            "MAYA.CACAO": 0
+        },
+        "POOL.XRD.TEST-RESOURCE_LOC1TH5R2TN083J0WJ8PQS2Y44A39HVXN6GCYGFELH97YFF69SJA08U0RC": {
+            "XRD.TEST-RESOURCE_LOC1TH5R2TN083J0WJ8PQS2Y44A39HVXN6GCYGFELH97YFF69SJA08U0RC": 0,
+            "MAYA.CACAO": 0
+        },
+        "POOL.THOR.RUNE": {
+            "THOR.RUNE": 17000040000,
+            "MAYA.CACAO": 177856949107
+        },
+        "POOL.ETH.ETH": {
+            "ETH.ETH": 23719108,
+            "MAYA.CACAO": 9065360939208
+        },
+        "POOL.ARB.ETH": {
+            "ARB.ETH": 198670275,
+            "MAYA.CACAO": 51105434399966
+        },
+        "POOL.ETH.TKN-0X52C84043CD9C865236F11D9FC9F56AA003C1F922": {
+            "ETH.TKN-0X52C84043CD9C865236F11D9FC9F56AA003C1F922": 315957593,
+            "MAYA.CACAO": 9517411883876
+        }
+    },
+    {
+        "TX": 59,
+        "OUT": 2,
+        "CONTRIB": {},
+        "USER-1": {},
+        "PROVIDER-1": {},
+        "PROVIDER-2": {},
+        "VAULT": {},
+        "POOL.KUJI.KUJI": {
+            "KUJI.KUJI": 160000000000,
+            "MAYA.CACAO": 94140625000
+        },
+        "POOL.KUJI.USK": {
+            "KUJI.USK": 160000000000,
+            "MAYA.CACAO": 94140625000
+        },
+        "POOL.DASH.DASH": {
+            "DASH.DASH": 36000000000,
+            "MAYA.CACAO": 291898148149
+        },
+        "POOL.XRD.XRD": {
+            "XRD.XRD": 0,
+            "MAYA.CACAO": 0
+        },
+        "POOL.XRD.TEST-RESOURCE_LOC1TH5R2TN083J0WJ8PQS2Y44A39HVXN6GCYGFELH97YFF69SJA08U0RC": {
+            "XRD.TEST-RESOURCE_LOC1TH5R2TN083J0WJ8PQS2Y44A39HVXN6GCYGFELH97YFF69SJA08U0RC": 0,
+            "MAYA.CACAO": 0
+        },
+        "POOL.THOR.RUNE": {
+            "THOR.RUNE": 17000040000,
+            "MAYA.CACAO": 177856949107
+        },
+        "POOL.ETH.ETH": {
+            "ETH.ETH": 21357689,
+            "MAYA.CACAO": 8154564313999
+        },
+        "POOL.ARB.ETH": {
+            "ARB.ETH": 198670275,
+            "MAYA.CACAO": 51105434399966
+        },
+        "POOL.ETH.TKN-0X52C84043CD9C865236F11D9FC9F56AA003C1F922": {
+            "ETH.TKN-0X52C84043CD9C865236F11D9FC9F56AA003C1F922": 315957593,
+            "MAYA.CACAO": 9517411883876
+        }
+    },
+    {
+        "TX": 60,
+        "OUT": 2,
+        "CONTRIB": {},
+        "USER-1": {},
+        "PROVIDER-1": {},
+        "PROVIDER-2": {},
+        "VAULT": {},
+        "POOL.KUJI.KUJI": {
+            "KUJI.KUJI": 160000000000,
+            "MAYA.CACAO": 94140625000
+        },
+        "POOL.KUJI.USK": {
+            "KUJI.USK": 160000000000,
+            "MAYA.CACAO": 94140625000
+        },
+        "POOL.DASH.DASH": {
+            "DASH.DASH": 36000000000,
+            "MAYA.CACAO": 291898148149
+        },
+        "POOL.XRD.XRD": {
+            "XRD.XRD": 0,
+            "MAYA.CACAO": 0
+        },
+        "POOL.XRD.TEST-RESOURCE_LOC1TH5R2TN083J0WJ8PQS2Y44A39HVXN6GCYGFELH97YFF69SJA08U0RC": {
+            "XRD.TEST-RESOURCE_LOC1TH5R2TN083J0WJ8PQS2Y44A39HVXN6GCYGFELH97YFF69SJA08U0RC": 0,
+            "MAYA.CACAO": 0
+        },
+        "POOL.THOR.RUNE": {
+            "THOR.RUNE": 17000040000,
+            "MAYA.CACAO": 177856949107
+        },
+        "POOL.ETH.ETH": {
+            "ETH.ETH": 21357689,
+            "MAYA.CACAO": 8154564313999
+        },
+        "POOL.ARB.ETH": {
+            "ARB.ETH": 179002807,
+            "MAYA.CACAO": 45943613884243
+        },
+        "POOL.ETH.TKN-0X52C84043CD9C865236F11D9FC9F56AA003C1F922": {
+            "ETH.TKN-0X52C84043CD9C865236F11D9FC9F56AA003C1F922": 315957593,
+            "MAYA.CACAO": 9517411883876
+        }
+    },
+    {
+        "TX": 61,
+        "OUT": 2,
+        "CONTRIB": {},
+        "USER-1": {},
+        "PROVIDER-1": {},
+        "PROVIDER-2": {},
+        "VAULT": {},
+        "POOL.KUJI.KUJI": {
+            "KUJI.KUJI": 160000000000,
+            "MAYA.CACAO": 94140625000
+        },
+        "POOL.KUJI.USK": {
+            "KUJI.USK": 160000000000,
+            "MAYA.CACAO": 94140625000
+        },
+        "POOL.DASH.DASH": {
+            "DASH.DASH": 36000000000,
+            "MAYA.CACAO": 291898148149
+        },
+        "POOL.XRD.XRD": {
+            "XRD.XRD": 0,
+            "MAYA.CACAO": 0
+        },
+        "POOL.XRD.TEST-RESOURCE_LOC1TH5R2TN083J0WJ8PQS2Y44A39HVXN6GCYGFELH97YFF69SJA08U0RC": {
+            "XRD.TEST-RESOURCE_LOC1TH5R2TN083J0WJ8PQS2Y44A39HVXN6GCYGFELH97YFF69SJA08U0RC": 0,
+            "MAYA.CACAO": 0
+        },
+        "POOL.THOR.RUNE": {
+            "THOR.RUNE": 17000040000,
+            "MAYA.CACAO": 177856949107
+        },
+        "POOL.ETH.ETH": {
+            "ETH.ETH": 15066233,
+            "MAYA.CACAO": 10556700733379
+        },
+        "POOL.ARB.ETH": {
+            "ARB.ETH": 179002807,
+            "MAYA.CACAO": 45943613884243
+        },
+        "POOL.ETH.TKN-0X52C84043CD9C865236F11D9FC9F56AA003C1F922": {
+            "ETH.TKN-0X52C84043CD9C865236F11D9FC9F56AA003C1F922": 286009616,
+            "MAYA.CACAO": 8516321452664
+        }
+    },
+    {
+        "TX": 62,
+        "OUT": 2,
+        "CONTRIB": {},
+        "USER-1": {},
+        "PROVIDER-1": {},
+        "PROVIDER-2": {},
+        "VAULT": {},
+        "POOL.KUJI.KUJI": {
+            "KUJI.KUJI": 160000000000,
+            "MAYA.CACAO": 94140625000
+        },
+        "POOL.KUJI.USK": {
+            "KUJI.USK": 160000000000,
+            "MAYA.CACAO": 94140625000
+        },
+        "POOL.DASH.DASH": {
+            "DASH.DASH": 32400005000,
+            "MAYA.CACAO": 262708292792
+        },
+        "POOL.XRD.XRD": {
+            "XRD.XRD": 0,
+            "MAYA.CACAO": 0
+        },
+        "POOL.XRD.TEST-RESOURCE_LOC1TH5R2TN083J0WJ8PQS2Y44A39HVXN6GCYGFELH97YFF69SJA08U0RC": {
+            "XRD.TEST-RESOURCE_LOC1TH5R2TN083J0WJ8PQS2Y44A39HVXN6GCYGFELH97YFF69SJA08U0RC": 0,
+            "MAYA.CACAO": 0
+        },
+        "POOL.THOR.RUNE": {
+            "THOR.RUNE": 17000040000,
+            "MAYA.CACAO": 177856949107
+        },
+        "POOL.ETH.ETH": {
+            "ETH.ETH": 15066233,
+            "MAYA.CACAO": 10556700733379
+        },
+        "POOL.ARB.ETH": {
+            "ARB.ETH": 179002807,
+            "MAYA.CACAO": 45943613884243
+        },
+        "POOL.ETH.TKN-0X52C84043CD9C865236F11D9FC9F56AA003C1F922": {
+            "ETH.TKN-0X52C84043CD9C865236F11D9FC9F56AA003C1F922": 286009616,
+            "MAYA.CACAO": 8516321452664
+        }
+    },
+    {
+        "TX": 63,
+        "OUT": 2,
+        "CONTRIB": {},
+        "USER-1": {},
+        "PROVIDER-1": {},
+        "PROVIDER-2": {},
+        "VAULT": {},
+        "POOL.KUJI.KUJI": {
+            "KUJI.KUJI": 160000000000,
+            "MAYA.CACAO": 94140625000
+        },
+        "POOL.KUJI.USK": {
+            "KUJI.USK": 160000000000,
+            "MAYA.CACAO": 94140625000
+        },
+        "POOL.DASH.DASH": {
+            "DASH.DASH": 32400005000,
+            "MAYA.CACAO": 262708292792
+        },
+        "POOL.XRD.XRD": {
+            "XRD.XRD": 0,
+            "MAYA.CACAO": 0
+        },
+        "POOL.XRD.TEST-RESOURCE_LOC1TH5R2TN083J0WJ8PQS2Y44A39HVXN6GCYGFELH97YFF69SJA08U0RC": {
+            "XRD.TEST-RESOURCE_LOC1TH5R2TN083J0WJ8PQS2Y44A39HVXN6GCYGFELH97YFF69SJA08U0RC": 0,
+            "MAYA.CACAO": 0
+        },
+        "POOL.THOR.RUNE": {
+            "THOR.RUNE": 15300076000,
+            "MAYA.CACAO": 160070835711
+        },
+        "POOL.ETH.ETH": {
+            "ETH.ETH": 15066233,
+            "MAYA.CACAO": 10556700733379
+        },
+        "POOL.ARB.ETH": {
+            "ARB.ETH": 179002807,
+            "MAYA.CACAO": 45943613884243
+        },
+        "POOL.ETH.TKN-0X52C84043CD9C865236F11D9FC9F56AA003C1F922": {
+            "ETH.TKN-0X52C84043CD9C865236F11D9FC9F56AA003C1F922": 286009616,
+            "MAYA.CACAO": 8516321452664
+        }
+    },
+    {
+        "TX": 64,
+        "OUT": 2,
+        "CONTRIB": {},
+        "USER-1": {},
+        "PROVIDER-1": {},
+        "PROVIDER-2": {},
+        "VAULT": {},
+        "POOL.KUJI.KUJI": {
+            "KUJI.KUJI": 144000040000,
+            "MAYA.CACAO": 84726538965
+        },
+        "POOL.KUJI.USK": {
+            "KUJI.USK": 160000000000,
+            "MAYA.CACAO": 94140625000
+        },
+        "POOL.DASH.DASH": {
+            "DASH.DASH": 32400005000,
+            "MAYA.CACAO": 262708292792
+        },
+        "POOL.XRD.XRD": {
+            "XRD.XRD": 0,
+            "MAYA.CACAO": 0
+        },
+        "POOL.XRD.TEST-RESOURCE_LOC1TH5R2TN083J0WJ8PQS2Y44A39HVXN6GCYGFELH97YFF69SJA08U0RC": {
+            "XRD.TEST-RESOURCE_LOC1TH5R2TN083J0WJ8PQS2Y44A39HVXN6GCYGFELH97YFF69SJA08U0RC": 0,
+            "MAYA.CACAO": 0
+        },
+        "POOL.THOR.RUNE": {
+            "THOR.RUNE": 15300076000,
+            "MAYA.CACAO": 160070835711
+        },
+        "POOL.ETH.ETH": {
+            "ETH.ETH": 15066233,
+            "MAYA.CACAO": 10556700733379
+        },
+        "POOL.ARB.ETH": {
+            "ARB.ETH": 179002807,
+            "MAYA.CACAO": 45943613884243
+        },
+        "POOL.ETH.TKN-0X52C84043CD9C865236F11D9FC9F56AA003C1F922": {
+            "ETH.TKN-0X52C84043CD9C865236F11D9FC9F56AA003C1F922": 286009616,
+            "MAYA.CACAO": 8516321452664
+        }
+    },
+    {
+        "TX": 65,
+        "OUT": 2,
+        "CONTRIB": {},
+        "USER-1": {},
+        "PROVIDER-1": {},
+        "PROVIDER-2": {},
+        "VAULT": {},
+        "POOL.KUJI.KUJI": {
+            "KUJI.KUJI": 144000040000,
+            "MAYA.CACAO": 84726538965
+        },
+        "POOL.KUJI.USK": {
+            "KUJI.USK": 144000040000,
+            "MAYA.CACAO": 84726538965
+        },
+        "POOL.DASH.DASH": {
+            "DASH.DASH": 32400005000,
+            "MAYA.CACAO": 262708292792
+        },
+        "POOL.XRD.XRD": {
+            "XRD.XRD": 0,
+            "MAYA.CACAO": 0
+        },
+        "POOL.XRD.TEST-RESOURCE_LOC1TH5R2TN083J0WJ8PQS2Y44A39HVXN6GCYGFELH97YFF69SJA08U0RC": {
+            "XRD.TEST-RESOURCE_LOC1TH5R2TN083J0WJ8PQS2Y44A39HVXN6GCYGFELH97YFF69SJA08U0RC": 0,
+            "MAYA.CACAO": 0
+        },
+        "POOL.THOR.RUNE": {
+            "THOR.RUNE": 15300076000,
+            "MAYA.CACAO": 160070835711
+        },
+        "POOL.ETH.ETH": {
+            "ETH.ETH": 15066233,
+            "MAYA.CACAO": 10556700733379
+        },
+        "POOL.ARB.ETH": {
+            "ARB.ETH": 179002807,
+            "MAYA.CACAO": 45943613884243
+        },
+        "POOL.ETH.TKN-0X52C84043CD9C865236F11D9FC9F56AA003C1F922": {
+            "ETH.TKN-0X52C84043CD9C865236F11D9FC9F56AA003C1F922": 286009616,
+            "MAYA.CACAO": 8516321452664
+        }
+    },
+    {
+        "TX": 66,
+        "OUT": 2,
+        "CONTRIB": {},
+        "USER-1": {},
+        "PROVIDER-1": {},
+        "PROVIDER-2": {},
+        "VAULT": {},
+        "POOL.KUJI.KUJI": {
+            "KUJI.KUJI": 144000040000,
+            "MAYA.CACAO": 84726538965
+        },
+        "POOL.KUJI.USK": {
+            "KUJI.USK": 144000040000,
+            "MAYA.CACAO": 84726538965
+        },
+        "POOL.DASH.DASH": {
+            "DASH.DASH": 32400005000,
+            "MAYA.CACAO": 262708292792
+        },
+        "POOL.XRD.XRD": {
+            "XRD.XRD": 0,
+            "MAYA.CACAO": 0
+        },
+        "POOL.XRD.TEST-RESOURCE_LOC1TH5R2TN083J0WJ8PQS2Y44A39HVXN6GCYGFELH97YFF69SJA08U0RC": {
+            "XRD.TEST-RESOURCE_LOC1TH5R2TN083J0WJ8PQS2Y44A39HVXN6GCYGFELH97YFF69SJA08U0RC": 0,
+            "MAYA.CACAO": 0
+        },
+        "POOL.THOR.RUNE": {
+            "THOR.RUNE": 15300076000,
+            "MAYA.CACAO": 160070835711
+        },
+        "POOL.ETH.ETH": {
+            "ETH.ETH": 8774777,
+            "MAYA.CACAO": 14965036789859
+        },
+        "POOL.ARB.ETH": {
+            "ARB.ETH": 179002807,
+            "MAYA.CACAO": 45943613884243
+        },
+        "POOL.ETH.TKN-0X52C84043CD9C865236F11D9FC9F56AA003C1F922": {
+            "ETH.TKN-0X52C84043CD9C865236F11D9FC9F56AA003C1F922": 0,
+            "MAYA.CACAO": 0
+        }
+    },
+    {
+        "TX": 67,
+        "OUT": 2,
+        "CONTRIB": {},
+        "USER-1": {},
+        "PROVIDER-1": {},
+        "PROVIDER-2": {},
+        "VAULT": {},
+        "POOL.KUJI.KUJI": {
+            "KUJI.KUJI": 144000040000,
+            "MAYA.CACAO": 84726538965
+        },
+        "POOL.KUJI.USK": {
+            "KUJI.USK": 144000040000,
+            "MAYA.CACAO": 84726538965
+        },
+        "POOL.DASH.DASH": {
+            "DASH.DASH": 32400005000,
+            "MAYA.CACAO": 262708292792
+        },
+        "POOL.XRD.XRD": {
+            "XRD.XRD": 0,
+            "MAYA.CACAO": 0
+        },
+        "POOL.XRD.TEST-RESOURCE_LOC1TH5R2TN083J0WJ8PQS2Y44A39HVXN6GCYGFELH97YFF69SJA08U0RC": {
+            "XRD.TEST-RESOURCE_LOC1TH5R2TN083J0WJ8PQS2Y44A39HVXN6GCYGFELH97YFF69SJA08U0RC": 0,
+            "MAYA.CACAO": 0
+        },
+        "POOL.THOR.RUNE": {
+            "THOR.RUNE": 15300076000,
+            "MAYA.CACAO": 160070835711
+        },
+        "POOL.ETH.ETH": {
+            "ETH.ETH": 0,
+            "MAYA.CACAO": 0
+        },
+        "POOL.ARB.ETH": {
+            "ARB.ETH": 179002807,
+            "MAYA.CACAO": 45943613884243
+        },
+        "POOL.ETH.TKN-0X52C84043CD9C865236F11D9FC9F56AA003C1F922": {
+            "ETH.TKN-0X52C84043CD9C865236F11D9FC9F56AA003C1F922": 0,
+            "MAYA.CACAO": 0
+        }
+    },
+    {
+        "TX": 68,
+        "OUT": 2,
+        "CONTRIB": {},
+        "USER-1": {},
+        "PROVIDER-1": {},
+        "PROVIDER-2": {},
+        "VAULT": {},
+        "POOL.KUJI.KUJI": {
+            "KUJI.KUJI": 144000040000,
+            "MAYA.CACAO": 84726538965
+        },
+        "POOL.KUJI.USK": {
+            "KUJI.USK": 144000040000,
+            "MAYA.CACAO": 84726538965
+        },
+        "POOL.DASH.DASH": {
+            "DASH.DASH": 32400005000,
+            "MAYA.CACAO": 262708292792
+        },
+        "POOL.XRD.XRD": {
+            "XRD.XRD": 0,
+            "MAYA.CACAO": 0
+        },
+        "POOL.XRD.TEST-RESOURCE_LOC1TH5R2TN083J0WJ8PQS2Y44A39HVXN6GCYGFELH97YFF69SJA08U0RC": {
+            "XRD.TEST-RESOURCE_LOC1TH5R2TN083J0WJ8PQS2Y44A39HVXN6GCYGFELH97YFF69SJA08U0RC": 0,
+            "MAYA.CACAO": 0
+        },
+        "POOL.THOR.RUNE": {
+            "THOR.RUNE": 15300076000,
+            "MAYA.CACAO": 160070835711
+        },
+        "POOL.ETH.ETH": {
+            "ETH.ETH": 0,
+            "MAYA.CACAO": 0
+        },
+        "POOL.ARB.ETH": {
+            "ARB.ETH": 0,
+            "MAYA.CACAO": 0
+        },
+        "POOL.ETH.TKN-0X52C84043CD9C865236F11D9FC9F56AA003C1F922": {
+            "ETH.TKN-0X52C84043CD9C865236F11D9FC9F56AA003C1F922": 0,
+            "MAYA.CACAO": 0
+        }
+    },
+    {
+        "TX": 69,
+        "OUT": 2,
+        "CONTRIB": {},
+        "USER-1": {},
+        "PROVIDER-1": {},
+        "PROVIDER-2": {},
+        "VAULT": {},
+        "POOL.KUJI.KUJI": {
+            "KUJI.KUJI": 144000040000,
+            "MAYA.CACAO": 84726538965
+        },
+        "POOL.KUJI.USK": {
+            "KUJI.USK": 144000040000,
+            "MAYA.CACAO": 84726538965
+        },
+        "POOL.DASH.DASH": {
+            "DASH.DASH": 0,
+            "MAYA.CACAO": 0
+        },
+        "POOL.XRD.XRD": {
+            "XRD.XRD": 0,
+            "MAYA.CACAO": 0
+        },
+        "POOL.XRD.TEST-RESOURCE_LOC1TH5R2TN083J0WJ8PQS2Y44A39HVXN6GCYGFELH97YFF69SJA08U0RC": {
+            "XRD.TEST-RESOURCE_LOC1TH5R2TN083J0WJ8PQS2Y44A39HVXN6GCYGFELH97YFF69SJA08U0RC": 0,
+            "MAYA.CACAO": 0
+        },
+        "POOL.THOR.RUNE": {
+            "THOR.RUNE": 15300076000,
+            "MAYA.CACAO": 160070835711
+        },
+        "POOL.ETH.ETH": {
+            "ETH.ETH": 0,
+            "MAYA.CACAO": 0
+        },
+        "POOL.ARB.ETH": {
+            "ARB.ETH": 0,
+            "MAYA.CACAO": 0
+        },
+        "POOL.ETH.TKN-0X52C84043CD9C865236F11D9FC9F56AA003C1F922": {
+            "ETH.TKN-0X52C84043CD9C865236F11D9FC9F56AA003C1F922": 0,
+            "MAYA.CACAO": 0
+        }
+    },
+    {
+        "TX": 70,
+        "OUT": 2,
+        "CONTRIB": {},
+        "USER-1": {},
+        "PROVIDER-1": {},
+        "PROVIDER-2": {},
+        "VAULT": {},
+        "POOL.KUJI.KUJI": {
+            "KUJI.KUJI": 144000040000,
+            "MAYA.CACAO": 84726538965
+        },
+        "POOL.KUJI.USK": {
+            "KUJI.USK": 0,
+            "MAYA.CACAO": 0
+        },
+        "POOL.DASH.DASH": {
+            "DASH.DASH": 0,
+            "MAYA.CACAO": 0
+        },
+        "POOL.XRD.XRD": {
+            "XRD.XRD": 0,
+            "MAYA.CACAO": 0
+        },
+        "POOL.XRD.TEST-RESOURCE_LOC1TH5R2TN083J0WJ8PQS2Y44A39HVXN6GCYGFELH97YFF69SJA08U0RC": {
+            "XRD.TEST-RESOURCE_LOC1TH5R2TN083J0WJ8PQS2Y44A39HVXN6GCYGFELH97YFF69SJA08U0RC": 0,
+            "MAYA.CACAO": 0
+        },
+        "POOL.THOR.RUNE": {
+            "THOR.RUNE": 15300076000,
+            "MAYA.CACAO": 160070835711
+        },
+        "POOL.ETH.ETH": {
+            "ETH.ETH": 0,
+            "MAYA.CACAO": 0
+        },
+        "POOL.ARB.ETH": {
+            "ARB.ETH": 0,
+            "MAYA.CACAO": 0
+        },
+        "POOL.ETH.TKN-0X52C84043CD9C865236F11D9FC9F56AA003C1F922": {
+            "ETH.TKN-0X52C84043CD9C865236F11D9FC9F56AA003C1F922": 0,
+            "MAYA.CACAO": 0
+        }
+    },
+    {
+        "TX": 71,
+        "OUT": 2,
+        "CONTRIB": {},
+        "USER-1": {},
+        "PROVIDER-1": {},
+        "PROVIDER-2": {},
+        "VAULT": {},
+        "POOL.KUJI.KUJI": {
+            "KUJI.KUJI": 30000,
+            "MAYA.CACAO": 0
+        },
+        "POOL.KUJI.USK": {
+            "KUJI.USK": 0,
+            "MAYA.CACAO": 0
+        },
+        "POOL.DASH.DASH": {
+            "DASH.DASH": 0,
+            "MAYA.CACAO": 0
+        },
+        "POOL.XRD.XRD": {
+            "XRD.XRD": 0,
+            "MAYA.CACAO": 0
+        },
+        "POOL.XRD.TEST-RESOURCE_LOC1TH5R2TN083J0WJ8PQS2Y44A39HVXN6GCYGFELH97YFF69SJA08U0RC": {
+            "XRD.TEST-RESOURCE_LOC1TH5R2TN083J0WJ8PQS2Y44A39HVXN6GCYGFELH97YFF69SJA08U0RC": 0,
+            "MAYA.CACAO": 0
+        },
+        "POOL.THOR.RUNE": {
+            "THOR.RUNE": 15300076000,
+            "MAYA.CACAO": 160070835711
+        },
+        "POOL.ETH.ETH": {
+            "ETH.ETH": 0,
+            "MAYA.CACAO": 0
+        },
+        "POOL.ARB.ETH": {
+            "ARB.ETH": 0,
+            "MAYA.CACAO": 0
+        },
+        "POOL.ETH.TKN-0X52C84043CD9C865236F11D9FC9F56AA003C1F922": {
+            "ETH.TKN-0X52C84043CD9C865236F11D9FC9F56AA003C1F922": 0,
+            "MAYA.CACAO": 0
+        }
+    },
+    {
+        "TX": 72,
+        "OUT": 2,
+        "CONTRIB": {},
+        "USER-1": {},
+        "PROVIDER-1": {},
+        "PROVIDER-2": {},
+        "VAULT": {},
+        "POOL.KUJI.KUJI": {
+            "KUJI.KUJI": 30000,
+            "MAYA.CACAO": 0
+        },
+        "POOL.KUJI.USK": {
+            "KUJI.USK": 0,
+            "MAYA.CACAO": 0
+        },
+        "POOL.DASH.DASH": {
+            "DASH.DASH": 0,
+            "MAYA.CACAO": 0
+        },
+        "POOL.XRD.XRD": {
+            "XRD.XRD": 0,
+            "MAYA.CACAO": 0
+        },
+        "POOL.XRD.TEST-RESOURCE_LOC1TH5R2TN083J0WJ8PQS2Y44A39HVXN6GCYGFELH97YFF69SJA08U0RC": {
+            "XRD.TEST-RESOURCE_LOC1TH5R2TN083J0WJ8PQS2Y44A39HVXN6GCYGFELH97YFF69SJA08U0RC": 0,
+            "MAYA.CACAO": 0
+        },
+        "POOL.THOR.RUNE": {
+            "THOR.RUNE": 0,
+            "MAYA.CACAO": 0
+        },
+        "POOL.ETH.ETH": {
+            "ETH.ETH": 0,
+            "MAYA.CACAO": 0
+        },
+        "POOL.ARB.ETH": {
+            "ARB.ETH": 0,
+            "MAYA.CACAO": 0
+        },
+        "POOL.ETH.TKN-0X52C84043CD9C865236F11D9FC9F56AA003C1F922": {
+            "ETH.TKN-0X52C84043CD9C865236F11D9FC9F56AA003C1F922": 0,
+            "MAYA.CACAO": 0
+        }
+    }
+]

@@ -1,0 +1,218 @@
+{{ template "default-state.yaml" }}
+---
+{{ template "btc-eth-big-pool-state.yaml" }}
+---
+type: create-blocks
+count: 1
+---
+#######################################################################################
+# Set PREFERREDASSETOUTBOUNDFEEMULTIPLIER to 5
+########################################################################################
+type: tx-mimir
+key: "PREFERREDASSETOUTBOUNDFEEMULTIPLIER"
+value: 5
+signer: {{ addr_maya_dog }}
+sequence: 0
+---
+type: create-blocks
+count: 1
+---
+type: check
+endpoint: http://localhost:1317/mayachain/mimir
+asserts:
+  - .PREFERREDASSETOUTBOUNDFEEMULTIPLIER == 5
+---
+#######################################################################################
+# MAYAName memo format:  ~:name:chain:address:?owner:?preferredAsset:?expiry:?affbps:?subaff:?subaffbps
+########################################################################################
+#######################################################################################
+# Set frog affiliate with 150 affiliate fee bps (1.5%) and 
+########################################################################################
+# create frog MAYAName with 1.5 bps affiliate fee
+type: tx-deposit
+signer: {{ addr_maya_dog }}
+coins:
+  - amount: "200000000000"
+    asset: "cacao"
+memo: "~:frog:MAYA:{{ addr_maya_frog }}::::${BPS=150}"
+---
+type: create-blocks
+count: 1
+---
+########################################################################################
+# Check MAYANames's settgings
+########################################################################################
+type: check
+endpoint: http://localhost:1317/mayachain/mayaname/frog
+asserts:
+  - .aliases[0].address == "{{ addr_maya_frog }}"
+  - .owner == "{{ addr_maya_dog }}"
+  - .affiliate_bps == ${BPS}
+---
+########################################################################################
+# Test preferred asset payment for ETH.ETH as preferred asset.
+# Payment is triggered when affiliate collector amount
+# is bigger than PREFERREDASSETOUTBOUNDFEEMULTIPLIER x outbound chain gas.
+# PREFERREDASSETOUTBOUNDFEEMULTIPLIER is set to 5 for this test
+########################################################################################
+# set preferred asset and alias for the preferred asset chain (BTC) for frog
+type: tx-deposit
+signer: {{ addr_maya_dog }}
+coins:
+  - amount: "${GAS=2000000000}"
+    asset: "cacao"
+memo: "~:frog:BTC:{{ addr_btc_frog }}::BTC.BTC::"
+---
+type: create-blocks
+count: 1
+---
+type: check
+endpoint: http://localhost:1317/mayachain/mayaname/frog
+asserts:
+  - .preferred_asset == "BTC.BTC"
+  - .aliases[0].address == "{{ addr_maya_frog }}"
+  - .aliases[1].address == "{{ addr_btc_frog }}"
+  - .affiliate_collector_cacao|tonumber == 0
+  - .preferred_asset_swap_threshold_cacao == "700000000"
+---
+type: tx-deposit
+signer: {{ addr_maya_dog }}
+coins:
+  - amount: "${GAS}"
+    asset: "cacao"
+memo: "~:frog:ETH:{{ addr_eth_frog }}::ETH.ETH"
+---
+type: create-blocks
+count: 1
+---
+type: check
+endpoint: http://localhost:1317/mayachain/mayaname/frog
+asserts:
+  - .preferred_asset == "ETH.ETH"
+  - .aliases[0].address == "{{ addr_maya_frog }}"
+  - .aliases[1].address == "{{ addr_btc_frog }}"
+  - .aliases[2].address == "{{ addr_eth_frog }}"
+  - .affiliate_collector_cacao|tonumber == ${PREV_FROG_AFFCOLL_BAL=0}
+  - .preferred_asset_swap_threshold_cacao == "64000000000"
+  - .affiliate_bps == ${BPS}
+---
+# do a small swap first not to trigger preferred asset payment
+type: tx-deposit
+signer: {{ addr_maya_cat }}
+coins:
+  - amount: "${SWAP_AMT=500000000000}"
+    asset: "cacao"
+memo: "=:ETH.ETH:{{ addr_eth_fox }}::frog"
+---
+type: create-blocks
+count: 2
+---
+# check swap results, affiliate fee should be in affiliate collector
+type: check
+endpoint: http://localhost:1317/mayachain/mayaname/frog
+asserts:
+  - (${SWAP_AMT} * ${BPS} / 10000 - ${GAS}) - (.affiliate_collector_cacao|tonumber - ${PREV_FROG_AFFCOLL_BAL}) < (${SWAP_AMT} * ${BPS} / 10000 - ${GAS}) * 0.001 # 10 bps tolerance
+---
+# check the outbound queue and then clear it
+type: check
+endpoint: http://localhost:1317/mayachain/queue/outbound
+asserts:
+  - .|length == 1
+  - .[0]|.in_hash == "{{ native_txid -1 }}"
+---
+type: tx-observed-out
+signer: {{ addr_maya_dog }}  
+txs:
+- tx:
+    id: '{{ observe_txid 3 }}'
+    chain: ETH
+    from_address: {{ addr_eth_dog }}
+    to_address: {{ addr_eth_fox }}
+    coins:
+      - amount: "474811692"
+        asset: "ETH.ETH"
+        decimals: 8
+    gas:
+      - amount: "960000"
+        asset: "ETH.ETH"
+    memo: "OUT:{{ native_txid -1 }}"
+  block_height: 2
+  finalise_height: 2
+  observed_pub_key: {{ pubkey_dog }}
+---
+type: create-blocks
+count: 1
+---
+type: check
+endpoint: http://localhost:1317/mayachain/queue/outbound
+asserts:
+  - .|length == 0
+---
+# now do a larger swap to trigger preferred asset payment
+type: tx-deposit
+signer: {{ addr_maya_cat }}
+coins:
+  - amount: "${SWAP_AMT=5000000000000}"
+    asset: "cacao"
+memo: "=:BTC.BTC:{{ addr_btc_fox }}::frog"
+---
+type: create-blocks
+count: 3 # main swap + affiliate swap + preferres asset swap
+---
+# check swap results, affiliate collector should be empty, fees should be sent to frog's eth address, as it is the preferred address
+type: check
+endpoint: http://localhost:1317/mayachain/mayaname/frog
+asserts:
+  - .affiliate_collector_cacao|tonumber == 0
+---
+# check the outbound queue, there should be 2 txs, the normal swap to BTC and the preferred asset swap to preferred asset ETH
+type: check
+endpoint: http://localhost:1317/mayachain/queue/outbound
+asserts:
+  - .|length == 2
+  - .[1]|.chain == "ETH"
+  - .[1]|.to_address == "{{ addr_eth_frog }}"
+---
+########################################################################################
+# Test preferred asset payment for CACAO as preferred asset,
+# which is equivalent to empty preferred asset.
+# Affiliate fee payment is always sent directly to the MAYA alias 
+# or, if alias is not defined, to the owner
+########################################################################################
+# set preferred asset and alias for the preferred asset chain (MAYA) for frog
+type: tx-deposit
+signer: {{ addr_maya_dog }}
+coins:
+  - amount: "${GAS}"
+    asset: "cacao"
+memo: "~:frog::::MAYA.CACAO"
+---
+type: create-blocks
+count: 1
+---
+type: check
+endpoint: http://localhost:1317/mayachain/mayaname/frog
+asserts:
+  - .preferred_asset == "."
+---
+# do a small swap
+type: tx-deposit
+signer: {{ addr_maya_cat }}
+coins:
+  - amount: "${SWAP_AMT=200000000000}"
+    asset: "cacao"
+memo: "=:BTC.BTC:{{ addr_btc_fox }}::frog"
+---
+type: create-blocks
+count: 2
+---
+# check swap results, affiliate collector should be empty, affiliate fee is in the maya alias
+type: check
+endpoint: http://localhost:1317/mayachain/mayaname/frog
+asserts:
+  - .affiliate_collector_cacao|tonumber == 0
+---
+type: check
+endpoint: http://localhost:1317/cosmos/bank/v1beta1/balances/{{ addr_maya_frog }}
+asserts:
+  - (${SWAP_AMT} * ${BPS} / 10000 - ${GAS}) - (.balances[]|select(.denom=="cacao")|.amount|tonumber) < (${SWAP_AMT} * ${BPS} / 10000 - ${GAS}) * 0.001 # 10 bps tolerance

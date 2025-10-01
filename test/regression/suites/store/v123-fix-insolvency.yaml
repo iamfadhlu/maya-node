@@ -1,0 +1,147 @@
+{{ template "default-state.yaml" }}
+---
+type: state
+genesis:
+  app_state:
+    bank:
+      balances:
+        - address: {{ addr_module_asgard }}
+          coins:
+            - amount: "10000000000000000000"
+              denom: cacao
+        - address: {{ addr_module_reserve }}
+          coins:
+            - amount: "10000000000000000000"
+              denom: cacao
+    mayachain:
+      store_version: "122"
+      network_fees:
+        - chain: THOR
+          transaction_fee_rate: "2374800"
+          transaction_size: "1"
+        - chain: BTC
+          transaction_fee_rate: "7"
+          transaction_size: "1000"
+      pools:
+        - asset: BTC.BTC
+          status: Available
+          balance_cacao: "100000000000000000"
+          balance_asset: "1000000000"
+          LP_units: "100000000000000000"
+          decimals: "8"
+          synth_units: "0"
+        - asset: THOR.RUNE
+          status: Available
+          balance_cacao: "100000000000000000"
+          balance_asset: "100000000000000"
+          LP_units: "100000000000000000"
+          decimals: "8"
+      liquidity_providers:
+        - asset: "BTC.BTC"
+          cacao_address: {{ addr_maya_dog }}
+          asset_address: ""
+          last_add_height: "1"
+          last_withdraw_height: "0"
+          units: "100000000000000000"
+          pending_cacao: "0"
+          pending_asset: "0"
+          pending_tx_Id: ""
+          cacao_deposit_value: "0"
+          asset_deposit_value: "0"
+          node_bond_address: null
+          withdraw_counter: "0"
+          last_withdraw_counter_height: "0"
+          bonded_nodes:
+            - node_address: {{ addr_maya_dog }}
+              units: "100000000000000000"
+        - asset: "THOR.RUNE"
+          cacao_address: {{ addr_maya_deer }}
+          asset_address: ""
+          last_add_height: "1"
+          last_withdraw_height: "0"
+          units: "100000000000000000"
+          pending_cacao: "0"
+          pending_asset: "0"
+          pending_tx_Id: ""
+          cacao_deposit_value: "0"
+          asset_deposit_value: "0"
+          node_bond_address: null
+          withdraw_counter: "0"
+          last_withdraw_counter_height: "0"
+      vaults:
+        - block_height: "0"
+          chains:
+            - MAYA
+            - BTC
+            - THOR
+          coins:
+            - amount: "5000000000"
+              asset: BTC.BTC
+              decimals: "8"
+            - amount: "10000"
+              asset: THOR.RUNE
+              decimals: "8"
+          inbound_tx_count: "6"
+          membership:
+            - tmayapub1addwnpepqfshsq2y6ejy2ysxmq4gj8n8mzuzyulk9wh4n946jv5w2vpwdn2yuz3v0gx
+          pub_key: tmayapub1addwnpepqfshsq2y6ejy2ysxmq4gj8n8mzuzyulk9wh4n946jv5w2vpwdn2yuz3v0gx
+          status: ActiveVault
+          type: AsgardVault
+        - block_height: "0"
+          chains:
+            - MAYA
+            - BTC
+            - BNB
+            - ETH
+            - DASH
+            - ARB
+          coins:
+            - amount: "5000000000"
+              asset: BTC.BTC
+              decimals: "8"
+            - amount: "100000000000000"
+              asset: THOR.RUNE
+              decimals: "8"
+          inbound_tx_count: "1"
+          membership:
+            - tmayapub1addwnpepqfshsq2y6ejy2ysxmq4gj8n8mzuzyulk9wh4n946jv5w2vpwdn2yuz3v0gx # also dog
+          pub_key: tmayapub1addwnpepqv8lvvqmczr893yf7zyf7xtffccf032aprl8z09y3e3nfruedew854pe9l8 # fox's pubkey
+          status: RetiringVault
+          type: AsgardVault
+      node_accounts:
+        - node_address: {{ addr_maya_dog }}
+          status: Active
+          pub_key_set:
+            secp256k1: {{ pubkey_dog }}
+          bond: "100000000000000"
+          version: "1.122.0"
+---
+type: create-blocks
+count: 1
+---
+type: check
+endpoint: http://localhost:1317/mayachain/vaults/asgard
+asserts:
+  - .[]|select(.pub_key=="{{ pubkey_dog }}").coins|length == 2
+  - .[]|select(.pub_key=="{{ pubkey_dog }}").coins[]|select(.asset=="THOR.RUNE")|.amount|tonumber == 10000
+  - .[]|select(.pub_key=="{{ pubkey_dog }}").coins[]|select(.asset=="BTC.BTC")|.amount|tonumber == 5000000000
+  - .[]|select(.pub_key=="{{ pubkey_fox }}").coins|length == 2
+  - .[]|select(.pub_key=="{{ pubkey_fox }}").coins[]|select(.asset=="THOR.RUNE")|.amount|tonumber == 100000000000000
+  - .[]|select(.pub_key=="{{ pubkey_fox }}").coins[]|select(.asset=="BTC.BTC")|.amount|tonumber == 5000000000
+---
+type: tx-version
+signer: {{ addr_maya_dog }}
+version: "1.123.0"
+---
+type: create-blocks
+count: 2
+---
+type: check
+endpoint: http://localhost:1317/mayachain/vaults/asgard
+asserts:
+  - .[]|select(.pub_key=="{{ pubkey_dog }}").coins|length == 2
+  - .[]|select(.pub_key=="{{ pubkey_dog }}").coins[]|select(.asset=="THOR.RUNE")|.amount|tonumber == 10000
+  - .[]|select(.pub_key=="{{ pubkey_dog }}").coins[]|select(.asset=="BTC.BTC")|.amount|tonumber == 5000000000
+  - .[]|select(.pub_key=="{{ pubkey_fox }}").coins|length == 2
+  - .[]|select(.pub_key=="{{ pubkey_fox }}").coins[]|select(.asset=="THOR.RUNE")|.amount|tonumber == 96900000000000
+  - .[]|select(.pub_key=="{{ pubkey_fox }}").coins[]|select(.asset=="BTC.BTC")|.amount|tonumber == 4944000000

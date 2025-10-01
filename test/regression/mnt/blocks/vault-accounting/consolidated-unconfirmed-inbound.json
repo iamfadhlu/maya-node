@@ -1,0 +1,809 @@
+[
+  {
+    "id": {
+      "hash": "",
+      "parts": {
+        "total": 0,
+        "hash": ""
+      }
+    },
+    "header": {
+      "version": {
+        "block": "11",
+        "app": "0"
+      },
+      "chain_id": "mayachain",
+      "height": 1,
+      "time": "",
+      "last_block_id": {
+        "hash": "",
+        "parts": {
+          "total": 0,
+          "hash": ""
+        }
+      },
+      "last_commit_hash": "",
+      "data_hash": "E3B0C44298FC1C149AFBF4C8996FB92427AE41E4649B934CA495991B7852B855",
+      "validators_hash": "9A0FC1918CDCB81267B61959D511436CC2B19E3A48538EC664B2E46E3D6E61C6",
+      "next_validators_hash": "9A0FC1918CDCB81267B61959D511436CC2B19E3A48538EC664B2E46E3D6E61C6",
+      "consensus_hash": "048091BC7DDC283F77BFBF91D73C44DA58C3DF8A9CBC867405D8B7F3DAADA22F",
+      "app_hash": "E3B0C44298FC1C149AFBF4C8996FB92427AE41E4649B934CA495991B7852B855",
+      "last_results_hash": "E3B0C44298FC1C149AFBF4C8996FB92427AE41E4649B934CA495991B7852B855",
+      "evidence_hash": "E3B0C44298FC1C149AFBF4C8996FB92427AE41E4649B934CA495991B7852B855",
+      "proposer_address": "E557CD61B142A7E76E89BB3020D395A15D97C452"
+    },
+    "begin_block_events": [],
+    "end_block_events": [
+      {
+        "bond_reward": "0",
+        "type": "rewards"
+      }
+    ],
+    "txs": []
+  },
+  {
+    "id": {
+      "hash": "",
+      "parts": {
+        "total": 0,
+        "hash": ""
+      }
+    },
+    "header": {
+      "version": {
+        "block": "11",
+        "app": "0"
+      },
+      "chain_id": "mayachain",
+      "height": 2,
+      "time": "",
+      "last_block_id": {
+        "hash": "",
+        "parts": {
+          "total": 0,
+          "hash": ""
+        }
+      },
+      "last_commit_hash": "",
+      "data_hash": "71E480C46D912A29B81FFA465BA8CE085B7813DECC689133144B7E21786A3E9E",
+      "validators_hash": "9A0FC1918CDCB81267B61959D511436CC2B19E3A48538EC664B2E46E3D6E61C6",
+      "next_validators_hash": "9A0FC1918CDCB81267B61959D511436CC2B19E3A48538EC664B2E46E3D6E61C6",
+      "consensus_hash": "048091BC7DDC283F77BFBF91D73C44DA58C3DF8A9CBC867405D8B7F3DAADA22F",
+      "app_hash": "5ADBE722AA4A0D72247ECAE26D7BC027F6DC83D36A3C0B6523316C007773C824",
+      "last_results_hash": "E3B0C44298FC1C149AFBF4C8996FB92427AE41E4649B934CA495991B7852B855",
+      "evidence_hash": "E3B0C44298FC1C149AFBF4C8996FB92427AE41E4649B934CA495991B7852B855",
+      "proposer_address": "E557CD61B142A7E76E89BB3020D395A15D97C452"
+    },
+    "begin_block_events": [],
+    "end_block_events": [
+      {
+        "bond_reward": "0",
+        "type": "rewards"
+      }
+    ],
+    "txs": [
+      {
+        "hash": "14E8FD08C05AD68BB30C8267AAD3C108E433B56739CECFB0C3A698D38E20F859",
+        "tx": {
+          "auth_info": {
+            "fee": {
+              "amount": [],
+              "gas_limit": "2000000",
+              "granter": "",
+              "payer": ""
+            },
+            "signer_infos": [
+              {
+                "mode_info": {
+                  "single": {
+                    "mode": "SIGN_MODE_DIRECT"
+                  }
+                },
+                "public_key": {
+                  "@type": "/cosmos.crypto.secp256k1.PubKey",
+                  "key": "AmF4AUTWZEUSBtgqiR5n2Lgic/Yrr1mWupMo5TAubNRO"
+                },
+                "sequence": "0"
+              }
+            ]
+          },
+          "body": {
+            "extension_options": [],
+            "memo": "",
+            "messages": [
+              {
+                "@type": "/types.MsgObservedTxIn",
+                "signer": "tmaya1zf3gsk7edzwl9syyefvfhle37cjtql35hdgtzt",
+                "txs": [
+                  {
+                    "aggregator": "",
+                    "aggregator_target": "",
+                    "aggregator_target_limit": null,
+                    "block_height": "1",
+                    "finalise_height": "3",
+                    "keysign_ms": "0",
+                    "observed_pub_key": "tmayapub1addwnpepqfshsq2y6ejy2ysxmq4gj8n8mzuzyulk9wh4n946jv5w2vpwdn2yuz3v0gx",
+                    "out_hashes": [],
+                    "signers": [],
+                    "status": "incomplete",
+                    "tx": {
+                      "chain": "BTC",
+                      "coins": [
+                        {
+                          "amount": "5000000",
+                          "asset": "BTC.BTC",
+                          "decimals": "8"
+                        }
+                      ],
+                      "from_address": "bcrt1q3wrmhnh2qe98rjse30pl7u6jxszjjwl44ls6uw",
+                      "gas": [
+                        {
+                          "amount": "10000",
+                          "asset": "BTC.BTC",
+                          "decimals": "0"
+                        }
+                      ],
+                      "id": "0000000000000000000000000000000000000000000000000000000000000001",
+                      "memo": "=:MAYA.CACAO:tmaya13wrmhnh2qe98rjse30pl7u6jxszjjwl4fd6gwn",
+                      "to_address": "bcrt1qzf3gsk7edzwl9syyefvfhle37cjtql35tlzesk"
+                    }
+                  }
+                ]
+              }
+            ],
+            "non_critical_extension_options": [],
+            "timeout_height": "0"
+          },
+          "signatures": [
+            "Nk1ioCayeRHrqtnF4CWqlWHHxc0UFCY+QlcxWmD/cg0PF3bhhHtDiwgQEvo1lyYGUhQ9yqJmuNA9ZBaPZybnxQ=="
+          ]
+        },
+        "result": {
+          "code": 0,
+          "data": "\n\u0018\n\u0016/types.MsgObservedTxIn",
+          "log": "[{\"events\":[{\"type\":\"message\",\"attributes\":[{\"key\":\"action\",\"value\":\"set_observed_txin\"}]}]}]",
+          "gas_wanted": "2000000",
+          "gas_used": "161136",
+          "events": [
+            {
+              "fee": "",
+              "fee_payer": "tmaya1zf3gsk7edzwl9syyefvfhle37cjtql35hdgtzt",
+              "type": "tx"
+            },
+            {
+              "acc_seq": "tmaya1zf3gsk7edzwl9syyefvfhle37cjtql35hdgtzt/0",
+              "type": "tx"
+            },
+            {
+              "signature": "Nk1ioCayeRHrqtnF4CWqlWHHxc0UFCY+QlcxWmD/cg0PF3bhhHtDiwgQEvo1lyYGUhQ9yqJmuNA9ZBaPZybnxQ==",
+              "type": "tx"
+            },
+            {
+              "action": "set_observed_txin",
+              "type": "message"
+            }
+          ]
+        }
+      }
+    ]
+  },
+  {
+    "id": {
+      "hash": "",
+      "parts": {
+        "total": 0,
+        "hash": ""
+      }
+    },
+    "header": {
+      "version": {
+        "block": "11",
+        "app": "0"
+      },
+      "chain_id": "mayachain",
+      "height": 3,
+      "time": "",
+      "last_block_id": {
+        "hash": "",
+        "parts": {
+          "total": 0,
+          "hash": ""
+        }
+      },
+      "last_commit_hash": "",
+      "data_hash": "014F55A3F86D8FBBF4D033DCA9CD943DBCA556063E787325E006C20889A34B60",
+      "validators_hash": "9A0FC1918CDCB81267B61959D511436CC2B19E3A48538EC664B2E46E3D6E61C6",
+      "next_validators_hash": "9A0FC1918CDCB81267B61959D511436CC2B19E3A48538EC664B2E46E3D6E61C6",
+      "consensus_hash": "048091BC7DDC283F77BFBF91D73C44DA58C3DF8A9CBC867405D8B7F3DAADA22F",
+      "app_hash": "DD874880AC8902B41D49A8770F036DCA7A86864EA2773FA05CB5E2113861EA1D",
+      "last_results_hash": "F82D4BF57ABE09C30375F589A4869594B6DF51D07735F72F67DCDFC481E8F6E8",
+      "evidence_hash": "E3B0C44298FC1C149AFBF4C8996FB92427AE41E4649B934CA495991B7852B855",
+      "proposer_address": "E557CD61B142A7E76E89BB3020D395A15D97C452"
+    },
+    "begin_block_events": [],
+    "end_block_events": [
+      {
+        "bond_reward": "0",
+        "type": "rewards"
+      },
+      {
+        "amount": "1000000000cacao",
+        "spender": "tmaya1dheycdevq39qlkxs2a6wuuzyn4aqxhve3qfhf7",
+        "type": "coin_spent"
+      },
+      {
+        "amount": "1000000000cacao",
+        "receiver": "tmaya1g98cy3n9mmjrpn0sxmn63lztelera37nrn4zh6",
+        "type": "coin_received"
+      },
+      {
+        "amount": "1000000000cacao",
+        "recipient": "tmaya1g98cy3n9mmjrpn0sxmn63lztelera37nrn4zh6",
+        "sender": "tmaya1dheycdevq39qlkxs2a6wuuzyn4aqxhve3qfhf7",
+        "type": "transfer"
+      },
+      {
+        "sender": "tmaya1dheycdevq39qlkxs2a6wuuzyn4aqxhve3qfhf7",
+        "type": "message"
+      },
+      {
+        "asset": "BTC.BTC",
+        "asset_amt": "10000",
+        "cacao_amt": "1000000000",
+        "transaction_count": "1",
+        "type": "gas"
+      }
+    ],
+    "txs": [
+      {
+        "hash": "18F112D039A4ECE38A33AD31CF4B06F275EA8D4693A478F32E8EDC2FD6DA0988",
+        "tx": {
+          "auth_info": {
+            "fee": {
+              "amount": [],
+              "gas_limit": "2000000",
+              "granter": "",
+              "payer": ""
+            },
+            "signer_infos": [
+              {
+                "mode_info": {
+                  "single": {
+                    "mode": "SIGN_MODE_DIRECT"
+                  }
+                },
+                "public_key": {
+                  "@type": "/cosmos.crypto.secp256k1.PubKey",
+                  "key": "AmF4AUTWZEUSBtgqiR5n2Lgic/Yrr1mWupMo5TAubNRO"
+                },
+                "sequence": "1"
+              }
+            ]
+          },
+          "body": {
+            "extension_options": [],
+            "memo": "",
+            "messages": [
+              {
+                "@type": "/types.MsgObservedTxOut",
+                "signer": "tmaya1zf3gsk7edzwl9syyefvfhle37cjtql35hdgtzt",
+                "txs": [
+                  {
+                    "aggregator": "",
+                    "aggregator_target": "",
+                    "aggregator_target_limit": null,
+                    "block_height": "2",
+                    "finalise_height": "2",
+                    "keysign_ms": "0",
+                    "observed_pub_key": "tmayapub1addwnpepqfshsq2y6ejy2ysxmq4gj8n8mzuzyulk9wh4n946jv5w2vpwdn2yuz3v0gx",
+                    "out_hashes": [],
+                    "signers": [],
+                    "status": "incomplete",
+                    "tx": {
+                      "chain": "BTC",
+                      "coins": [
+                        {
+                          "amount": "105000000",
+                          "asset": "BTC.BTC",
+                          "decimals": "8"
+                        }
+                      ],
+                      "from_address": "bcrt1qzf3gsk7edzwl9syyefvfhle37cjtql35tlzesk",
+                      "gas": [
+                        {
+                          "amount": "10000",
+                          "asset": "BTC.BTC",
+                          "decimals": "0"
+                        }
+                      ],
+                      "id": "0000000000000000000000000000000000000000000000000000000000000002",
+                      "memo": "consolidate",
+                      "to_address": "bcrt1qzf3gsk7edzwl9syyefvfhle37cjtql35tlzesk"
+                    }
+                  }
+                ]
+              }
+            ],
+            "non_critical_extension_options": [],
+            "timeout_height": "0"
+          },
+          "signatures": [
+            "npM1mfdYBGPryQTs2kURohVnx6H+eIPDSn6stlBdE9ASeUb+rT9D8hJoKMVs/TwnFt+h0Uns4JntfIXbtt8WXg=="
+          ]
+        },
+        "result": {
+          "code": 0,
+          "data": "\n\u0019\n\u0017/types.MsgObservedTxOut",
+          "log": "[{\"events\":[{\"type\":\"message\",\"attributes\":[{\"key\":\"action\",\"value\":\"set_observed_txout\"}]}]}]",
+          "gas_wanted": "2000000",
+          "gas_used": "169248",
+          "events": [
+            {
+              "fee": "",
+              "fee_payer": "tmaya1zf3gsk7edzwl9syyefvfhle37cjtql35hdgtzt",
+              "type": "tx"
+            },
+            {
+              "acc_seq": "tmaya1zf3gsk7edzwl9syyefvfhle37cjtql35hdgtzt/1",
+              "type": "tx"
+            },
+            {
+              "signature": "npM1mfdYBGPryQTs2kURohVnx6H+eIPDSn6stlBdE9ASeUb+rT9D8hJoKMVs/TwnFt+h0Uns4JntfIXbtt8WXg==",
+              "type": "tx"
+            },
+            {
+              "action": "set_observed_txout",
+              "type": "message"
+            }
+          ]
+        }
+      }
+    ]
+  },
+  {
+    "id": {
+      "hash": "",
+      "parts": {
+        "total": 0,
+        "hash": ""
+      }
+    },
+    "header": {
+      "version": {
+        "block": "11",
+        "app": "0"
+      },
+      "chain_id": "mayachain",
+      "height": 4,
+      "time": "",
+      "last_block_id": {
+        "hash": "",
+        "parts": {
+          "total": 0,
+          "hash": ""
+        }
+      },
+      "last_commit_hash": "",
+      "data_hash": "732AFBD712C1FB6A39FC8F0ED6259DFB8F94062CA1A473A94CC97F27A1A67037",
+      "validators_hash": "9A0FC1918CDCB81267B61959D511436CC2B19E3A48538EC664B2E46E3D6E61C6",
+      "next_validators_hash": "9A0FC1918CDCB81267B61959D511436CC2B19E3A48538EC664B2E46E3D6E61C6",
+      "consensus_hash": "048091BC7DDC283F77BFBF91D73C44DA58C3DF8A9CBC867405D8B7F3DAADA22F",
+      "app_hash": "8AA88528A611894846D121D971D4993CC6F7117C026E6F5BAE8E244FB3CBB3D9",
+      "last_results_hash": "D5193551DA0CDF3977F3A51984DD8C8C1690A407B63F523E7A0736CA0FC732AD",
+      "evidence_hash": "E3B0C44298FC1C149AFBF4C8996FB92427AE41E4649B934CA495991B7852B855",
+      "proposer_address": "E557CD61B142A7E76E89BB3020D395A15D97C452"
+    },
+    "begin_block_events": [],
+    "end_block_events": [
+      {
+        "bond_reward": "0",
+        "type": "rewards"
+      }
+    ],
+    "txs": [
+      {
+        "hash": "9777954C38554E9FBD6AB59B5BDA904062287A38FEE95A6F56F9FF41CFAD220D",
+        "tx": {
+          "auth_info": {
+            "fee": {
+              "amount": [],
+              "gas_limit": "2000000",
+              "granter": "",
+              "payer": ""
+            },
+            "signer_infos": [
+              {
+                "mode_info": {
+                  "single": {
+                    "mode": "SIGN_MODE_DIRECT"
+                  }
+                },
+                "public_key": {
+                  "@type": "/cosmos.crypto.secp256k1.PubKey",
+                  "key": "AmF4AUTWZEUSBtgqiR5n2Lgic/Yrr1mWupMo5TAubNRO"
+                },
+                "sequence": "2"
+              }
+            ]
+          },
+          "body": {
+            "extension_options": [],
+            "memo": "",
+            "messages": [
+              {
+                "@type": "/types.MsgObservedTxIn",
+                "signer": "tmaya1zf3gsk7edzwl9syyefvfhle37cjtql35hdgtzt",
+                "txs": [
+                  {
+                    "aggregator": "",
+                    "aggregator_target": "",
+                    "aggregator_target_limit": null,
+                    "block_height": "2",
+                    "finalise_height": "2",
+                    "keysign_ms": "0",
+                    "observed_pub_key": "tmayapub1addwnpepqfshsq2y6ejy2ysxmq4gj8n8mzuzyulk9wh4n946jv5w2vpwdn2yuz3v0gx",
+                    "out_hashes": [],
+                    "signers": [],
+                    "status": "incomplete",
+                    "tx": {
+                      "chain": "BTC",
+                      "coins": [
+                        {
+                          "amount": "105000000",
+                          "asset": "BTC.BTC",
+                          "decimals": "8"
+                        }
+                      ],
+                      "from_address": "bcrt1qzf3gsk7edzwl9syyefvfhle37cjtql35tlzesk",
+                      "gas": [
+                        {
+                          "amount": "10000",
+                          "asset": "BTC.BTC",
+                          "decimals": "0"
+                        }
+                      ],
+                      "id": "0000000000000000000000000000000000000000000000000000000000000002",
+                      "memo": "consolidate",
+                      "to_address": "bcrt1qzf3gsk7edzwl9syyefvfhle37cjtql35tlzesk"
+                    }
+                  }
+                ]
+              }
+            ],
+            "non_critical_extension_options": [],
+            "timeout_height": "0"
+          },
+          "signatures": [
+            "Kdi7kW2iRf8LKXdatIWQ49vE4VYCwvi8ds4lqFYZ4bgkEbWT/tM5smaeqpgO0t7E9uwFsGhFTChuWQOZ8s52ZA=="
+          ]
+        },
+        "result": {
+          "code": 0,
+          "data": "\n\u0018\n\u0016/types.MsgObservedTxIn",
+          "log": "[{\"events\":[{\"type\":\"message\",\"attributes\":[{\"key\":\"action\",\"value\":\"set_observed_txin\"}]}]}]",
+          "gas_wanted": "2000000",
+          "gas_used": "148179",
+          "events": [
+            {
+              "fee": "",
+              "fee_payer": "tmaya1zf3gsk7edzwl9syyefvfhle37cjtql35hdgtzt",
+              "type": "tx"
+            },
+            {
+              "acc_seq": "tmaya1zf3gsk7edzwl9syyefvfhle37cjtql35hdgtzt/2",
+              "type": "tx"
+            },
+            {
+              "signature": "Kdi7kW2iRf8LKXdatIWQ49vE4VYCwvi8ds4lqFYZ4bgkEbWT/tM5smaeqpgO0t7E9uwFsGhFTChuWQOZ8s52ZA==",
+              "type": "tx"
+            },
+            {
+              "action": "set_observed_txin",
+              "type": "message"
+            }
+          ]
+        }
+      }
+    ]
+  },
+  {
+    "id": {
+      "hash": "",
+      "parts": {
+        "total": 0,
+        "hash": ""
+      }
+    },
+    "header": {
+      "version": {
+        "block": "11",
+        "app": "0"
+      },
+      "chain_id": "mayachain",
+      "height": 5,
+      "time": "",
+      "last_block_id": {
+        "hash": "",
+        "parts": {
+          "total": 0,
+          "hash": ""
+        }
+      },
+      "last_commit_hash": "",
+      "data_hash": "E7B99D8EB9DB202A030491B614F9DE11824B258CEFBFB176B1971B8319B4AFF8",
+      "validators_hash": "9A0FC1918CDCB81267B61959D511436CC2B19E3A48538EC664B2E46E3D6E61C6",
+      "next_validators_hash": "9A0FC1918CDCB81267B61959D511436CC2B19E3A48538EC664B2E46E3D6E61C6",
+      "consensus_hash": "048091BC7DDC283F77BFBF91D73C44DA58C3DF8A9CBC867405D8B7F3DAADA22F",
+      "app_hash": "E6050C710D881EEB0E43E685E43E2851DDDF08E9B6C52E51B126E204EF8A7CDD",
+      "last_results_hash": "2E05200A739FF67AD5055DAE1655672F07B453B78BC602E801FFEC102BF4171F",
+      "evidence_hash": "E3B0C44298FC1C149AFBF4C8996FB92427AE41E4649B934CA495991B7852B855",
+      "proposer_address": "E557CD61B142A7E76E89BB3020D395A15D97C452"
+    },
+    "begin_block_events": [],
+    "end_block_events": [
+      {
+        "chain": "BTC",
+        "coin": "5000000 BTC.BTC",
+        "emit_asset": "453601130794 MAYA.CACAO",
+        "from": "bcrt1q3wrmhnh2qe98rjse30pl7u6jxszjjwl44ls6uw",
+        "id": "0000000000000000000000000000000000000000000000000000000000000001",
+        "liquidity_fee": "22682324772",
+        "liquidity_fee_in_cacao": "22682324772",
+        "memo": "=:MAYA.CACAO:tmaya13wrmhnh2qe98rjse30pl7u6jxszjjwl4fd6gwn",
+        "pool": "BTC.BTC",
+        "streaming_swap_count": "1",
+        "streaming_swap_quantity": "1",
+        "swap_slip": "476",
+        "swap_target": "0",
+        "to": "bcrt1qzf3gsk7edzwl9syyefvfhle37cjtql35tlzesk",
+        "type": "swap"
+      },
+      {
+        "coins": "2000000000 MAYA.CACAO",
+        "pool_deduct": "0",
+        "tx_id": "0000000000000000000000000000000000000000000000000000000000000001",
+        "type": "fee"
+      },
+      {
+        "amount": "2000000000cacao",
+        "spender": "tmaya1g98cy3n9mmjrpn0sxmn63lztelera37nrn4zh6",
+        "type": "coin_spent"
+      },
+      {
+        "amount": "2000000000cacao",
+        "receiver": "tmaya1dheycdevq39qlkxs2a6wuuzyn4aqxhve3qfhf7",
+        "type": "coin_received"
+      },
+      {
+        "amount": "2000000000cacao",
+        "recipient": "tmaya1dheycdevq39qlkxs2a6wuuzyn4aqxhve3qfhf7",
+        "sender": "tmaya1g98cy3n9mmjrpn0sxmn63lztelera37nrn4zh6",
+        "type": "transfer"
+      },
+      {
+        "sender": "tmaya1g98cy3n9mmjrpn0sxmn63lztelera37nrn4zh6",
+        "type": "message"
+      },
+      {
+        "amount": "451601130794cacao",
+        "spender": "tmaya1g98cy3n9mmjrpn0sxmn63lztelera37nrn4zh6",
+        "type": "coin_spent"
+      },
+      {
+        "amount": "451601130794cacao",
+        "receiver": "tmaya13wrmhnh2qe98rjse30pl7u6jxszjjwl4fd6gwn",
+        "type": "coin_received"
+      },
+      {
+        "amount": "451601130794cacao",
+        "recipient": "tmaya13wrmhnh2qe98rjse30pl7u6jxszjjwl4fd6gwn",
+        "sender": "tmaya1g98cy3n9mmjrpn0sxmn63lztelera37nrn4zh6",
+        "type": "transfer"
+      },
+      {
+        "sender": "tmaya1g98cy3n9mmjrpn0sxmn63lztelera37nrn4zh6",
+        "type": "message"
+      },
+      {
+        "chain": "MAYA",
+        "coin": "451601130794 MAYA.CACAO",
+        "from": "tmaya1g98cy3n9mmjrpn0sxmn63lztelera37nrn4zh6",
+        "id": "0000000000000000000000000000000000000000000000000000000000000000",
+        "in_tx_id": "0000000000000000000000000000000000000000000000000000000000000001",
+        "memo": "OUT:0000000000000000000000000000000000000000000000000000000000000001",
+        "to": "tmaya13wrmhnh2qe98rjse30pl7u6jxszjjwl4fd6gwn",
+        "type": "outbound"
+      },
+      {
+        "amount": "6217064348cacao",
+        "spender": "tmaya1g98cy3n9mmjrpn0sxmn63lztelera37nrn4zh6",
+        "type": "coin_spent"
+      },
+      {
+        "amount": "6217064348cacao",
+        "receiver": "tmaya1dheycdevq39qlkxs2a6wuuzyn4aqxhve3qfhf7",
+        "type": "coin_received"
+      },
+      {
+        "amount": "6217064348cacao",
+        "recipient": "tmaya1dheycdevq39qlkxs2a6wuuzyn4aqxhve3qfhf7",
+        "sender": "tmaya1g98cy3n9mmjrpn0sxmn63lztelera37nrn4zh6",
+        "type": "transfer"
+      },
+      {
+        "sender": "tmaya1g98cy3n9mmjrpn0sxmn63lztelera37nrn4zh6",
+        "type": "message"
+      },
+      {
+        "amount": "1680599394cacao",
+        "spender": "tmaya1dheycdevq39qlkxs2a6wuuzyn4aqxhve3qfhf7",
+        "type": "coin_spent"
+      },
+      {
+        "amount": "1680599394cacao",
+        "receiver": "tmaya17gw75axcnr8747pkanye45pnrwk7p9c3uquyle",
+        "type": "coin_received"
+      },
+      {
+        "amount": "1680599394cacao",
+        "recipient": "tmaya17gw75axcnr8747pkanye45pnrwk7p9c3uquyle",
+        "sender": "tmaya1dheycdevq39qlkxs2a6wuuzyn4aqxhve3qfhf7",
+        "type": "transfer"
+      },
+      {
+        "sender": "tmaya1dheycdevq39qlkxs2a6wuuzyn4aqxhve3qfhf7",
+        "type": "message"
+      },
+      {
+        "amount": "2268232477cacao",
+        "spender": "tmaya1dheycdevq39qlkxs2a6wuuzyn4aqxhve3qfhf7",
+        "type": "coin_spent"
+      },
+      {
+        "amount": "2268232477cacao",
+        "receiver": "tmaya1577sz8j7xnthm3cl3vgfvmdmkrp7dqrhfj6dsg",
+        "type": "coin_received"
+      },
+      {
+        "amount": "2268232477cacao",
+        "recipient": "tmaya1577sz8j7xnthm3cl3vgfvmdmkrp7dqrhfj6dsg",
+        "sender": "tmaya1dheycdevq39qlkxs2a6wuuzyn4aqxhve3qfhf7",
+        "type": "transfer"
+      },
+      {
+        "sender": "tmaya1dheycdevq39qlkxs2a6wuuzyn4aqxhve3qfhf7",
+        "type": "message"
+      },
+      {
+        "amount": "1134116238cacao",
+        "spender": "tmaya1dheycdevq39qlkxs2a6wuuzyn4aqxhve3qfhf7",
+        "type": "coin_spent"
+      },
+      {
+        "amount": "1134116238cacao",
+        "receiver": "tmaya167q2uvp3pzqjkefx3qd275yfdgee9fadhejgwg",
+        "type": "coin_received"
+      },
+      {
+        "amount": "1134116238cacao",
+        "recipient": "tmaya167q2uvp3pzqjkefx3qd275yfdgee9fadhejgwg",
+        "sender": "tmaya1dheycdevq39qlkxs2a6wuuzyn4aqxhve3qfhf7",
+        "type": "transfer"
+      },
+      {
+        "sender": "tmaya1dheycdevq39qlkxs2a6wuuzyn4aqxhve3qfhf7",
+        "type": "message"
+      },
+      {
+        "BTC.BTC": "-6217064348",
+        "bond_reward": "1680599394",
+        "type": "rewards"
+      }
+    ],
+    "txs": [
+      {
+        "hash": "59ED93FD93114885F9526C5F86152001150696D63FB13F1EC150A531DFCE362B",
+        "tx": {
+          "auth_info": {
+            "fee": {
+              "amount": [],
+              "gas_limit": "2000000",
+              "granter": "",
+              "payer": ""
+            },
+            "signer_infos": [
+              {
+                "mode_info": {
+                  "single": {
+                    "mode": "SIGN_MODE_DIRECT"
+                  }
+                },
+                "public_key": {
+                  "@type": "/cosmos.crypto.secp256k1.PubKey",
+                  "key": "AmF4AUTWZEUSBtgqiR5n2Lgic/Yrr1mWupMo5TAubNRO"
+                },
+                "sequence": "3"
+              }
+            ]
+          },
+          "body": {
+            "extension_options": [],
+            "memo": "",
+            "messages": [
+              {
+                "@type": "/types.MsgObservedTxIn",
+                "signer": "tmaya1zf3gsk7edzwl9syyefvfhle37cjtql35hdgtzt",
+                "txs": [
+                  {
+                    "aggregator": "",
+                    "aggregator_target": "",
+                    "aggregator_target_limit": null,
+                    "block_height": "3",
+                    "finalise_height": "3",
+                    "keysign_ms": "0",
+                    "observed_pub_key": "tmayapub1addwnpepqfshsq2y6ejy2ysxmq4gj8n8mzuzyulk9wh4n946jv5w2vpwdn2yuz3v0gx",
+                    "out_hashes": [],
+                    "signers": [],
+                    "status": "incomplete",
+                    "tx": {
+                      "chain": "BTC",
+                      "coins": [
+                        {
+                          "amount": "5000000",
+                          "asset": "BTC.BTC",
+                          "decimals": "8"
+                        }
+                      ],
+                      "from_address": "bcrt1q3wrmhnh2qe98rjse30pl7u6jxszjjwl44ls6uw",
+                      "gas": [
+                        {
+                          "amount": "10000",
+                          "asset": "BTC.BTC",
+                          "decimals": "0"
+                        }
+                      ],
+                      "id": "0000000000000000000000000000000000000000000000000000000000000001",
+                      "memo": "=:MAYA.CACAO:tmaya13wrmhnh2qe98rjse30pl7u6jxszjjwl4fd6gwn",
+                      "to_address": "bcrt1qzf3gsk7edzwl9syyefvfhle37cjtql35tlzesk"
+                    }
+                  }
+                ]
+              }
+            ],
+            "non_critical_extension_options": [],
+            "timeout_height": "0"
+          },
+          "signatures": [
+            "3SbkxC3gOJynerBijJ6EP5VrvOQcOgyIbbRn9EQOY906SnojjVJzofAwA7lX3BxycMVi5g26vbhzyi51mEIWKQ=="
+          ]
+        },
+        "result": {
+          "code": 0,
+          "data": "\n\u0018\n\u0016/types.MsgObservedTxIn",
+          "log": "[{\"events\":[{\"type\":\"message\",\"attributes\":[{\"key\":\"action\",\"value\":\"set_observed_txin\"}]}]}]",
+          "gas_wanted": "2000000",
+          "gas_used": "236016",
+          "events": [
+            {
+              "fee": "",
+              "fee_payer": "tmaya1zf3gsk7edzwl9syyefvfhle37cjtql35hdgtzt",
+              "type": "tx"
+            },
+            {
+              "acc_seq": "tmaya1zf3gsk7edzwl9syyefvfhle37cjtql35hdgtzt/3",
+              "type": "tx"
+            },
+            {
+              "signature": "3SbkxC3gOJynerBijJ6EP5VrvOQcOgyIbbRn9EQOY906SnojjVJzofAwA7lX3BxycMVi5g26vbhzyi51mEIWKQ==",
+              "type": "tx"
+            },
+            {
+              "action": "set_observed_txin",
+              "type": "message"
+            }
+          ]
+        }
+      }
+    ]
+  }
+]

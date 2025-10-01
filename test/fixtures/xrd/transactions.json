@@ -1,0 +1,888 @@
+{
+  "previous_state_identifiers": {
+    "state_version": 169227826,
+    "state_tree_hash": "cca18d2af9e3bec2c7594d9faf5d740e1b0d47a20815ea43fe9941f135da8122",
+    "transaction_tree_hash": "faa67cfb2d16d490f6f54e6b4bd35aa7a7950ef5651616f82ca8bfcdcb9458f0",
+    "receipt_tree_hash": "686bd5e3e8115974ca3ba279497c471136baf4c524f9998005d5cf36a64a9d16"
+  },
+  "from_state_version": 169227827,
+  "count": 1,
+  "max_ledger_state_version": 169321162,
+  "transactions": [
+    {
+      "resultant_state_identifiers": {
+        "state_version": 169227827,
+        "state_tree_hash": "5d33a29be95019629cff478a27ff256148b8b54c7c93535845f51c43f0835ea4",
+        "transaction_tree_hash": "34c149d22908df701c92316184facd88d7470a3b5527d39a7874323b4657efa3",
+        "receipt_tree_hash": "de1ba93833b2800821c6941ac702f854401b8a5028013c2d23c33f71a6f5a454"
+      },
+      "ledger_transaction": {
+        "type": "User",
+        "notarized_transaction": {
+          "hash": "1ccb0aee9412d7ecb2dd68e6a1de3be3b49993ea8fbf9ab57314fabc2c96bc33",
+          "hash_bech32m": "notarizedtransaction_rdx1rn9s4m55ztt7evkadrn2rh3muw6fnyl237le4dtnznatctykhsess7lmy3",
+          "payload_hex": "4d22030221022104210707010afc550200000000000a0656020000000000093a60a5502201012007209dc0bffd9a53024ebfec38ae7dc9d78e87fba82336e0469cff33a2c3f4922bc901010800002022044103800051fc7e020a4ea7d03f6ad2238cdaaad6cd4849ad14a321c4d1b4fc1937a20c086c6f636b5f66656521018564fc70fa699b5006000000000000000000000000000000004103800051fc7e020a4ea7d03f6ad2238cdaaad6cd4849ad14a321c4d1b4fc1937a20c087769746864726177210280005da66318c6318c61f5a61b4c6318c6318cf794aa8d295f14e6318c6318c6850000c016305da24d5a060000000000000000000000000000000280005da66318c6318c61f5a61b4c6318c6318cf794aa8d295f14e6318c6318c6850000c016305da24d5a06000000000000000000000000000041038000c07d71dbd67865d64c2ba5f4d867ef2eac2fc8ba19f967288e021b8a2fec0c0c757365725f6465706f7369742104800051fc7e020a4ea7d03f6ad2238cdaaad6cd4849ad14a321c4d1b4fc1937a28000d16e2aa16abbefce4866fa2bef693159d2484be18d1698b70dbfee7e6c8e81000000000c423d3a54484f522e52554e453a74686f7231707133716563636c677536373734617671386172666d7630703232687a6c346d6d63613670763a302f312f303a64783a302020002200002022002201012101200740d491a03215f942ecd644750b3037202f95d1bc1b4887410145afac766de4ed318929504eb1e94effef605ec3f77b77955034f75a04cd25ab5598447c21c1ba03",
+          "signed_intent": {
+            "hash": "32c68aab28fab0b5771749d2538168cd7f19136828d143a6cccbf8874834eb03",
+            "hash_bech32m": "signedintent_rdx1xtrg42egl2ct2achf8f98qtge4l3jymg9rg58fkve0ugwjp5avpseme6q6",
+            "intent": {
+              "hash": "7922f11adc1eefbbe3db4d5326f7d5ca642a23eefb9cbb199b3fd0499037cd3d",
+              "hash_bech32m": "txid_rdx10y30zxkurmhmhc7mf4fjda74efjz5glwlwwtkxvm8lgynyphe57ss2rwt7",
+              "header": {
+                "network_id": 1,
+                "start_epoch_inclusive": 153084,
+                "end_epoch_exclusive": 153094,
+                "nonce": 1353015354,
+                "notary_public_key": {
+                  "key_type": "EddsaEd25519",
+                  "key_hex": "9dc0bffd9a53024ebfec38ae7dc9d78e87fba82336e0469cff33a2c3f4922bc9"
+                },
+                "notary_is_signatory": true,
+                "tip_percentage": 0
+              },
+              "instructions": "CALL_METHOD\n    Address(\"account_rdx12878uqs2f6naq0m26g3cek426mx5sjddzj3jr3x3kn7pjdazzecx64\")\n    \"lock_fee\"\n    Decimal(\"0.4550344418400001\")\n;\nCALL_METHOD\n    Address(\"account_rdx12878uqs2f6naq0m26g3cek426mx5sjddzj3jr3x3kn7pjdazzecx64\")\n    \"withdraw\"\n    Address(\"resource_rdx1tknxxxxxxxxxradxrdxxxxxxxxx009923554798xxxxxxxxxradxrd\")\n    Decimal(\"30000\")\n;\nTAKE_FROM_WORKTOP\n    Address(\"resource_rdx1tknxxxxxxxxxradxrdxxxxxxxxx009923554798xxxxxxxxxradxrd\")\n    Decimal(\"30000\")\n    Bucket(\"bucket1\")\n;\nCALL_METHOD\n    Address(\"component_rdx1cp7hrk7k0pjavnpt5h6dsel096kzlj96r8ukw2ywqgdc5tlvpvn0as\")\n    \"user_deposit\"\n    Address(\"account_rdx12878uqs2f6naq0m26g3cek426mx5sjddzj3jr3x3kn7pjdazzecx64\")\n    Address(\"account_rdx169hz4gt2h0huujrxlg4776f3t8fysjlp35tf3dcdhlh8umyw88es3x\")\n    Bucket(\"bucket1\")\n    \"=:THOR.RUNE:thor1pq3qecclgu6774avq8arfmv0p22hzl4mmca6pv:0/1/0:dx:0\"\n;\n"
+            },
+            "intent_signatures": []
+          },
+          "notary_signature": {
+            "key_type": "EddsaEd25519",
+            "signature_hex": "d491a03215f942ecd644750b3037202f95d1bc1b4887410145afac766de4ed318929504eb1e94effef605ec3f77b77955034f75a04cd25ab5598447c21c1ba03"
+          }
+        }
+      },
+      "receipt": {
+        "status": "Succeeded",
+        "fee_summary": {
+          "execution_cost_units_consumed": 5698438,
+          "finalization_cost_units_consumed": 525139,
+          "xrd_total_execution_cost": "0.2849219",
+          "xrd_total_finalization_cost": "0.02625695",
+          "xrd_total_royalty_cost": "0",
+          "xrd_total_storage_cost": "0.11053085137",
+          "xrd_total_tipping_cost": "0"
+        },
+        "costing_parameters": {
+          "execution_cost_unit_price": "0.00000005",
+          "execution_cost_unit_limit": 100000000,
+          "execution_cost_unit_loan": 4000000,
+          "finalization_cost_unit_price": "0.00000005",
+          "finalization_cost_unit_limit": 50000000,
+          "xrd_usd_price": "16.666666666666666666",
+          "xrd_storage_price": "0.00009536743",
+          "xrd_archive_storage_price": "0.00009536743",
+          "tip_percentage": 0
+        },
+        "fee_source": {
+          "from_vaults": [
+            {
+              "vault_entity": {
+                "entity_type": "InternalFungibleVault",
+                "is_global": false,
+                "entity_address": "internal_vault_rdx1tresaqavsv80xn4n0juhjx0chmf60a8m60zksc5fp0fjx356s93z2w"
+              },
+              "xrd_amount": "0.42170970137"
+            }
+          ]
+        },
+        "fee_destination": {
+          "to_proposer": "0.1054274253425",
+          "to_validator_set": "0.1054274253425",
+          "to_burn": "0.210854850685",
+          "to_royalty_recipients": []
+        },
+        "state_updates": {
+          "deleted_partitions": [],
+          "created_substates": [
+            {
+              "substate_id": {
+                "entity_type": "GlobalTransactionTracker",
+                "entity_address": "transactiontracker_rdx1stxxxxxxxxxxtxtrakxxxxxxxxx006844685494xxxxxxxxxtxtrak",
+                "entity_module": "Main",
+                "partition_kind": "KeyValue",
+                "partition_number": 122,
+                "substate_type": "TransactionTrackerCollectionEntry",
+                "substate_key": {
+                  "key_type": "Map",
+                  "db_sort_key_hex": "e4f4e608fc14cb09c4da51a6d59b775f731c789f5c2007207922f11adc1eefbbe3db4d5326f7d5ca642a23eefb9cbb199b3fd0499037cd3d",
+                  "key_hex": "5c2007207922f11adc1eefbbe3db4d5326f7d5ca642a23eefb9cbb199b3fd0499037cd3d"
+                }
+              },
+              "value": {
+                "substate_data": {
+                  "substate_type": "TransactionTrackerCollectionEntry",
+                  "is_locked": false,
+                  "key": {
+                    "intent_hash": "7922f11adc1eefbbe3db4d5326f7d5ca642a23eefb9cbb199b3fd0499037cd3d",
+                    "intent_hash_bech32m": "txid_rdx10y30zxkurmhmhc7mf4fjda74efjz5glwlwwtkxvm8lgynyphe57ss2rwt7"
+                  },
+                  "value": {
+                    "status": "CommittedSuccess"
+                  }
+                }
+              },
+              "system_structure": {
+                "type": "ObjectKeyValuePartitionEntry",
+                "key_schema": {
+                  "type": "Package",
+                  "full_type_id": {
+                    "entity_address": "package_rdx1pkgxxxxxxxxxtxtrakxxxxxxxxx000595975309xxxxxxxxxtxtrak",
+                    "schema_hash": "bd71c021e525c608eaf7291c8c0eb2519993241a8e8d6d58c62e3ae056535592",
+                    "local_type_id": {
+                      "kind": "SchemaLocal",
+                      "id": 0,
+                      "as_sbor": {
+                        "hex": "5c2201010a0000000000000000",
+                        "programmatic_json": {
+                          "kind": "Enum",
+                          "variant_id": "1",
+                          "fields": [
+                            {
+                              "kind": "U64",
+                              "value": "0"
+                            }
+                          ]
+                        }
+                      }
+                    }
+                  }
+                },
+                "value_schema": {
+                  "type": "Package",
+                  "full_type_id": {
+                    "entity_address": "package_rdx1pkgxxxxxxxxxtxtrakxxxxxxxxx000595975309xxxxxxxxxtxtrak",
+                    "schema_hash": "bd71c021e525c608eaf7291c8c0eb2519993241a8e8d6d58c62e3ae056535592",
+                    "local_type_id": {
+                      "kind": "SchemaLocal",
+                      "id": 1,
+                      "as_sbor": {
+                        "hex": "5c2201010a0100000000000000",
+                        "programmatic_json": {
+                          "kind": "Enum",
+                          "variant_id": "1",
+                          "fields": [
+                            {
+                              "kind": "U64",
+                              "value": "1"
+                            }
+                          ]
+                        }
+                      }
+                    }
+                  }
+                }
+              }
+            }
+          ],
+          "updated_substates": [
+            {
+              "substate_id": {
+                "entity_type": "GlobalConsensusManager",
+                "entity_address": "consensusmanager_rdx1scxxxxxxxxxxcnsmgrxxxxxxxxx000999665565xxxxxxxxxcnsmgr",
+                "entity_module": "Main",
+                "partition_kind": "Field",
+                "partition_number": 64,
+                "substate_type": "ConsensusManagerFieldValidatorRewards",
+                "substate_key": {
+                  "key_type": "Field",
+                  "db_sort_key_hex": "02",
+                  "id": 2
+                }
+              },
+              "new_value": {
+                "substate_data": {
+                  "substate_type": "ConsensusManagerFieldValidatorRewards",
+                  "is_locked": false,
+                  "value": {
+                    "proposer_rewards": [
+                      {
+                        "validator_index": {
+                          "index": 26
+                        },
+                        "xrd_amount": "0.190884576835"
+                      },
+                      {
+                        "validator_index": {
+                          "index": 20
+                        },
+                        "xrd_amount": "0.676467615615"
+                      },
+                      {
+                        "validator_index": {
+                          "index": 32
+                        },
+                        "xrd_amount": "0.188315198305"
+                      },
+                      {
+                        "validator_index": {
+                          "index": 6
+                        },
+                        "xrd_amount": "0.190880776835"
+                      },
+                      {
+                        "validator_index": {
+                          "index": 0
+                        },
+                        "xrd_amount": "0.1896257659575"
+                      },
+                      {
+                        "validator_index": {
+                          "index": 9
+                        },
+                        "xrd_amount": "0.2988549017425"
+                      },
+                      {
+                        "validator_index": {
+                          "index": 19
+                        },
+                        "xrd_amount": "0.190885026835"
+                      },
+                      {
+                        "validator_index": {
+                          "index": 11
+                        },
+                        "xrd_amount": "0.3304395244725"
+                      }
+                    ],
+                    "rewards_vault": {
+                      "entity_type": "InternalFungibleVault",
+                      "is_global": false,
+                      "entity_address": "internal_vault_rdx1tpsesv77qvw782kknjks9g3x2msg8cc8ldshk28pkf6m6lkhzcw3fr"
+                    }
+                  }
+                }
+              },
+              "system_structure": {
+                "type": "ObjectField",
+                "value_schema": {
+                  "type": "Package",
+                  "full_type_id": {
+                    "entity_address": "package_rdx1pkgxxxxxxxxxcnsmgrxxxxxxxxx000746305335xxxxxxxxxcnsmgr",
+                    "schema_hash": "d8510877df1d820f4752b3c033baf656f62e0e612731718865d048b9d16300b3",
+                    "local_type_id": {
+                      "kind": "SchemaLocal",
+                      "id": 9,
+                      "as_sbor": {
+                        "hex": "5c2201010a0900000000000000",
+                        "programmatic_json": {
+                          "kind": "Enum",
+                          "variant_id": "1",
+                          "fields": [
+                            {
+                              "kind": "U64",
+                              "value": "9"
+                            }
+                          ]
+                        }
+                      }
+                    }
+                  }
+                }
+              }
+            },
+            {
+              "substate_id": {
+                "entity_type": "InternalFungibleVault",
+                "entity_address": "internal_vault_rdx1tresaqavsv80xn4n0juhjx0chmf60a8m60zksc5fp0fjx356s93z2w",
+                "entity_module": "Main",
+                "partition_kind": "Field",
+                "partition_number": 64,
+                "substate_type": "FungibleVaultFieldBalance",
+                "substate_key": {
+                  "key_type": "Field",
+                  "db_sort_key_hex": "00",
+                  "id": 0
+                }
+              },
+              "new_value": {
+                "substate_data": {
+                  "substate_type": "FungibleVaultFieldBalance",
+                  "is_locked": false,
+                  "value": {
+                    "amount": "30125.51426484214894"
+                  }
+                }
+              },
+              "system_structure": {
+                "type": "ObjectField",
+                "value_schema": {
+                  "type": "Package",
+                  "full_type_id": {
+                    "entity_address": "package_rdx1pkgxxxxxxxxxresrcexxxxxxxxx000538436477xxxxxxxxxresrce",
+                    "schema_hash": "462a3fea283117aab2b01c297812bdc0fa9060b29eb5e68b847f361bc1201933",
+                    "local_type_id": {
+                      "kind": "SchemaLocal",
+                      "id": 0,
+                      "as_sbor": {
+                        "hex": "5c2201010a0000000000000000",
+                        "programmatic_json": {
+                          "kind": "Enum",
+                          "variant_id": "1",
+                          "fields": [
+                            {
+                              "kind": "U64",
+                              "value": "0"
+                            }
+                          ]
+                        }
+                      }
+                    }
+                  }
+                }
+              }
+            },
+            {
+              "substate_id": {
+                "entity_type": "InternalFungibleVault",
+                "entity_address": "internal_vault_rdx1tqdwpyk5lhc47jch2jxf3vm8f6qmhrzdqu9aueh42k4fdnzxwaa8pv",
+                "entity_module": "Main",
+                "partition_kind": "Field",
+                "partition_number": 64,
+                "substate_type": "FungibleVaultFieldBalance",
+                "substate_key": {
+                  "key_type": "Field",
+                  "db_sort_key_hex": "00",
+                  "id": 0
+                }
+              },
+              "new_value": {
+                "substate_data": {
+                  "substate_type": "FungibleVaultFieldBalance",
+                  "is_locked": false,
+                  "value": {
+                    "amount": "14347215.057220259151632975"
+                  }
+                }
+              },
+              "system_structure": {
+                "type": "ObjectField",
+                "value_schema": {
+                  "type": "Package",
+                  "full_type_id": {
+                    "entity_address": "package_rdx1pkgxxxxxxxxxresrcexxxxxxxxx000538436477xxxxxxxxxresrce",
+                    "schema_hash": "462a3fea283117aab2b01c297812bdc0fa9060b29eb5e68b847f361bc1201933",
+                    "local_type_id": {
+                      "kind": "SchemaLocal",
+                      "id": 0,
+                      "as_sbor": {
+                        "hex": "5c2201010a0000000000000000",
+                        "programmatic_json": {
+                          "kind": "Enum",
+                          "variant_id": "1",
+                          "fields": [
+                            {
+                              "kind": "U64",
+                              "value": "0"
+                            }
+                          ]
+                        }
+                      }
+                    }
+                  }
+                }
+              }
+            },
+            {
+              "substate_id": {
+                "entity_type": "InternalFungibleVault",
+                "entity_address": "internal_vault_rdx1tpsesv77qvw782kknjks9g3x2msg8cc8ldshk28pkf6m6lkhzcw3fr",
+                "entity_module": "Main",
+                "partition_kind": "Field",
+                "partition_number": 64,
+                "substate_type": "FungibleVaultFieldBalance",
+                "substate_key": {
+                  "key_type": "Field",
+                  "db_sort_key_hex": "00",
+                  "id": 0
+                }
+              },
+              "new_value": {
+                "substate_data": {
+                  "substate_type": "FungibleVaultFieldBalance",
+                  "is_locked": false,
+                  "value": {
+                    "amount": "4.512706775893579493"
+                  }
+                }
+              },
+              "system_structure": {
+                "type": "ObjectField",
+                "value_schema": {
+                  "type": "Package",
+                  "full_type_id": {
+                    "entity_address": "package_rdx1pkgxxxxxxxxxresrcexxxxxxxxx000538436477xxxxxxxxxresrce",
+                    "schema_hash": "462a3fea283117aab2b01c297812bdc0fa9060b29eb5e68b847f361bc1201933",
+                    "local_type_id": {
+                      "kind": "SchemaLocal",
+                      "id": 0,
+                      "as_sbor": {
+                        "hex": "5c2201010a0000000000000000",
+                        "programmatic_json": {
+                          "kind": "Enum",
+                          "variant_id": "1",
+                          "fields": [
+                            {
+                              "kind": "U64",
+                              "value": "0"
+                            }
+                          ]
+                        }
+                      }
+                    }
+                  }
+                }
+              }
+            }
+          ],
+          "deleted_substates": [],
+          "new_global_entities": []
+        },
+        "events": [
+          {
+            "type": {
+              "emitter": {
+                "type": "Method",
+                "entity": {
+                  "entity_type": "InternalFungibleVault",
+                  "is_global": false,
+                  "entity_address": "internal_vault_rdx1tresaqavsv80xn4n0juhjx0chmf60a8m60zksc5fp0fjx356s93z2w"
+                },
+                "object_module_id": "Main"
+              },
+              "type_reference": {
+                "full_type_id": {
+                  "entity_address": "package_rdx1pkgxxxxxxxxxresrcexxxxxxxxx000538436477xxxxxxxxxresrce",
+                  "schema_hash": "462a3fea283117aab2b01c297812bdc0fa9060b29eb5e68b847f361bc1201933",
+                  "local_type_id": {
+                    "kind": "SchemaLocal",
+                    "id": 22,
+                    "as_sbor": {
+                      "hex": "5c2201010a1600000000000000",
+                      "programmatic_json": {
+                        "kind": "Enum",
+                        "variant_id": "1",
+                        "fields": [
+                          {
+                            "kind": "U64",
+                            "value": "22"
+                          }
+                        ]
+                      }
+                    }
+                  }
+                }
+              },
+              "name": "LockFeeEvent"
+            },
+            "data": {
+              "hex": "5c2101a064fc70fa699b500600000000000000000000000000000000",
+              "programmatic_json": {
+                "kind": "Tuple",
+                "fields": [
+                  {
+                    "kind": "Decimal",
+                    "value": "0.4550344418400001"
+                  }
+                ]
+              }
+            }
+          },
+          {
+            "type": {
+              "emitter": {
+                "type": "Method",
+                "entity": {
+                  "entity_type": "InternalFungibleVault",
+                  "is_global": false,
+                  "entity_address": "internal_vault_rdx1tresaqavsv80xn4n0juhjx0chmf60a8m60zksc5fp0fjx356s93z2w"
+                },
+                "object_module_id": "Main"
+              },
+              "type_reference": {
+                "full_type_id": {
+                  "entity_address": "package_rdx1pkgxxxxxxxxxresrcexxxxxxxxx000538436477xxxxxxxxxresrce",
+                  "schema_hash": "462a3fea283117aab2b01c297812bdc0fa9060b29eb5e68b847f361bc1201933",
+                  "local_type_id": {
+                    "kind": "SchemaLocal",
+                    "id": 24,
+                    "as_sbor": {
+                      "hex": "5c2201010a1800000000000000",
+                      "programmatic_json": {
+                        "kind": "Enum",
+                        "variant_id": "1",
+                        "fields": [
+                          {
+                            "kind": "U64",
+                            "value": "24"
+                          }
+                        ]
+                      }
+                    }
+                  }
+                }
+              },
+              "name": "WithdrawEvent"
+            },
+            "data": {
+              "hex": "5c2101a00000c016305da24d5a060000000000000000000000000000",
+              "programmatic_json": {
+                "kind": "Tuple",
+                "fields": [
+                  {
+                    "kind": "Decimal",
+                    "value": "30000"
+                  }
+                ]
+              }
+            }
+          },
+          {
+            "type": {
+              "emitter": {
+                "type": "Method",
+                "entity": {
+                  "entity_type": "GlobalVirtualEd25519Account",
+                  "is_global": true,
+                  "entity_address": "account_rdx12878uqs2f6naq0m26g3cek426mx5sjddzj3jr3x3kn7pjdazzecx64"
+                },
+                "object_module_id": "Main"
+              },
+              "type_reference": {
+                "full_type_id": {
+                  "entity_address": "package_rdx1pkgxxxxxxxxxaccntxxxxxxxxxx000929625493xxxxxxxxxaccntx",
+                  "schema_hash": "a54510264dbd13e03ea7d6e3112d5f3a88c9bddae66b9569d5de381ba9447a8a",
+                  "local_type_id": {
+                    "kind": "SchemaLocal",
+                    "id": 39,
+                    "as_sbor": {
+                      "hex": "5c2201010a2700000000000000",
+                      "programmatic_json": {
+                        "kind": "Enum",
+                        "variant_id": "1",
+                        "fields": [
+                          {
+                            "kind": "U64",
+                            "value": "39"
+                          }
+                        ]
+                      }
+                    }
+                  }
+                }
+              },
+              "name": "WithdrawEvent"
+            },
+            "data": {
+              "hex": "5c220002805da66318c6318c61f5a61b4c6318c6318cf794aa8d295f14e6318c6318c6a00000c016305da24d5a060000000000000000000000000000",
+              "programmatic_json": {
+                "kind": "Enum",
+                "variant_id": "0",
+                "fields": [
+                  {
+                    "kind": "Reference",
+                    "value": "resource_loc1tknxxxxxxxxxradxrdxxxxxxxxx009923554798xxxxxxxxxvq32hv"
+                  },
+                  {
+                    "kind": "Decimal",
+                    "value": "30000"
+                  }
+                ]
+              }
+            }
+          },
+          {
+            "type": {
+              "emitter": {
+                "type": "Method",
+                "entity": {
+                  "entity_type": "InternalFungibleVault",
+                  "is_global": false,
+                  "entity_address": "internal_vault_rdx1tqdwpyk5lhc47jch2jxf3vm8f6qmhrzdqu9aueh42k4fdnzxwaa8pv"
+                },
+                "object_module_id": "Main"
+              },
+              "type_reference": {
+                "full_type_id": {
+                  "entity_address": "package_rdx1pkgxxxxxxxxxresrcexxxxxxxxx000538436477xxxxxxxxxresrce",
+                  "schema_hash": "462a3fea283117aab2b01c297812bdc0fa9060b29eb5e68b847f361bc1201933",
+                  "local_type_id": {
+                    "kind": "SchemaLocal",
+                    "id": 25,
+                    "as_sbor": {
+                      "hex": "5c2201010a1900000000000000",
+                      "programmatic_json": {
+                        "kind": "Enum",
+                        "variant_id": "1",
+                        "fields": [
+                          {
+                            "kind": "U64",
+                            "value": "25"
+                          }
+                        ]
+                      }
+                    }
+                  }
+                }
+              },
+              "name": "DepositEvent"
+            },
+            "data": {
+              "hex": "5c2101a00000c016305da24d5a060000000000000000000000000000",
+              "programmatic_json": {
+                "kind": "Tuple",
+                "fields": [
+                  {
+                    "kind": "Decimal",
+                    "value": "30000"
+                  }
+                ]
+              }
+            }
+          },
+          {
+            "type": {
+              "emitter": {
+                "type": "Method",
+                "entity": {
+                  "entity_type": "GlobalGenericComponent",
+                  "is_global": true,
+                  "entity_address": "component_rdx1cp7hrk7k0pjavnpt5h6dsel096kzlj96r8ukw2ywqgdc5tlvpvn0as"
+                },
+                "object_module_id": "Main"
+              },
+              "type_reference": {
+                "full_type_id": {
+                  "entity_address": "package_rdx1phrj86uazl3a0h5k39adqc6uwumvu5fj0g546lnjsma9djvqae42ly",
+                  "schema_hash": "e87ee9343d5152f55349195d1461568e2b52f174112c4bed4b9e919395267b82",
+                  "local_type_id": {
+                    "kind": "SchemaLocal",
+                    "id": 14,
+                    "as_sbor": {
+                      "hex": "5c2201010a0e00000000000000",
+                      "programmatic_json": {
+                        "kind": "Enum",
+                        "variant_id": "1",
+                        "fields": [
+                          {
+                            "kind": "U64",
+                            "value": "14"
+                          }
+                        ]
+                      }
+                    }
+                  }
+                }
+              },
+              "name": "MayaRouterDepositEvent"
+            },
+            "data": {
+              "hex": "5c21058051fc7e020a4ea7d03f6ad2238cdaaad6cd4849ad14a321c4d1b4fc1937a280d16e2aa16abbefce4866fa2bef693159d2484be18d1698b70dbfee7e6c8e805da66318c6318c61f5a61b4c6318c6318cf794aa8d295f14e6318c6318c6a00000c016305da24d5a0600000000000000000000000000000c423d3a54484f522e52554e453a74686f7231707133716563636c677536373734617671386172666d7630703232687a6c346d6d63613670763a302f312f303a64783a30",
+              "programmatic_json": {
+                "kind": "Tuple",
+                "fields": [
+                  {
+                    "kind": "Reference",
+                    "value": "account_rdx12878uqs2f6naq0m26g3cek426mx5sjddzj3jr3x3kn7pjdazzecx64"
+                  },
+                  {
+                    "kind": "Reference",
+                    "value": "account_rdx169hz4gt2h0huujrxlg4776f3t8fysjlp35tf3dcdhlh8umyw88es3x"
+                  },
+                  {
+                    "kind": "Reference",
+                    "value": "resource_loc1tknxxxxxxxxxradxrdxxxxxxxxx009923554798xxxxxxxxxvq32hv"
+                  },
+                  {
+                    "kind": "Decimal",
+                    "value": "30000"
+                  },
+                  {
+                    "kind": "String",
+                    "value": "=:THOR.RUNE:thor1pq3qecclgu6774avq8arfmv0p22hzl4mmca6pv:0/1/0:dx:0"
+                  }
+                ]
+              }
+            }
+          },
+          {
+            "type": {
+              "emitter": {
+                "type": "Method",
+                "entity": {
+                  "entity_type": "InternalFungibleVault",
+                  "is_global": false,
+                  "entity_address": "internal_vault_rdx1tresaqavsv80xn4n0juhjx0chmf60a8m60zksc5fp0fjx356s93z2w"
+                },
+                "object_module_id": "Main"
+              },
+              "type_reference": {
+                "full_type_id": {
+                  "entity_address": "package_rdx1pkgxxxxxxxxxresrcexxxxxxxxx000538436477xxxxxxxxxresrce",
+                  "schema_hash": "462a3fea283117aab2b01c297812bdc0fa9060b29eb5e68b847f361bc1201933",
+                  "local_type_id": {
+                    "kind": "SchemaLocal",
+                    "id": 23,
+                    "as_sbor": {
+                      "hex": "5c2201010a1700000000000000",
+                      "programmatic_json": {
+                        "kind": "Enum",
+                        "variant_id": "1",
+                        "fields": [
+                          {
+                            "kind": "U64",
+                            "value": "23"
+                          }
+                        ]
+                      }
+                    }
+                  }
+                }
+              },
+              "name": "PayFeeEvent"
+            },
+            "data": {
+              "hex": "5c2101a080b27e34bd36da0500000000000000000000000000000000",
+              "programmatic_json": {
+                "kind": "Tuple",
+                "fields": [
+                  {
+                    "kind": "Decimal",
+                    "value": "0.42170970137"
+                  }
+                ]
+              }
+            }
+          },
+          {
+            "type": {
+              "emitter": {
+                "type": "Method",
+                "entity": {
+                  "entity_type": "InternalFungibleVault",
+                  "is_global": false,
+                  "entity_address": "internal_vault_rdx1tpsesv77qvw782kknjks9g3x2msg8cc8ldshk28pkf6m6lkhzcw3fr"
+                },
+                "object_module_id": "Main"
+              },
+              "type_reference": {
+                "full_type_id": {
+                  "entity_address": "package_rdx1pkgxxxxxxxxxresrcexxxxxxxxx000538436477xxxxxxxxxresrce",
+                  "schema_hash": "462a3fea283117aab2b01c297812bdc0fa9060b29eb5e68b847f361bc1201933",
+                  "local_type_id": {
+                    "kind": "SchemaLocal",
+                    "id": 25,
+                    "as_sbor": {
+                      "hex": "5c2201010a1900000000000000",
+                      "programmatic_json": {
+                        "kind": "Enum",
+                        "variant_id": "1",
+                        "fields": [
+                          {
+                            "kind": "U64",
+                            "value": "25"
+                          }
+                        ]
+                      }
+                    }
+                  }
+                }
+              },
+              "name": "DepositEvent"
+            },
+            "data": {
+              "hex": "5c2101a040593f9a5e1bed0200000000000000000000000000000000",
+              "programmatic_json": {
+                "kind": "Tuple",
+                "fields": [
+                  {
+                    "kind": "Decimal",
+                    "value": "0.210854850685"
+                  }
+                ]
+              }
+            }
+          },
+          {
+            "type": {
+              "emitter": {
+                "type": "Method",
+                "entity": {
+                  "entity_type": "GlobalFungibleResource",
+                  "is_global": true,
+                  "entity_address": "resource_rdx1tknxxxxxxxxxradxrdxxxxxxxxx009923554798xxxxxxxxxradxrd"
+                },
+                "object_module_id": "Main"
+              },
+              "type_reference": {
+                "full_type_id": {
+                  "entity_address": "package_rdx1pkgxxxxxxxxxresrcexxxxxxxxx000538436477xxxxxxxxxresrce",
+                  "schema_hash": "ba27cc155884d6e1aa7a41346fd8c11f18cc99775653caef1fd3455d625fd147",
+                  "local_type_id": {
+                    "kind": "SchemaLocal",
+                    "id": 58,
+                    "as_sbor": {
+                      "hex": "5c2201010a3a00000000000000",
+                      "programmatic_json": {
+                        "kind": "Enum",
+                        "variant_id": "1",
+                        "fields": [
+                          {
+                            "kind": "U64",
+                            "value": "58"
+                          }
+                        ]
+                      }
+                    }
+                  }
+                }
+              },
+              "name": "BurnFungibleResourceEvent"
+            },
+            "data": {
+              "hex": "5c2101a040593f9a5e1bed0200000000000000000000000000000000",
+              "programmatic_json": {
+                "kind": "Tuple",
+                "fields": [
+                  {
+                    "kind": "Decimal",
+                    "value": "0.210854850685"
+                  }
+                ]
+              }
+            }
+          }
+        ],
+        "output": [
+          {
+            "hex": "5c2100",
+            "programmatic_json": {
+              "kind": "Tuple",
+              "fields": []
+            }
+          },
+          {
+            "hex": "5c90f88e50ea1dadd12ce425b7fef0fbf47f7c84ba8353063542d33e17d975d8",
+            "programmatic_json": {
+              "kind": "Own",
+              "value": "internal_component_rdx1lz89p6sa4hgjeep9kll0p7l50a7gfw5r2vrr2skn8ctajawck5zczh"
+            }
+          },
+          {
+            "hex": "5c2100",
+            "programmatic_json": {
+              "kind": "Tuple",
+              "fields": []
+            }
+          },
+          {
+            "hex": "5c2100",
+            "programmatic_json": {
+              "kind": "Tuple",
+              "fields": []
+            }
+          }
+        ]
+      },
+      "proposer_timestamp_ms": 1732167320467
+    }
+  ]
+}

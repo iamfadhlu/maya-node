@@ -1,0 +1,73 @@
+{{ template "default-state.yaml" }}
+---
+type: create-blocks
+count: 1
+---
+type: check
+endpoint: http://localhost:1317/mayachain/pools
+asserts:
+  - .|length == 1 # genesis BTC pool
+---
+type: tx-observed-in
+signer: {{ addr_maya_dog }}
+txs:
+- tx:
+    id: '{{ observe_txid 1 }}'
+    chain: ETH
+    from_address: {{ addr_eth_cat }}
+    to_address: {{ addr_eth_dog }}
+    coins:
+      - amount: "100000000"
+        asset: "ETH.ETH"
+        decimals: 8
+    gas:
+      - amount: "10000"
+        asset: "ETH.ETH"
+    memo: "+:ETH.ETH:{{ addr_maya_cat }}"
+  block_height: 1
+  finalise_height: 1
+  observed_pub_key: {{ pubkey_dog }}
+---
+type: create-blocks
+count: 1
+---
+type: check
+endpoint: http://localhost:1317/mayachain/tx/{{ observe_txid 1 }}
+asserts:
+- .observed_tx.status == "done"
+---
+type: check
+endpoint: http://localhost:1317/mayachain/pool/ETH.ETH/liquidity_providers
+asserts:
+  - .|length == 1
+---
+type: check
+endpoint: http://localhost:1317/mayachain/pools
+asserts:
+  - .|length == 1 # genesis BTC pool
+---
+type: tx-deposit
+signer: {{ addr_maya_cat }}
+coins:
+  - amount: "200000000"
+    asset: "cacao"
+memo: "+:ETH.ETH:{{ addr_eth_cat }}"
+---
+type: create-blocks
+count: 1
+---
+type: check
+endpoint: http://localhost:1317/mayachain/pools
+asserts:
+  - .|length == 2
+  - .[1].LP_units == "200000000"
+  - .[1].pending_inbound_asset == "0"
+  - .[1].pending_inbound_cacao == "0"
+---
+type: check
+endpoint: http://localhost:1317/mayachain/pool/ETH.ETH/liquidity_providers
+asserts:
+  - .|length == 1
+  - .[0].units == "200000000"
+  - .[0].pending_asset == "0"
+  - .[0].pending_cacao == "0"

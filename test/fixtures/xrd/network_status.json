@@ -1,0 +1,33 @@
+{
+  "pre_genesis_state_identifier": {
+    "state_version": 0,
+    "state_tree_hash": "0000000000000000000000000000000000000000000000000000000000000000",
+    "transaction_tree_hash": "0000000000000000000000000000000000000000000000000000000000000000",
+    "receipt_tree_hash": "0000000000000000000000000000000000000000000000000000000000000000"
+  },
+  "genesis_epoch_round": {
+    "epoch": 32717,
+    "round": 0
+  },
+  "post_genesis_state_identifier": {
+    "state_version": 647,
+    "state_tree_hash": "00b3ac86e1de42b264dfc6cc4d8f106c67152ec669743774c4b61c8bebbaa6eb",
+    "transaction_tree_hash": "5e1b7482ba95f1e2dbcedbb5db70a5ebe76161789ccd12b7cb267f524349cf80",
+    "receipt_tree_hash": "b9946807cfb6faefe14951076bb95329a5cb8d48b8635933c1dba32655373837"
+  },
+  "post_genesis_epoch_round": {
+    "epoch": 32718,
+    "round": 0
+  },
+  "current_state_identifier": {
+    "state_version": 161345270,
+    "state_tree_hash": "8634ae005e9dadf0dd80b1e319e9b8d1a64552d1a8a6424c52040ef8c49858c8",
+    "transaction_tree_hash": "6be78bd71757bff2b1c8596d63d97294ad2f3c6bf34da439a79740d74bbbe95c",
+    "receipt_tree_hash": "270eb768494a0334874092e440bfb6ccee132da6e0e852ba05cd53d7045ca770"
+  },
+  "current_epoch_round": {
+    "epoch": 148868,
+    "round": 1237
+  },
+  "current_protocol_version": "cuttlefish-part2"
+}

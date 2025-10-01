@@ -1,0 +1,411 @@
+{{ template "default-state.yaml" }}
+---
+{{ template "btc-eth-big-pool-state.yaml" }}
+---
+type: state
+genesis:
+  app_state:
+    auth:
+      accounts:
+        - "@type": /cosmos.auth.v1beta1.BaseAccount
+          address: {{ addr_maya_pig }}
+          pub_key: null
+          account_number: "9"
+          sequence: "0"
+        - "@type": /cosmos.auth.v1beta1.BaseAccount
+          address: {{ addr_maya_frog }}
+          pub_key: null
+          account_number: "10"
+          sequence: "0"
+        - "@type": /cosmos.auth.v1beta1.BaseAccount
+          address: {{ addr_maya_goat }}
+          pub_key: null
+          account_number: "11"
+          sequence: "0"
+        - "@type": /cosmos.auth.v1beta1.BaseAccount
+          address: "tmaya1csl8dvpyrcpr2r0qrz5pzx85r9akr2yfjxl2yh"
+          pub_key: null
+          account_number: "12"
+          sequence: "0"
+        - "@type": /cosmos.auth.v1beta1.BaseAccount
+          address: "tmaya17xpyg3033swl7y6wvplpapqhwrm9g2scu33ymp"
+          pub_key: null
+          account_number: "13"
+          sequence: "0"
+        - "@type": /cosmos.auth.v1beta1.BaseAccount
+          address: "tmaya143gxxhrxn9p7zec7240m7ry6sct8ad82jq83ph"
+          pub_key: null
+          account_number: "14"
+          sequence: "0"
+        - "@type": /cosmos.auth.v1beta1.BaseAccount
+          address: "tmaya12yvzh8lnzz2ns2v2vv6cm4l8z64hw47fvzpg7d"
+          pub_key: null
+          account_number: "15"
+          sequence: "0"
+        - "@type": /cosmos.auth.v1beta1.BaseAccount
+          address: {{ addr_maya_hawk }}
+          pub_key: null
+          account_number: "9"
+          sequence: "0"
+    bank:
+      balances:
+        - address: {{ addr_maya_pig }}
+          coins:
+            - denom: cacao
+              amount: "2500000000000"
+        - address: {{ addr_maya_frog }}
+          coins:
+            - denom: cacao
+              amount: "2500000000000"
+        - address: {{ addr_maya_goat }}
+          coins:
+            - denom: cacao
+              amount: "2500000000000"
+        - address: "tmaya1csl8dvpyrcpr2r0qrz5pzx85r9akr2yfjxl2yh"
+          coins:
+            - denom: cacao
+              amount: "2500000000000"
+        - address: "tmaya17xpyg3033swl7y6wvplpapqhwrm9g2scu33ymp"
+          coins:
+            - denom: cacao
+              amount: "2500000000000"
+        - address: "tmaya143gxxhrxn9p7zec7240m7ry6sct8ad82jq83ph"
+          coins:
+            - denom: cacao
+              amount: "2500000000000"
+        - address: "tmaya12yvzh8lnzz2ns2v2vv6cm4l8z64hw47fvzpg7d"
+          coins:
+            - denom: cacao
+              amount: "2500000000000"
+        - address: {{ addr_maya_hawk }}
+          coins:
+            - denom: cacao
+              amount: "2500000000000"
+    mayachain:
+      mimirs:
+        - key: PREFERREDASSETOUTBOUNDFEEMULTIPLIER
+          value: "5"
+---
+type: create-blocks
+count: 1
+---
+# check mimir and set address variables
+type: check
+endpoint: http://localhost:1317/mayachain/mimir
+asserts:
+  - .PREFERREDASSETOUTBOUNDFEEMULTIPLIER == 5
+  - ("tmaya1csl8dvpyrcpr2r0qrz5pzx85r9akr2yfjxl2yh" == "${ADDR_MAYA_BAT=tmaya1csl8dvpyrcpr2r0qrz5pzx85r9akr2yfjxl2yh}")
+  - ("tmaya17xpyg3033swl7y6wvplpapqhwrm9g2scu33ymp" == "${ADDR_MAYA_BEE=tmaya17xpyg3033swl7y6wvplpapqhwrm9g2scu33ymp}")
+  - ("tmaya143gxxhrxn9p7zec7240m7ry6sct8ad82jq83ph" == "${ADDR_MAYA_OWL=tmaya143gxxhrxn9p7zec7240m7ry6sct8ad82jq83ph}")
+  - ("tmaya12yvzh8lnzz2ns2v2vv6cm4l8z64hw47fvzpg7d" == "${ADDR_MAYA_ANT=tmaya12yvzh8lnzz2ns2v2vv6cm4l8z64hw47fvzpg7d}")
+---
+#######################################################################################
+# MAYAName memo format:  ~:name:chain:address:?owner:?preferredAsset:?expiry:?affbps:?subaff:?subaffbps
+########################################################################################
+#######################################################################################
+# Set hawk affiliate with 100 affiliate fee bps (1%)
+########################################################################################
+# create hawk MAYAName with 100 bps affiliate fee
+type: tx-deposit
+signer: {{ addr_maya_hawk }}
+coins:
+  - amount: ${REGFEE="110000000000"}
+    asset: "cacao"
+memo: "~:hawk:MAYA:{{ addr_maya_hawk }}::::100"
+---
+type: create-blocks
+count: 1
+---
+type: tx-deposit
+signer: {{ addr_maya_cat }}
+coins:
+  - amount: ${REGFEE}
+    asset: "cacao"
+memo: "~:cat:MAYA:{{ addr_maya_cat }}"
+---
+type: create-blocks
+count: 1
+---
+type: tx-deposit
+signer: {{ addr_maya_fox }}
+coins:
+  - amount: ${REGFEE}
+    asset: "cacao"
+memo: "~:fox:MAYA:{{ addr_maya_fox }}"
+---
+type: create-blocks
+count: 1
+---
+type: tx-deposit
+signer: {{ addr_maya_pig }}
+coins:
+  - amount: ${REGFEE}
+    asset: "cacao"
+memo: "~:pig:MAYA:{{ addr_maya_pig }}"
+---
+type: create-blocks
+count: 1
+---
+type: tx-deposit
+signer: {{ addr_maya_frog }}
+coins:
+  - amount: ${REGFEE}
+    asset: "cacao"
+memo: "~:frog:MAYA:{{ addr_maya_frog }}"
+---
+type: create-blocks
+count: 1
+---
+########################################################################################
+# Set affiliate->subaffiliate relations
+# affiliate fee is 1%
+# 100 hawk (100 aff bps) ... gets 50% of the fee
+#    - 30 cat (3000 subaff bps) ... gets 3% - which is 10% of 30% - of the fee
+#        - 12 fox (4000 subaff bps) ... gets 9.6% - which is 80% of 40% of 30% - of the fee
+#            - 2.4 ADDR_MAYA_BEE (2000 subaff bps) ... gets 2.4% - which is 20% of 40% of 30% - of the fee
+#        - 15 pig (5000 subaff bps) ... gets 9% - which is 60% of 50% of 30% - of the fee
+#            - ADDR_MAYA_OWL (2000 subaff bps) ... gets 3% - which is 20% of 50% of 30% - of the fee
+#            - ADDR_MAYA_ANT (1000 subaff bps) ... gets 1.5% - which is 10% of 50% of 30% - of the fee
+#            - frog (1000 subaff bps) ... gets 1.5% - which is 10% of 50% of 30% - of the fee
+#    - 20 ADD_MAYA_BAT (2000 subaff bps) ... gets 20% of the fee
+########################################################################################
+# try to set cat and ADDR_MAYA_BAT as hawk's sub-affiliates with 30%/20% fee shares
+type: tx-deposit
+signer: {{ addr_maya_hawk }}
+coins:
+  - amount: "2"
+    asset: "cacao"
+memo: "~:hawk:::::::cat/${ADDR_MAYA_BAT}:3000/2000"
+---
+type: create-blocks
+count: 1
+---
+# set fox & pig as cat's sub-affiliates with 40%/50% fee shares
+type: tx-deposit
+signer: {{ addr_maya_cat }}
+coins:
+  - amount: "2"
+    asset: "cacao"
+memo: "~:cat:::::::fox/pig:4000/5000"
+---
+type: create-blocks
+count: 1
+---
+# set ADDR_MAYA_BEE as fox's sub-affiliate with 20% fee share
+type: tx-deposit
+signer: {{ addr_maya_fox }}
+coins:
+  - amount: "2"
+    asset: "cacao"
+memo: "~:fox:::::::${ADDR_MAYA_BEE}:2000"
+---
+type: create-blocks
+count: 1
+---
+# set ADDR_MAYA_OWL as pig's sub-affiliate with 20% fee share
+type: tx-deposit
+signer: {{ addr_maya_pig }}
+coins:
+  - amount: "2"
+    asset: "cacao"
+memo: "~:pig:::::::${ADDR_MAYA_OWL}:2000"
+---
+type: create-blocks
+count: 1
+---
+# set ADDR_MAYA_ANT and frog as pig's sub-affiliates with a common 10% fee share
+type: tx-deposit
+signer: {{ addr_maya_pig }}
+coins:
+  - amount: "2"
+    asset: "cacao"
+memo: "~:pig:::::::${ADDR_MAYA_ANT}/frog:1000"
+---
+type: create-blocks
+count: 1
+---
+########################################################################################
+# Check MAYANames's settings
+########################################################################################
+type: check
+endpoint: http://localhost:1317/mayachain/mayaname/hawk
+asserts:
+  - .aliases[0].address == "{{ addr_maya_hawk }}"
+  - .owner == "{{ addr_maya_hawk }}"
+  - .preferred_asset == "."
+  - .affiliate_bps == 100
+  - .subaffiliates|length == 2
+  - .subaffiliates[0].name == "cat"
+  - .subaffiliates[0].bps == 3000
+  - .subaffiliates[1].name == "${ADDR_MAYA_BAT}"
+  - .subaffiliates[1].bps == 2000
+---
+type: check
+endpoint: http://localhost:1317/mayachain/mayaname/cat
+asserts:
+  - .aliases[0].address == "{{ addr_maya_cat }}"
+  - .owner == "{{ addr_maya_cat }}"
+  - .preferred_asset == "."
+  - .subaffiliates|length == 2
+  - .subaffiliates[0].name == "fox"
+  - .subaffiliates[0].bps == 4000
+  - .subaffiliates[1].name == "pig"
+  - .subaffiliates[1].bps == 5000
+---
+type: check
+endpoint: http://localhost:1317/mayachain/mayaname/fox
+asserts:
+  - .aliases[0].address == "{{ addr_maya_fox }}"
+  - .owner == "{{ addr_maya_fox }}"
+  - .preferred_asset == "."
+  - .subaffiliates|length == 1
+  - .subaffiliates[0].name == "${ADDR_MAYA_BEE}"
+  - .subaffiliates[0].bps == 2000
+---
+type: check
+endpoint: http://localhost:1317/mayachain/mayaname/pig
+asserts:
+  - .aliases[0].address == "{{ addr_maya_pig }}"
+  - .owner == "{{ addr_maya_pig }}"
+  - .preferred_asset == "."
+  - .subaffiliates|length == 3
+  - .subaffiliates[0].name == "${ADDR_MAYA_OWL}"
+  - .subaffiliates[0].bps == 2000
+  - .subaffiliates[1].name == "${ADDR_MAYA_ANT}"
+  - .subaffiliates[1].bps == 1000
+  - .subaffiliates[2].name == "frog"
+  - .subaffiliates[2].bps == 1000
+---
+type: check
+endpoint: http://localhost:1317/mayachain/mayaname/frog
+asserts:
+  - .aliases[0].address == "{{ addr_maya_frog }}"
+  - .owner == "{{ addr_maya_frog }}"
+  - .preferred_asset == "."
+  - .subaffiliates|length == 0
+---
+########################################################################################
+# save the balances of mayanames' addresses
+########################################################################################
+type: check
+endpoint: http://localhost:1317/cosmos/bank/v1beta1/balances/{{ addr_maya_hawk }}
+asserts:
+  - .balances[]|select(.denom=="cacao")|.amount|tonumber == ${HAWK_BALANCE=2385999999998}
+---
+type: check
+endpoint: http://localhost:1317/cosmos/bank/v1beta1/balances/{{ addr_maya_cat }}
+asserts:
+  - .balances[]|select(.denom=="cacao")|.amount|tonumber == ${CAT_BALANCE=2499885999999998}
+---
+type: check
+endpoint: http://localhost:1317/cosmos/bank/v1beta1/balances/{{ addr_maya_fox }}
+asserts:
+  - .balances[]|select(.denom=="cacao")|.amount|tonumber == ${FOX_BALANCE=2499885999999998}
+---
+type: check
+endpoint: http://localhost:1317/cosmos/bank/v1beta1/balances/{{ addr_maya_pig }}
+asserts:
+  - .balances[]|select(.denom=="cacao")|.amount|tonumber == ${PIG_BALANCE=2383999999996}
+---
+type: check
+endpoint: http://localhost:1317/cosmos/bank/v1beta1/balances/{{ addr_maya_frog }}
+asserts:
+  - .balances[]|select(.denom=="cacao")|.amount|tonumber == ${FROG_BALANCE=2388000000000}
+---
+type: check
+endpoint: http://localhost:1317/cosmos/bank/v1beta1/balances/${ADDR_MAYA_BEE}
+asserts:
+  - .balances[]|select(.denom=="cacao")|.amount|tonumber == ${BEE_BALANCE=2500000000000}
+---
+type: check
+endpoint: http://localhost:1317/cosmos/bank/v1beta1/balances/${ADDR_MAYA_OWL}
+asserts:
+  - .balances[]|select(.denom=="cacao")|.amount|tonumber == ${OWL_BALANCE=2500000000000}
+---
+type: check
+endpoint: http://localhost:1317/cosmos/bank/v1beta1/balances/${ADDR_MAYA_ANT}
+asserts:
+  - .balances[]|select(.denom=="cacao")|.amount|tonumber == ${ANT_BALANCE=2500000000000}
+---
+type: check
+endpoint: http://localhost:1317/cosmos/bank/v1beta1/balances/${ADDR_MAYA_BAT}
+asserts:
+  - .balances[]|select(.denom=="cacao")|.amount|tonumber == ${BAT_BALANCE=2500000000000}
+---
+type: create-blocks
+count: 1
+---
+########################################################################################
+# Now, here's where the magic happens
+########################################################################################
+type: tx-deposit
+signer: {{ addr_maya_dog }}
+coins:
+# 1000 cacao swap
+  - amount: "${SWAP_AMT=100000000000000}"
+    asset: "cacao"
+memo: "=:BTC.BTC:{{ addr_btc_fox }}::hawk"
+---
+type: create-blocks
+count: 3
+---
+# set the affiliate fee variable (SWAP_AMT * 0.01) and GAS
+type: check
+endpoint: http://localhost:1317/mayachain/mimir
+asserts:
+  - ${GAS=2000000000} == 2000000000
+---
+# Check balances of maya aliases / addresses (we swap from hawk so we need to subtract the swap amount and gas)
+type: check
+endpoint: http://localhost:1317/cosmos/bank/v1beta1/balances/{{ addr_maya_hawk }}
+asserts:
+  - ${COEF=0.001*0.5} == 0.001 * 0.5 # 100 bps * 0.5
+  - (${SWAP_AMT} * ${COEF} - ${GAS}) - (.balances[]|select(.denom=="cacao")|.amount|tonumber - ${HAWK_BALANCE}) < (${SWAP_AMT} * ${COEF} - ${GAS}) * 0.001 # 10 bps tolerance
+---
+type: check
+endpoint: http://localhost:1317/cosmos/bank/v1beta1/balances/{{ addr_maya_cat }}
+asserts:
+  - ${COEF=0.001*0.03} == 0.001 * 0.03 # 100 bps * 0.03
+  - (${SWAP_AMT} * ${COEF} - ${GAS}) - (.balances[]|select(.denom=="cacao")|.amount|tonumber - ${CAT_BALANCE}) < (${SWAP_AMT} * ${COEF} - ${GAS}) * 0.001 # 10 bps tolerance
+---
+type: check
+endpoint: http://localhost:1317/cosmos/bank/v1beta1/balances/{{ addr_maya_fox }}
+asserts:
+  - ${COEF=0.001*0.096} == 0.001 * 0.096
+  - (${SWAP_AMT} * ${COEF} - ${GAS}) - (.balances[]|select(.denom=="cacao")|.amount|tonumber - ${FOX_BALANCE}) < (${SWAP_AMT} * ${COEF} - ${GAS}) * 0.001 # 10 bps tolerance
+---
+type: check
+endpoint: http://localhost:1317/cosmos/bank/v1beta1/balances/{{ addr_maya_pig }}
+asserts:
+  - ${COEF=0.001*0.09} == 0.001 * 0.09
+  - (${SWAP_AMT} * ${COEF} - ${GAS}) - (.balances[]|select(.denom=="cacao")|.amount|tonumber - ${PIG_BALANCE}) < (${SWAP_AMT} * ${COEF} - ${GAS}) * 0.001 # 10 bps tolerance
+---
+type: check
+endpoint: http://localhost:1317/cosmos/bank/v1beta1/balances/{{ addr_maya_frog }}
+asserts:
+  - ${COEF=0.001*0.015} == 0.001 * 0.015
+  - (${SWAP_AMT} * ${COEF} - ${GAS}) - (.balances[]|select(.denom=="cacao")|.amount|tonumber - ${FROG_BALANCE}) < (${SWAP_AMT} * ${COEF} - ${GAS}) * 0.001 # 10 bps tolerance
+---
+type: check
+endpoint: http://localhost:1317/cosmos/bank/v1beta1/balances/${ADDR_MAYA_BEE}
+asserts:
+  - ${COEF=0.001*0.024} == 0.001 * 0.024
+  - (${SWAP_AMT} * ${COEF} - ${GAS}) - (.balances[]|select(.denom=="cacao")|.amount|tonumber - ${BEE_BALANCE}) < (${SWAP_AMT} * ${COEF} - ${GAS}) * 0.001 # 10 bps tolerance
+---
+type: check
+endpoint: http://localhost:1317/cosmos/bank/v1beta1/balances/${ADDR_MAYA_OWL}
+asserts:
+  - ${COEF=0.001*0.03} == 0.001 * 0.03
+  - (${SWAP_AMT} * ${COEF} - ${GAS}) - (.balances[]|select(.denom=="cacao")|.amount|tonumber - ${OWL_BALANCE}) < (${SWAP_AMT} * ${COEF} - ${GAS}) * 0.001 # 10 bps tolerance
+---
+type: check
+endpoint: http://localhost:1317/cosmos/bank/v1beta1/balances/${ADDR_MAYA_ANT}
+asserts:
+  - ${COEF=0.001*0.015} == 0.001 * 0.015
+  - (${SWAP_AMT} * ${COEF} - ${GAS}) - (.balances[]|select(.denom=="cacao")|.amount|tonumber - ${ANT_BALANCE}) < (${SWAP_AMT} * ${COEF} - ${GAS}) * 0.001 # 10 bps tolerance
+---
+type: check
+endpoint: http://localhost:1317/cosmos/bank/v1beta1/balances/${ADDR_MAYA_BAT}
+asserts:
+  - ${COEF=0.001*0.20} == 0.001 * 0.20
+  - (${SWAP_AMT} * ${COEF} - ${GAS}) - (.balances[]|select(.denom=="cacao")|.amount|tonumber - ${BAT_BALANCE}) < (${SWAP_AMT} * ${COEF} - ${GAS}) * 0.001 # 10 bps tolerance

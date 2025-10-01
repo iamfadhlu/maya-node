@@ -1,0 +1,180 @@
+{{ template "default-state.yaml" }}
+---
+{{ template "btc-eth-usdc-pool-state.yaml" }}
+---
+type: create-blocks
+count: 1
+---
+type: tx-deposit
+signer: {{ addr_maya_dog }}
+coins:
+  - amount: "100000000"
+    asset: "cacao"
+memo: "+:ETH.USDC-0X9999999999999999999999999999999999999999"
+---
+type: create-blocks
+count: 1
+---
+type: check
+endpoint: http://localhost:1317/mayachain/block
+asserts:
+  - .|[.txs[].result.events[]|select(.type == "add_liquidity")]|length > 0
+---
+type: tx-deposit
+signer: {{ addr_maya_fox }}
+coins:
+  - amount: "10000000000"
+    asset: "cacao"
+memo: "=:ETH.USDC-0X9999999999999999999999999999999999999999:{{ addr_eth_fox }}"
+---
+type: create-blocks
+count: 1
+---
+type: check
+endpoint: http://localhost:1317/mayachain/queue/outbound
+asserts:
+  - .|length == 1
+---
+type: tx-observed-out
+signer: {{ addr_maya_dog }}
+txs:
+  - tx:
+      id: "{{ observe_txid 1 }}"
+      chain: ETH
+      from_address: {{ addr_eth_dog }}
+      to_address: {{ addr_eth_fox }}
+      coins:
+        - amount: "8151048700"
+          asset: "ETH.USDC-0X9999999999999999999999999999999999999999"
+          decimals: 8
+      gas:
+        - amount: "960000"
+          asset: "ETH.ETH"
+      memo: "OUT:{{ native_txid -1 }}"
+    block_height: 2
+    finalise_height: 2
+    observed_pub_key: {{ pubkey_dog }}
+---
+type: create-blocks
+count: 1
+---
+type: check
+endpoint: http://localhost:1317/mayachain/queue/outbound
+asserts:
+  - .|length == 0
+---
+type: tx-mimir
+key: HALTTRADING-ETH-USDC-0X9999999999999999999999999999999999999999
+value: 1
+signer: {{ addr_maya_dog }}
+---
+type: create-blocks
+count: 1
+---
+type: check
+endpoint: http://localhost:1317/mayachain/mimir
+asserts:
+  - (."HALTTRADING-ETH-USDC-0X9999999999999999999999999999999999999999" // 0) > 0
+---
+type: create-blocks
+count: 1
+---
+type: tx-deposit
+signer: {{ addr_maya_dog }}
+coins:
+  - amount: "100000000"
+    asset: "cacao"
+memo: "+:ETH.USDC-0X9999999999999999999999999999999999999999"
+---
+type: create-blocks
+count: 1
+---
+type: check
+endpoint: http://localhost:1317/mayachain/block
+asserts:
+  - .txs[].result.events[]|select(.type=="refund").reason| contains("trading halted")
+---
+type: tx-deposit
+signer: {{ addr_maya_fox }}
+coins:
+  - amount: "10000000000"
+    asset: "cacao"
+memo: "=:ETH.USDC-0X9999999999999999999999999999999999999999:{{ addr_eth_fox }}"
+---
+type: create-blocks
+count: 1
+---
+type: check
+endpoint: http://localhost:1317/mayachain/queue/outbound
+asserts:
+  - .|length == 0
+---
+type: check
+endpoint: http://localhost:1317/mayachain/block
+asserts:
+  - .txs[].result.events[]|select(.type=="refund").reason| contains("trading halted")
+---
+type: tx-deposit
+signer: {{ addr_maya_dog }}
+coins:
+  - amount: "100000000"
+    asset: "cacao"
+memo: "+:BTC.BTC"
+---
+type: create-blocks
+count: 1
+---
+type: check
+endpoint: http://localhost:1317/mayachain/block
+asserts:
+  - .|[.txs[].result.events[]|select(.type == "add_liquidity")]|length > 0
+---
+type: tx-deposit
+signer: {{ addr_maya_dog }}
+coins:
+  - amount: "100000000"
+    asset: "cacao"
+memo: "+:ETH.ETH"
+---
+type: create-blocks
+count: 1
+---
+type: check
+endpoint: http://localhost:1317/mayachain/block
+asserts:
+  - .|[.txs[].result.events[]|select(.type == "add_liquidity")]|length > 0
+---
+type: tx-deposit
+signer: {{ addr_maya_dog }}
+coins:
+  - amount: "1000000000"
+    asset: "cacao"
+memo: "=:ETH.ETH:{{ addr_eth_fox }}"
+---
+type: create-blocks
+count: 1
+---
+type: tx-observed-out
+signer: {{ addr_maya_dog }}
+txs:
+  - tx:
+      id: "{{ observe_txid 2 }}"
+      chain: ETH
+      from_address: {{ addr_eth_dog }}
+      to_address: {{ addr_eth_fox }}
+      coins:
+        - amount: "8150942100"
+          asset: "ETH.ETH"
+          decimals: 8
+      gas:
+        - amount: "960000"
+          asset: "ETH.ETH"
+      memo: "OUT:{{ native_txid -1 }}"
+    block_height: 2
+    finalise_height: 2
+    observed_pub_key: {{ pubkey_dog }}
+---
+type: check
+endpoint: http://localhost:1317/mayachain/queue/outbound
+asserts:
+  - .|length == 1

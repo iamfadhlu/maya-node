@@ -1,0 +1,174 @@
+{{ template "default-state.yaml" }}
+---
+type: state
+genesis:
+  app_state:
+    bank:
+      balances:
+        - address: {{ addr_module_asgard }}
+          coins:
+            - amount: "100000000000000"
+              denom: cacao
+    mayachain:
+      pools:
+        - asset: BTC.BTC
+          status: Available
+          status_since: "0"
+          decimals: "8"
+          balance_cacao: "3000000000000000"
+          balance_asset: "0"
+          LP_units: "3000000000000000"
+          synth_units: "0"
+          pending_inbound_cacao: "0"
+          pending_inbound_asset: "0"
+      liquidity_providers:
+        - asset: "BTC.BTC"
+          cacao_address: {{ addr_maya_dog }}
+          asset_address: ""
+          last_add_height: "1"
+          last_withdraw_height: "0"
+          units: "1000000000000000"
+          pending_cacao: "0"
+          pending_asset: "0"
+          pending_tx_Id: ""
+          cacao_deposit_value: "0"
+          asset_deposit_value: "0"
+          node_bond_address: null
+          withdraw_counter: "0"
+          last_withdraw_counter_height: "0"
+          bonded_nodes:
+            - node_address: {{ addr_maya_dog }}
+              units: "1000000000000000"
+        - asset: "BTC.BTC"
+          cacao_address: {{ addr_maya_fox }}
+          asset_address: ""
+          last_add_height: "1"
+          last_withdraw_height: "0"
+          units: "1000000000000000"
+          pending_cacao: "0"
+          pending_asset: "0"
+          pending_tx_Id: ""
+          cacao_deposit_value: "0"
+          asset_deposit_value: "0"
+          node_bond_address: null
+          withdraw_counter: "0"
+          last_withdraw_counter_height: "0"
+          bonded_nodes:
+            - node_address: {{ addr_maya_fox }}
+              units: "1000000000000000"
+        - asset: "BTC.BTC"
+          cacao_address: {{ addr_maya_cat }}
+          asset_address: ""
+          last_add_height: "1"
+          last_withdraw_height: "0"
+          units: "1000000000000000"
+          pending_cacao: "0"
+          pending_asset: "0"
+          pending_tx_Id: ""
+          cacao_deposit_value: "0"
+          asset_deposit_value: "0"
+          node_bond_address: null
+          withdraw_counter: "0"
+          last_withdraw_counter_height: "0"
+          bonded_nodes:
+            - node_address: {{ addr_maya_fox }}
+              units: "1000000000000000"
+      bond_providers:
+        - node_address: {{ addr_maya_dog }}
+          node_operator_fee: "0"
+          providers:
+            - bond_address: {{ addr_maya_dog }}
+              bonded: true
+              reward: "0"
+        - node_address: {{ addr_maya_fox }}
+          node_operator_fee: "0"
+          providers:
+            - bond_address: {{ addr_maya_fox }}
+              bonded: true
+              reward: "0"
+      store_version: "120"
+      node_accounts:
+        - active_block_height: "0"
+          ip_address: 1.1.1.1
+          node_address: {{ addr_maya_dog }}
+          bond_address: {{ addr_maya_dog }}
+          pub_key_set:
+            secp256k1: {{ pubkey_dog }}
+            ed25519: "tmayapub1addwnpepqfshsq2y6ejy2ysxmq4gj8n8mzuzyulk9wh4n946jv5w2vpwdn2yuz3v0gx"
+          signer_membership: []
+          status: Active
+          validator_cons_pub_key: tmayacpub1zcjduepqq75h7uy6qhesh9d3a9tuk0mzrnc46u8rye44ze6peua3zmpfh23qpj8pe3
+          version: "1.120.0"
+        - active_block_height: "0"
+          ip_address: 1.1.1.1
+          node_address: {{ addr_maya_fox }}
+          bond_address: {{ addr_maya_fox }}
+          pub_key_set:
+            secp256k1: {{ pubkey_fox }}
+            ed25519: "tmayapub1addwnpepqfshsq2y6ejy2ysxmq4gj8n8mzuzyulk9wh4n946jv5w2vpwdn2yuz3v0gx"
+          signer_membership: []
+          status: Standby
+          validator_cons_pub_key: tmayacpub1zcjduepqq75h7uy6qhesh9d3a9tuk0mzrnc46u8rye44ze6peua3zmpfh23qpj8pe3
+          version: "1.120.0"
+---
+type: create-blocks
+count: 1
+---
+# Replicate a similar state in which a liquidity provider has a bonded node but node doesn't have the 
+# liquidity provider listed as providers in bond_providers
+type: check
+endpoint: http://localhost:1317/mayachain/pool/BTC.BTC/liquidity_provider/{{ addr_maya_cat }}
+asserts:
+  - .bonded_nodes|length == 1
+  - .bonded_nodes[0].node_address == "{{ addr_maya_fox }}"
+  - .bonded_nodes[0].units|tonumber == 1000000000000000
+---
+type: check
+endpoint: http://localhost:1317/mayachain/node/{{ addr_maya_fox }}
+asserts:
+  - .bond_providers.providers|length == 1
+  - .bond_providers.providers[0].bond_address == "{{ addr_maya_fox }}"
+  - .bond_providers.providers[0].pools|length == 1
+---
+type: tx-deposit
+signer: {{ addr_maya_cat }}
+coins:
+  - amount: "1"
+    asset: "cacao"
+memo: "UNBOND:BTC.BTC:1000000000000000:{{ addr_maya_fox }}"
+---
+type: create-blocks
+count: 1
+---
+# After sending the unbond, because of the current issue, the liquidity provider should still have
+# the bonded node listed
+type: check
+endpoint: http://localhost:1317/mayachain/pool/BTC.BTC/liquidity_provider/{{ addr_maya_cat }}
+asserts:
+  - .bonded_nodes|length == 1
+  - .bonded_nodes[0].node_address == "{{ addr_maya_fox }}"
+  - .bonded_nodes[0].units|tonumber == 1000000000000000
+---
+type: create-blocks
+count: 1
+---
+type: tx-version
+signer: {{ addr_maya_dog }}
+version: "1.121.0"
+---
+type: create-blocks
+count: 2
+---
+# After store migration the bonded node should be removed from liquidity provider
+type: check
+endpoint: http://localhost:1317/mayachain/pool/BTC.BTC/liquidity_provider/{{ addr_maya_cat }}
+asserts:
+  - .bonded_nodes|length == 0
+---
+# Node should have the same bond providers as the beginning
+type: check
+endpoint: http://localhost:1317/mayachain/node/{{ addr_maya_fox }}
+asserts:
+  - .bond_providers.providers|length == 1
+  - .bond_providers.providers[0].bond_address == "{{ addr_maya_fox }}"
+  - .bond_providers.providers[0].pools|length == 1

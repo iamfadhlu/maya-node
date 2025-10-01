@@ -1,0 +1,140 @@
+{{ template "default-state.yaml" }}
+---
+{{ template "btc-eth-pool-state.yaml" }}
+---
+# larger pools to ensure more precise affiliate fees
+type: state
+genesis:
+  app_state:
+    bank:
+      balances:
+        - address: {{ addr_module_asgard }}
+          coins:
+            - amount: "100000000000000"
+              denom: cacao
+    mayachain:
+      liquidity_providers:
+        - asset: BTC.BTC
+          asset_address: {{ addr_btc_cat }}
+          asset_deposit_value: "100000000000"
+          last_add_height: "1"
+          pending_asset: "0"
+          pending_cacao: "0"
+          cacao_address: {{ addr_maya_cat }}
+          cacao_deposit_value: "1000000000000000"
+          units: "1000000000000000"
+      pools:
+        - LP_units: "1000000000000000"
+          asset: BTC.BTC
+          balance_asset: "100000000000"
+          balance_cacao: "1000000000000000"
+          decimals: "8"
+          pending_inbound_asset: "0"
+          pending_inbound_cacao: "0"
+          status: Available
+          synth_units: "0"
+---
+type: create-blocks
+count: 1
+---
+type: check
+endpoint: http://localhost:1317/mayachain/pools
+asserts:
+  - .|length == 2
+  - 0 == ${GAS=2000000000}-2000000000
+---
+########################################################################################
+# swap cacao to btc with affiliate
+########################################################################################
+type: tx-deposit
+signer: {{ addr_maya_fox }}
+coins:
+  - amount: "${SWAP_AMT=1000000000000}"
+    asset: "cacao"
+memo: "=:BTC.BTC:{{ addr_btc_fox }}::{{ addr_maya_pig }}:${BPS=150}"
+---
+type: create-blocks
+count: 1
+---
+type: check
+endpoint: http://localhost:1317/mayachain/queue/outbound
+asserts:
+  - .|length == 1
+  - .[0]|.in_hash == "{{ native_txid -1 }}"
+---
+type: tx-observed-out
+signer: {{ addr_maya_dog }}
+txs:
+- tx:
+    id: '{{ observe_txid 1 }}'
+    chain: BTC
+    from_address: {{ addr_btc_dog }}
+    to_address: {{ addr_btc_fox }}
+    coins:
+      - amount: "98289295"
+        asset: "BTC.BTC"
+        decimals: 8
+    gas:
+      - amount: "10500"
+        asset: "BTC.BTC"
+    memo: "OUT:{{ native_txid -1 }}"
+  block_height: 1
+  finalise_height: 1
+  observed_pub_key: {{ pubkey_dog }}
+---
+type: create-blocks
+count: 1
+---
+type: check
+endpoint: http://localhost:1317/mayachain/queue/outbound
+asserts:
+  - .|length == 0
+---
+type: check
+endpoint: http://localhost:1317/cosmos/bank/v1beta1/balances/{{ addr_maya_pig }}
+asserts:
+  - .balances|length == 1
+  - (.balances[]|select(.denom == "cacao")|.amount|tonumber) / (${SWAP_AMT} * ${BPS} / 10000 - ${GAS}) < 1.0001 # 10 bps precision
+  - .balances[]|select(.denom == "cacao")|.amount|tonumber == ${PIG_BALANCE=12999511367}
+---
+type: check
+endpoint: http://localhost:1317/cosmos/bank/v1beta1/balances/{{ addr_maya_fox }}
+asserts:
+  - .balances[]|select(.denom == "cacao")|.amount|tonumber == ${FOX_BALANCE=2498998000000000}
+---
+########################################################################################
+# swap btc to cacao with affiliate
+########################################################################################
+type: tx-observed-in
+signer: {{ addr_maya_dog }}
+txs:
+- tx:
+    id: '{{ observe_txid 2 }}'
+    chain: BTC
+    from_address: {{ addr_btc_fox }}
+    to_address: {{ addr_btc_dog }}
+    coins:
+      - amount: "50000000"
+        asset: "BTC.BTC"
+        decimals: 8
+    gas:
+      - amount: "10500"
+        asset: "BTC.BTC"
+    memo: "=:MAYA.CACAO:{{ addr_maya_fox }}::{{ addr_maya_pig }}:${BPS}"
+  block_height: 2
+  finalise_height: 2
+  observed_pub_key: {{ pubkey_dog }}
+---
+type: create-blocks
+count: 1
+---
+type: check
+endpoint: http://localhost:1317/cosmos/bank/v1beta1/balances/{{ addr_maya_fox }}
+asserts:
+  - (.balances[]|select(.denom == "cacao")|.amount|tonumber) / (${FOX_BALANCE} + ${SWAP_OUT_AMT=500483349108} - ${GAS}) < 1
+  - (.balances[]|select(.denom == "cacao")|.amount|tonumber) / (${FOX_BALANCE} + ${SWAP_OUT_AMT} - ${GAS}) > 0.9999 # 10 bps precision
+---
+type: check
+endpoint: http://localhost:1317/cosmos/bank/v1beta1/balances/{{ addr_maya_pig }}
+asserts:
+  - .balances[]|select(.denom == "cacao")|.amount|tonumber == (${PIG_BALANCE} + ${SWAP_OUT_AMT} * ${BPS} / 10000 | round)

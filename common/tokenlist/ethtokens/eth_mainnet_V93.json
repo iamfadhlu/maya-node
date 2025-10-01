@@ -1,0 +1,21 @@
+{
+  "name": "1inch",
+  "timestamp": "2021-12-15T14:01:52+00:00",
+  "version": {
+    "major": 145,
+    "minor": 0,
+    "patch": 0
+  },
+  "keywords": ["1inch", "default", "list"],
+  "tokens": [
+    {
+      "address": "0xdAC17F958D2ee523a2206206994597C13D831ec7",
+      "chainId": 1,
+      "name": "TetherUSD",
+      "symbol": "USDT",
+      "decimals": 6,
+      "logoURI": "https://tokens.1inch.io/0xdac17f958d2ee523a2206206994597c13d831ec7.png"
+    }
+  ],
+  "logoURI": "https://1inch.exchange/assets/images/logo.png"
+}

@@ -1,0 +1,11 @@
+node_modules
+
+#Buidler files
+cache/
+
+#Hardhat files
+artifacts/
+artifacts
+
+# env
+.env

@@ -1,0 +1,32 @@
+{
+  "result": [
+    {
+      "txid": "f55201b6f73bd1e1f825df65849b2b6cfe303689fe47826b25e9f6b20aa3e9b7",
+      "vout": 0,
+      "address": "XxA8qpfiEG57uvn6ygKE7Qk8QdydY3TBuV",
+      "account": "",
+      "scriptPubKey": "76a914eb84124e2af5d2b882af3fad3afe3dc6e7e3892488ac",
+      "amount": 0.01741425,
+      "confirmations": 1,
+      "spendable": true,
+      "solvable": true,
+      "safe": true,
+      "ps_rounds": -3
+    },
+    {
+      "txid": "15873a6b4033c2ae32e5bd2c991496429a82fc2810c7cadacd49c739c51e2e69",
+      "vout": 1,
+      "address": "Xbcb71VUeCck2LzT6rvLT4cChoLfVwfn7H",
+      "account": "",
+      "scriptPubKey": "76a9140a2a2ad63324a780382423aa8248280a59c9e1c288ac",
+      "amount": 0.0893295,
+      "confirmations": 1,
+      "spendable": true,
+      "solvable": true,
+      "safe": true,
+      "ps_rounds": -2
+    }
+  ],
+  "error": null,
+  "id": 1
+}

@@ -1,0 +1,11 @@
+{
+  "balances": [
+    {
+      "denom": "rune",
+      "amount": "496694100"
+    }
+  ],
+  "pagination": {
+    "total": "1"
+  }
+}

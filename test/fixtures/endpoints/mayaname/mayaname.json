@@ -1,0 +1,11 @@
+{
+  "name": "test1",
+  "expire_block_height": 10000,
+  "owner": "tmaya1tdfqy34uptx207scymqsy4k5uzfmry5sffuam7",
+  "aliases": [
+    {
+      "chain": "MAYA",
+      "address": "tmaya1tdfqy34uptx207scymqsy4k5uzfmry5sffuam7"
+    }
+  ]
+}

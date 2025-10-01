@@ -1,0 +1,74 @@
+[package]
+name = "zec"
+version = "0.1.0"
+edition = "2021"
+
+[lib]
+crate-type = ["cdylib", "staticlib"] # cdylib for Go CGO, staticlib optional
+
+[dependencies]
+# UniFFI dependencies for Go bindings (optional)
+uniffi = { version = "0.25", features = ["build"], optional = true }
+
+# NAPI dependencies for Node.js bindings (optional)
+napi = { version = "2.16.0", features = ["napi8"], optional = true }
+napi-derive = { version = "2.16.0", optional = true }
+
+tracing = "0.1.41"
+tracing-attributes = "0.1.28"
+tracing-subscriber = { version = "0.3.19", features = [
+  "fmt",
+  "env-filter",
+  "time",
+] }
+
+anyhow = "1.0.94"
+thiserror = "1.0"                                            # For defining custom errors
+hex = "0.4"                                                  # If you need hex encoding/decoding
+serde = { version = "1.0.215", features = ["serde_derive"] }
+serde_json = "1.0.133"
+once_cell = "1.21.3"
+bincode = "1.3.3"
+
+blake2b_simd = "1.0.2"
+rand_core = "0.6.4"
+secp256k1 = "0.29.0"
+rand_chacha = "0.3.1"
+
+zcash_keys = { git = "https://github.com/zlyzol/librustzcash.git", branch = "maya-add-op-return", features = [
+  "test-dependencies",
+] }
+zcash_protocol = { git = "https://github.com/zlyzol/librustzcash.git", branch = "maya-add-op-return", features = [
+  "local-consensus",
+] }
+zcash_client_backend = { git = "https://github.com/zlyzol/librustzcash.git", branch = "maya-add-op-return", features = [
+  "transparent-inputs",
+] }
+zcash_primitives = { git = "https://github.com/zlyzol/librustzcash.git", branch = "maya-add-op-return", features = [
+  "transparent-inputs",
+] }
+zcash_proofs = { git = "https://github.com/zlyzol/librustzcash.git", branch = "maya-add-op-return", features = [
+  # Minimize dependencies by not including params
+] }
+zcash_transparent = { git = "https://github.com/zlyzol/librustzcash.git", branch = "maya-add-op-return", features = [
+  "transparent-inputs",
+] }
+zcash_address = { git = "https://github.com/zlyzol/librustzcash.git", branch = "maya-add-op-return" }
+zcash_encoding = { git = "https://github.com/zlyzol/librustzcash.git", branch = "maya-add-op-return" }
+
+# Commented out as we're not using these features at the moment
+# sapling-crypto = "0.5.0"
+# orchard = "0.11.0"
+
+[lints.rust]
+unexpected_cfgs = { level = "warn", check-cfg = [
+  'cfg(zcash_unstable, values("zfuture"))',
+] }
+
+[features]
+default = []
+uniffi = ["dep:uniffi"]
+napi = ["dep:napi", "dep:napi-derive"]
+
+[build-dependencies]
+uniffi = { version = "0.25", features = ["build"] } # For build.rs
