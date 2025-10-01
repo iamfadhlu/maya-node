@@ -1,0 +1,2635 @@
+# Cosmos Go Bugs
+
+- [ ]  **Custom precompiles not warmed (EIP-2929)**
+    - **Symptom:** Higher gas / bad estimates when calling custom precompiles.
+    - **Where to look:**
+        - `state_transition.go`: call to `StateDB.Prepare(...)`.
+        - `statedb.go`: `Prepare` logic for EIP-2929 warming.
+        - EVM init: `WithPrecompiles(...)`, `ActivePrecompiles(...)`.
+    - **Red flag:** `Prepare(..., evm.ActivePrecompiles(rules), ...)` used **but** custom precompiles are only in `evm.precompiles` (map), **not** in `evm.activePrecompiles` (slice).
+    - **Fix pattern:** Ensure `activePrecompiles` includes **default + custom** (pass the union to `Prepare`, or build `activePrecompiles` from the registry on init).
+- [ ]  **Zero-activation gates enable post-London forks**
+    - **Symptom:** London-only chains still charge Shanghai/Cancun gas (e.g., EIP-3860 init-code word gas) and flip on post-London conditionals.
+    - **Where to look (Cosmos/Ethermint):**
+        - `x/evm/types/chain_config.go`: `DefaultChainConfig()` fork gates.
+        - Any rules helpers: `IsShanghai/IsCancun/IsMerge`, and gas paths like `GetEthIntrinsicGas` → `IntrinsicGas`.
+    - **Red flags:**
+        - `ShanghaiTime := sdkmath.ZeroInt()` (same for Cancun/Arrow/Gray/Merge) in defaults.
+        - Checks like `if isContractCreation && isEIP3860 { ... }` where `isEIP3860` derives from `IsShanghai(...)` that is **true at block 0**.
+    - **Fix pattern:** Treat “disabled” ≠ zero. Set post-London gates to a sentinel that never triggers (e.g., `math.MaxUint64`/very large time) or `nil` semantics if supported; add a unit test asserting `IsShanghai=false` at genesis and that EIP-3860 logic is not applied under London-only config.
+- [ ]  **Native-token transfers bypass EVM `receive()/fallback()`**
+    - **Symptom:** Sending native tokens via ERC20 precompile credits contracts **without** running `receive()`/`fallback()`, breaking EVM semantics.
+    - **Where to look (Cosmos/Ethermint):**
+        - `precompile/erc20/transfer.go`: `TransferMethod`, `TransferFromMethod`.
+        - Any precompile using `bankKeeper.Send/SendCoins` or `MsgServer.Send`.
+        - EVM call path: `ApplyMessage/Call` vs direct bank module calls.
+    - **Red flags:**
+        - Precompile does value transfer with `bankKeeper.Send(...)` (no EVM call).
+        - No check `isContract(to)` → no `vm.Call`/`evm.Call` with `value`.
+        - Tests show contract with `receive(){revert();}` still gets funds.
+    - **Fix pattern:**
+    Route native-token transfers **through the EVM**:
+        - If `to` is a contract, execute `evm.Call(msg{to, value, data: nil})` so `receive()/fallback()` runs and can revert.
+        - Keep bank module as the *accounting backend*, but only after a successful EVM call; otherwise revert.
+        - Add unit test: transfer to contract with `receive(){revert();}` **must fail**; with payable `receive()` **must succeed**.
+- [ ]  **Bridge “skip & forget” makes locked events unreplayable (funds stuck)**
+    - **Symptom:** `AssetsLocked` events get **skipped** (mapping missing or `mintERC20` error) and are **never retried**, permanently stranding funds on source chain.
+    - **Where to look (Cosmos/Ethermint bridges):**
+        - `keeper.AcceptAssetsLocked(...)`
+        - Mapping CRUD: `GetERC20TokenMapping`, `DeleteERC20TokenMapping`
+        - Mint path: `mintERC20(...)`
+    - **Red flags:**
+        - Logic like `if !exists { log.Warn(... "event skipped"); continue }`
+        - On mint error: `log.Error(... "event skipped"); continue`
+        - No durable event state (`pending/failed/retryable`), no replay queue, no idempotency key (sequence).
+    - **Fix pattern (minimal):**
+        - Replace “skip” with **durable fail state + retry**: store event (sequence), mark `pending/failed`, background retry w/ backoff; idempotent mint by sequence.
+        - **Freeze/guard deletions:** prevent deleting a mapping with in-flight or unprocessed events; or mark mapping “tombstoned” but still valid for replay.
+        - **Source-chain gate:** reject new locks if mapping is absent/paused.
+        - Add invariants/tests: no event may be dropped without a persisted state; deletion requires `last_processed_seq ≥ last_emitted_seq`.
+- [ ]  **Wall-clock time in precompile (EIP-2612 permit) ⇒ consensus halt**
+    - **Symptom:** `permit()` checks deadline using `time.Now()` → validators disagree near cutoff → divergent state → chain halt.
+    - **Where to look:**
+        - `precompile/erc20/permit.go`: `PermitMethod.Run`.
+        - Any precompile/keeper using `time.Now/time.Since/time.After` during state transition.
+    - **Red flags:**
+        - `timestamp := time.Now().Unix()` in `Run(...)`.
+        - Deadline check like `if deadline.Int64() < timestamp { ... }` (non-inclusive) using OS time.
+    - **Fix pattern:**
+        - Use consensus time: `timestamp := context.SdkCtx().BlockTime().Unix()` (or EVM `Context.Time`).
+        - Make expiration deterministic & spec-aligned (inclusive check).
+        - Add test: near-deadline permit must produce identical result across nodes.
+- [ ]  **No proof-of-ownership for consensus key ⇒ app-front-run/DoS**
+    - **Symptom:** Anyone can submit `SubmitApplication` with **someone else’s consensus pubkey**, racing the real operator; legit submit then hits `ErrAlreadyApplying`.
+    - **Where to look (Cosmos/Ethermint PoA):**
+        - `x/poa/keeper/application.go`: `SubmitApplication`, `checkValidatorOperator`, `GetApplicationByConsAddr`.
+        - Precompile that builds `Validator` and calls keeper (consensus key sourced there).
+    - **Red flags:**
+        - Only check: `tx.Sender == validator.operator` (✅) but **no signature from `validator.consPubKey`**.
+        - Early uniqueness gate: `GetApplicationByConsAddr(...) -> ErrAlreadyApplying` without proving key ownership.
+        - No challenge/attestation step linking operator ⇄ consensus key.
+    - **Fix pattern (minimal + robust):**
+        - **Require a signature** from `consPubKey` over application fields (chain-id, operator addr, cons pubkey, nonce/height) and **verify in keeper/ante**.
+        - Store `(consPubKey → operator)` binding; reject if bound to a different operator (both in *pending* and *active* sets).
+        - Optional: add explicit `MsgProveConsensusKey{operator, consPubKey, sig}` step before `SubmitApplication`.
+- [ ]  **R/S zero-trim → 65-byte sig not formed (permit breaks)**
+    - **Symptom:** `SigToPub`/recover fails intermittently; valid EIP-2612 permits revert when `R` or `S` starts with `0x00`.
+    - **Where to look:**
+        - `precompile/erc20/permit.go` (and any precompile doing ECDSA recover).
+    - **Red flags:**
+        - `signature := append(r.Bytes(), append(s.Bytes(), v)... )`
+        - Using `big.Int.Bytes()` for `R`/`S` without zero-left-padding to 32 bytes.
+        - `len(signature) != 65` before recover.
+    - **Fix pattern:**
+        - Build a fixed-width signature:
+            
+            ```go
+            var r32, s32 [32]byte
+            copy(r32[32-len(r.Bytes()):], r.Bytes())
+            copy(s32[32-len(s.Bytes()):], s.Bytes())
+            sig := make([]byte, 65)
+            copy(sig[0:32], r32[:])
+            copy(sig[32:64], s32[:])
+            sig[64] = v // v in {0,1}
+            
+            ```
+            
+        - Or use a helper like `crypto.JoinSignature(r32[:], s32[:], v)` if available.
+        - Add a unit test asserting recover succeeds for R/S with leading zeros.
+- [ ]  **Nonce slot derived with `HexToHash(string(key))` ⇒ zero-hash collision**
+    - **Symptom:** BTC & MEZO permit nonces collide (both read/write the same `0x00…00` slot) → using one increments the other; replay/DOS on EIP-2612–style flows.
+    - **Where to look:**
+        - `precompile/erc20/permit.go`: `getNonce(...)`, `incrementNonce(...)`.
+        - `key.go`: `PrecompileBTCNonceKey`, `PrecompileMEZONonceKey`.
+        - `evmkeeper.Get/SetStateExtension`.
+    - **Red flags:**
+        - `common.HexToHash(string(key))` where `key` is raw bytes (e.g., `{prefixPrecompile?, prefixNonce}`) → invalid hex → **zero hash**.
+        - Short, non-32B keys used directly as storage slots.
+    - **Fix pattern:**
+        - Derive a proper 32-byte slot (namespaced & collision-free):
+            
+            ```go
+            // Option A: keccak namespace
+            slot := crypto.Keccak256Hash(append([]byte("permit-nonce:"), key...))
+            // Option B: 32B left-pad bytes
+            slot := common.BytesToHash(leftPad32(key))
+            
+            ```
+            
+        - Use `slot` in **both** `GetStateExtension` and `SetStateExtension`.
+        - Include the **asset namespace + owner address** in `key` if nonce is per-(asset,owner).
+        - Add tests: BTC ≠ MEZO slot; increment on one does not change the other; no `0x00…00` slot ever used.
+        - If chain is live, **migrate** existing nonce from `0x00…00` to new slots.
+- [ ]  **EIP-2612 `nonces()` name mismatch breaks wallet interop**
+    - **Symptom:** Wallets/SDKs can’t build or verify permits because precompile exposes `nonce` (singular) instead of standard `nonces(address) → uint256`.
+    - **Where to look:**
+        - `precompile/erc20/permit.go` constants & method registry.
+        - ABI JSON shipped for the precompile.
+    - **Red flags:**
+        - `NonceMethodName = "nonce"`; ABI function named `nonce` not `nonces`.
+        - Selector mismatch vs EIP-2612 (`0x7ecebe00` for `nonces(address)`).
+    - **Fix pattern:**
+        - Rename to `nonces` in code and ABI; implement signature `function nonces(address owner) view returns (uint256)`.
+        - (Optional for backward compat) keep a deprecated `nonce(address)` alias mapping to the same logic.
+        - Add tests with common wallets/libs (ethers/web3) to fetch `nonces(owner)` and sign a valid EIP-2612 permit.
+- [ ]  **Self-destruct + later native transfer ⇒ balance zeroed ⇒ end-blocker panic**
+    - **Symptom:** A contract `SELFDESTRUCT`s, then receives native tokens later in the **same tx**. Commit path zeroes its balance, so supply accounting (e.g., BTC bridge invariant) fails and the node panics → chain halt.
+    - **Where to look (Cosmos/Ethermint forks):**
+        - `x/evm/statedb/statedb.go`: commit/apply stage handling of `obj.selfDestructed` → `keeper.DeleteAccount(...)`.
+        - `x/evm/keeper/statedb.go` (or similar): `DeleteAccount` implementation (look for `SetBalance(..., new(big.Int))`).
+        - Bridge/end-block invariants: functions that assert `bankSupply == minted - burned` (e.g., `verifyBTCSupply` / `EndBlock`).
+    - **Red flags:**
+        - In commit:
+            
+            ```go
+            if obj.selfDestructed { _ = keeper.DeleteAccount(ctx, obj.Address()) }
+            
+            ```
+            
+            and inside `DeleteAccount`:
+            
+            ```go
+            // clear balance
+            SetBalance(ctx, addr, new(big.Int)) // unconditional zero
+            
+            ```
+            
+        - No ordering/merge of intra-tx credits after `selfDestruct` (credits discarded).
+        - Invariant panics like: “inconsistent state between the bridge and mezo: invalid asset supply”.
+    - **Fix pattern (pick one, often combine):**
+        - **Pass final balance to deletion:**`DeleteAccount(ctx, addr, obj.account.Balance.ToBig())` and set that instead of zero.
+        - **Reorder commit:** apply all pending balance changes first, then finalize deletion using the object’s last balance.
+        - **Tombstone instead of zeroing:** mark deleted, clear storage, **don’t** force zero balance; allow accounting to see final credits.
+        - **(If adopting EIP-6780/Shanghai)**: align `SELFDESTRUCT` semantics (reclaims only in creation tx, otherwise no-op) to avoid this class entirely.
+        - Add tests: tx that `selfdestruct`s then transfers to same address must **not** break supply invariants; no panic in end-blocker.
+- [ ]  **Unsynchronized shared height (`latestBlock`) ⇒ data race / skipped or reindexed blocks**
+    - **Symptom:** Concurrent read/write of `latestBlock` between header listener goroutine and indexing loop → race; may skip heights, reindex, or crash.
+    - **Where to look:**
+        - `server/indexer_service.go`: `OnStart()` — goroutine reading `blockHeadersChan` updates `latestBlock`; main loop reads it.
+    - **Red flags:**
+        - Plain int64 `latestBlock` touched by multiple goroutines with **no mutex/atomic**.
+        - `select { case newBlockSignal <- struct{}{}; default: }` (signals can be dropped).
+        - Loops like `for i := lastBlock+1; i <= latestBlock; i++ { … }` using a racy upper bound.
+    - **Fix pattern (pick one):**
+        - **Atomic:** `var latest atomic.Int64`; writer `latest.Store(h)`, reader `h := latest.Load()`.
+        - **Mutex:** guard all reads/writes to `latestBlock` with a `sync.Mutex`.
+        - **Single-owner design (best):** make the **header goroutine** the sole owner of height and push concrete heights on a buffered channel; the indexer consumes sequentially (no shared var).
+    - **Hardening:**
+        - Add a test harness with `race`; fuzz bursts & delays on header channel; assert **no gaps/dupes** in indexed heights.
+        - Consider replacing “signal-only” chan with `chan int64` of heights to avoid missed notifications.
+- [ ]  **Unbounded `FilterCriteria.Addresses` ⇒ `eth_getLogs` RPC DoS**
+    - **Symptom:** Huge `addresses` array in `eth_getLogs` makes `GetLogs` scan an enormous set → multi-second+ CPU/mem spike → RPC stalls.
+    - **Where to look:**
+        - `rpc/namespaces/ethereum/eth/filters`: `PublicFilterAPI.GetLogs`, `NewBlockFilter`, filter construction & log iteration.
+    - **Red flags:**
+        - No `len(crit.Addresses)` cap.
+        - No block-range cap (`fromBlock`…`toBlock`).
+        - Topics unbounded + lack of dedupe.
+    - **Fix pattern (minimum):**
+        
+        ```go
+        const MaxFilterAddresses = 2048       // tune
+        const MaxFilterBlockSpan = 10_000     // tune
+        const MaxFilterTopics    = 256        // tune
+        
+        if len(crit.Addresses) > MaxFilterAddresses { return nil, ErrTooManyAddresses }
+        if span(crit.FromBlock, crit.ToBlock) > MaxFilterBlockSpan { return nil, ErrBlockRangeTooLarge }
+        if totalTopics(crit.Topics) > MaxFilterTopics { return nil, ErrTooManyTopics }
+        crit.Addresses = dedupe(crit.Addresses)
+        
+        ```
+        
+    - **Hardening (nice-to-have):** per-request context deadlines; server rate-limit & concurrency caps; response pagination; pre-filter by bloom/index before per-address scans; configurable limits surfaced in RPC config.
+- [ ]  **Concurrent subscribe overwrites topic channel → silent event loss**
+    - **Symptom:** Two subscribers race on the same topic. The later goroutine overwrites `topicChans[event]` with a new `chan`, while `eventBus` is still wired to the first. Publisher pushes to ch₁; second subscriber listens on ch₂ → misses all events.
+    - **Where to look:**
+        - `rpc/ethereum/pubsub/*`: `EventSystem.eventLoop`, subscription install path, `topicChans map[string]chan ResultEvent`, `eventBus.AddTopic/RemoveTopic`.
+    - **Red flags:**
+        - `topicChans[event] = ch` **before** `AddTopic` succeeds.
+        - Creating a new channel per subscribe for the same topic (no dedupe/fanout).
+        - Errors like “topic already registered” during concurrent installs.
+        - Map holds one channel per topic, but multiple subscribers exist.
+    - **Fix pattern:**
+        - Register first; only write `topicChans[event]` **after** `AddTopic` succeeds.
+        - If topic already registered, **reuse the existing channel** and just attach the new subscriber to the fanout list.
+        - Model a per-topic struct `{ch, subscribers(set), refCount}` and broadcast from a **single eventBus channel** to all subscribers.
+        - Guard installs/uninstalls with a mutex; make remove idempotent (only call `RemoveTopic` when `refCount` hits zero).
+- [ ]  **RW-lock released before iterating subscriber map ⇒ RPC DoS panic**
+    - **Symptom:** Under concurrent `Subscribe`/`Unsubscribe` and event publish, node panics with `fatal error: concurrent map iteration and map write`; public WS RPC goes down.
+    - **Where to look:**
+        - `rpc/ethereum/pubsub/pubsub.go`: `memEventBus.publishAllSubscribers`, `Subscribe`, `closeAllSubscribers`.
+        - Shared structure: `subscribers map[string]map[uint64]chan coretypes.ResultEvent` guarded by `subscribersMux`.
+    - **Red flags:**
+        - `RLock` → read pointer `subscribers[name]` → `RUnlock` → `for range` over that map.
+        - Writers use `Lock` to mutate the same inner map while publishers iterate it.
+        - No snapshot/defensive copy of the inner map before unlocking.
+    - **Fix pattern:**
+        - **Simple:** hold `RLock` for the entire iteration (acquire before read, `defer RUnlock()` after loop).
+        - **Better:** while holding `RLock`, build a **snapshot** (`make(map[uint64]chan ...); for k,v := range inner { snap[k]=v }`), then unlock and iterate the snapshot to avoid blocking writers.
+        - **Design hardening:** per-topic struct with its own mutex; or RCU-style atomic pointer to an immutable subscriber map updated by writers; ensure `RemoveTopic/closeAllSubscribers` is idempotent.
+        - Add a concurrency test that hammers `Subscribe/Unsubscribe` and publish; assert no panic and events still delivered.
+- [ ]  **Unbounded `TraceTx.Predecessors` ⇒ RPC DoS**
+    - **Symptom:** Large `req.Predecessors` makes `TraceTx` simulate an excessive number of txs before tracing, spiking CPU/memory and stalling the gRPC/JSON-RPC node.
+    - **Where to look:**
+        - `x/evm/keeper/grpc_query.go`: `Keeper.TraceTx` loop over `req.Predecessors`, calls to `ApplyMessageWithConfig`, and the subsequent `traceTx`.
+    - **Red flags:**
+        - No cap on `len(req.Predecessors)`.
+        - No wall-clock timeout around the predecessors loop.
+        - No cumulative resource budget (gas/work/logs) for the simulation phase.
+        - Tracer output limits not enforced globally.
+    - **Fix pattern:**
+        - **Hard caps:** e.g., `const MaxPredecessors = 128` (configurable); reject larger requests with `InvalidArgument`.
+        - **Time box:** wrap the entire predecessors phase in `context.WithTimeout` (e.g., 5s default) and honor `ctx.Err()` between iterations.
+        - **Work budget:** track cumulative simulated gas / steps / logs; abort when exceeding `MaxSimGas` / `MaxLogs`.
+        - **Tracer limits:** propagate and enforce output `Limit` across predecessors and the main trace; short-circuit once exceeded.
+        - **Rate limiting:** per-IP/token QPS & concurrent in-flight limits on `TraceTx`.
+- [ ]  **Missing journal fields ⇒ bad revert flips account type**
+    - **Symptom/Impact:** After a tx reverts, account flag silently resets to default (e.g., `YieldClaimable → YieldAutomatic`), changing accounting semantics (yield gets baked into balance, wrong claims).
+    - **Root cause pattern:** A mutator (e.g., `stateObject.SubClaimableAmount`) updates multiple fields but the journal entry (`balanceValuesChange`) omits one of them (the `flags`). On revert, the omitted field restores to zero/default instead of the pre-tx value.
+    - **Where to look (Cosmos/EVM forks & geth-derived state):**
+        - `state/state_object.go` (or equivalent): methods like `SubClaimableAmount`, `AddClaimableAmount`, `SetFlags`, `setBalanceValues`.
+        - Journal definitions & `journal.append(...)` calls; snapshot/revert paths (`Snapshot`, `RevertToSnapshot`).
+    - **Red flags:**
+        - Journal structs don’t capture **every** field that the mutator changes (e.g., `prevFlags` missing).
+        - Revert relies on zero-values for fields not recorded.
+        - Mutators compute & set multiple state components (`Fixed`, `Shares`, `Remainder`, `Flags`) but journal only records some.
+    - **Fix pattern:**
+        - Extend the journal record to include `prevFlags` (and any other mutated fields), and restore them on revert.
+        - Audit all state mutators for 1:1 correspondence between mutated fields and journaled “prev\*” fields.
+        - Add a regression test: snapshot → perform claim (or any flag-changing op) → force revert → assert flags, balances, claimable equal pre-snapshot.
+- [ ]  **Under-metered protocol extensions (yield + gas refund) ⇒ cheap DoS & block-stuffing**
+    - **Symptom/Impact:** Extra storage reads/writes added for native **yield** and **gas refund** aren’t fully charged. Gas bump only on `CREATE/CREATE2/CALL*` (and after `frameCount` threshold) misses:
+        - First-time `SSTORE` (20k) vs reset (5k).
+        - Static costs in `AllocateDevGas` (per-tx `SLOAD`/`SSTORE`, `AddBalance`).
+        - Costs in `Balance/GetClaimableAmount/SetBalance/SubClaimableAmount/SetFlags`.
+        Result: attackers touch many contracts, force heavy loops/writes, and recover most fees via refund → **sustained DoS / block stuffing** at discount.
+    - **Where to look (Cosmos/Ethermint forks with Blast-style mods):**
+        - Gas accounting gates: `BlastGasParamStorageGas`, `BlastMaxFrameCount`, opcode handlers (`CALL*`, `CREATE*`, `BALANCE`, `SELFDESTRUCT`).
+        - Yield paths: `stateObject.{Balance,SetBalance,SetFlags,SubClaimableAmount,GetClaimableAmount}` and share price/count reads/writes.
+        - Refund paths: `gasTracker.{UseGas,AllocateDevGas}` and `gtm.allocations` fan-out.
+    - **Red flags:**
+        - Flat + late gas surcharge (only after N frames).
+        - No special case for **zero→non-zero** `SSTORE` (20k).
+        - Per-tx static work (global SLOAD/SSTORE, AddBalance) not billed.
+        - Unbounded `allocations` iteration; accepts zero-gas entries.
+    - **Fix pattern:**
+        - **Meter where work happens:** charge dynamic costs in the exact opcode/paths (`BALANCE`, `SELFDESTRUCT`, yield setters/getters).
+        - **Always apply** surcharge (remove frameCount gate); include first-touch 20k `SSTORE`.
+        - **Bill static overhead once per tx** (e.g., intrinsic/ctx surcharge credited to sequencer, not refundable).
+        - **Bound & sanitize** `gtm.allocations` (cap size ≈ `blockGas/BlastGasParamStorageGas`; ignore zeros).
+        - **Policy levers:** raise minimum tax / maturity; automate abusive-governor detection and redirect refunds.
+- [ ]  **Intrinsic access-list gas misattributed to treasury instead of inducing dApps**
+    - **Symptom/Impact:** When a tx includes an EIP-2930 access list, its intrinsic charges (`TxAccessListAddressGas`, `TxAccessListStorageKeyGas`) are booked to the Blast/treasury address, not to the contracts whose addresses/slots are being warmed. Result: dApps consistently earn less than they induce (happens 100% of the time access lists are used).
+    - **Where to look:**
+        - `core/state_transition.go`: `IntrinsicGas(...)` calc and the line that does `gasTracker.UseGas(params.BlastGasAddress, gas)` before execution.
+        - Gas accounting fan-out logic: `gasTracker.UseGas` → `AllocateDevGas`.
+    - **Red flags:**
+        - A single `UseGas(BlastGasAddress, totalIntrinsicGas)` with no per-address breakdown.
+        - No loop attributing `TxAccessListAddressGas`/`TxAccessListStorageKeyGas` to each `accessList[i].Address`.
+    - **Fix pattern:**
+        - Split intrinsic gas attribution:
+            - For each `al := range msg.AccessList`:
+            `gasTracker.UseGas(al.Address, params.TxAccessListAddressGas + len(al.StorageKeys)*params.TxAccessListStorageKeyGas)`
+            - Attribute **only the remainder** of intrinsic gas (data bytes, creation overhead, etc.) to the treasury:
+            `UseGas(BlastGasAddress, intrinsicGasMinusAccessListPortion)`.
+        - **CREATE/CREATE2:** if the access list includes the to-be-created address, compute it up front (EOA nonce or `CreateAddress2`) to attribute correctly; if unknown, fall back to the caller or treasury.
+        - Preserve EIP-2929/2930 semantics (warming still happens) — this change only affects **who** gets credited, not execution behavior.
+        - Add config toggle/threshold if you need backwards-compatible rollout of revenue shifts.
+- [ ]  **Cross-layer fee mismatch → systemic underfunding/DoS**
+    - **Core idea:** If L2 **collects** L1 DA fees using a static scalar but **withdraws** them through a path that can be **discounted** (e.g., slashing-era withdrawal discounts), the rollup undercharges users and can’t cover L1 DA—creating a latent DoS on data posting.
+    - **Where to look (and grep):**
+        - L2 fee calc/oracle: functions like `NewL1CostFunc(...)`, `L1Cost(...)`, and the **scalar/overhead/basefee** reads (`ScalarSlot`, `OverheadSlot`, `L1BaseFeeSlot`).
+        - Bridge withdrawal path of the **L1FeeVault** (or equivalent) to see if **discounts** apply to fee withdrawals.
+        - Any constants or config using a **fixed L1 scalar** or ignoring L1-side discount rates.
+    - **Red flags:**
+        - Fixed `scalar` used network-wide (no time-varying/discount input).
+        - No feedback loop from L1 (oracle) that reports the **current withdrawal discount** or slashing status.
+        - Accounting assumes “fees in = fees out” while withdrawal path takes a percentage cut.
+    - **Fix pattern (tight, actionable):**
+        - Extend the L1Block oracle payload with **current withdrawal discount** (or “effective scalar”) and **apply it** in `L1Cost(...)`.
+        - Make `scalar` **dynamic** (block/time based), cached per block but refreshed, not a constant.
+        - Add **deficit guards**: if effective scalar < threshold, temporarily raise L2 L1-fee component or route a treasury top-up; emit metrics/alerts.
+- [ ]  **Precompile gas misattribution → perpetual “first-call” surcharge (massive overcharge)**
+    - **Core idea:** Frame-count surcharge logic applies an extra cold-cost (`BlastGasParamStorageGas`, e.g. 7100) whenever `GetGasUsedByContract(addr)==0`. Precompile calls book gas to a **treasury/system address** (e.g., `BlastGasAddress`) instead of the **callee**, so the callee’s usage stays zero forever → the surcharge fires on **every** precompile call (e.g., `sha256(32B)` becomes \~72 → **7172** gas).
+    - **Where to look (and grep):**
+        - Call gas calculators: functions like `makeCallVariantGasCallEIP2929` / `operations_acl.go` checking
+        `evm.frameCount > BlastMaxFrameCount && contract.gasTracker.GetGasUsedByContract(addr) == 0`.
+        - Precompile path: `RunPrecompiledContract(...)` and subsequent `gasTracker.UseGas(...)` calls; look for usage recorded to **`BlastGasAddress`** (or similar) instead of the callee.
+        - Gas tracker internals: `GetGasUsedByContract`, per-address allocations/touch maps, and fee allocation.
+    - **Red flags:**
+        - Any `UseGas(...)` that credits **system/treasury** for precompile execution rather than the **callee address**.
+        - Surcharge/“first-touch” conditions tied to **per-address** usage with **no updates** on precompile paths.
+        - No `isPrecompile(addr)` guard/whitelist in the surcharge check.
+    - **Fix pattern (tight, actionable):**
+        - **Attribute usage to the callee:** in the precompile path, record per-callee usage (e.g., `gasTracker.UseGas(callee, used)` or add `MarkTouched(callee)`), even if fee *distribution* still routes to treasury.
+        - Or **bypass** the surcharge for precompiles: add `if isPrecompile(addr) { blastGasCost = 0 }`.
+        - Ensure unit tests: repeated precompile calls after `frameCount > BlastMaxFrameCount` do **not** incur the 7100 surcharge; verify `GetGasUsedByContract(precompileAddr)` flips non-zero after first call.
+- [ ]  **Uncapped time×balance accrual (“etherSeconds”) → riskless, sustained block-stuffing DoS**
+    - **Core idea:** Gas refunds accrue via a time-weighted balance metric (e.g., `etherSeconds`). If accrual is **uncapped** and **not fully consumed/zeroed on withdraw**, an attacker can pre-farm surplus `etherSeconds`, withdraw principal (no capital at risk), then **loop claim→spend→claim** to refill refunds each block—keeping fees near-zero while stuffing blocks for days.
+    - **Where to look (and grep):**
+        - Accrual/update path: functions like `updateGasPredeploy(...)` that do
+        `etherSeconds += etherBalance * (now - lastUpdated)` and set `lastUpdated`.
+        *Grep:* `etherSeconds`, `lastUpdated`, `updateGasPredeploy`, `readGasParams`, `GasParameters`.
+        - Claim/withdraw path in the gas predeploy contract (e.g., `Gas.sol`):
+        `claim(...)`, `claimAllGas(...)`, parameters like `gasSecondsToConsume`.
+        *Grep:* `claimAllGas`, `claim(`, `gasSecondsToConsume`, `ceil`, `rate`, `maturity`.
+        - Any **caps/ceilings** logic: constants/slots like `ceilGasSeconds`, `ceilClaimRate`, or missing thereof.
+        *Grep:* `ceil`, `cap`, `max`, `limit`, `rate`.
+        - Admin clawback & timing: `adminClaimGas`, “maturity” delays, and whether claims can be immediate post-accrual.
+        *Grep:* `adminClaimGas`, `maturity`, `delay`, `cooldown`.
+        - Integration with fee allocation loop (e.g., `AllocateDevGas`) to see how quickly balances feed into accrual.
+    - **Red flags:**
+        - No `min(cap, computed)` when updating `etherSeconds`; accrual grows **past** what’s needed to redeem full balance at `ceilClaimRate`.
+        - Withdrawals **don’t** proportionally reduce or zero `etherSeconds`; surplus remains after principal is pulled.
+        - Claims allowed **immediately** (no enforced delay) and accept **user-supplied** `gasSecondsToConsume` with weak bounds.
+        - Lack of per-tx/block **refund-rate caps** and no burn/sink for excess time credit.
+        - Metrics/telemetry absent for “refund coverage ratio” (claimed vs accrued).
+    - **Fix pattern (tight, actionable):**
+        - **Cap accrual:** before storing, set `etherSeconds = min(etherSeconds, etherBalance * ceilGasSeconds)` (or equivalent bound derived from max claim rate).
+        - **Couple withdraw with seconds:** on any principal decrease, **reduce `etherSeconds` proportionally** (or zero on full withdraw).
+        - **Enforce pacing:** add per-tx and per-block **max refundable gas** tied to `ceilClaimRate`; reject/clip `gasSecondsToConsume`.
+        - **Delay & clawback safety:** keep a **maturity window** for new accrual; disallow immediate same-block self-funded refunds; ensure `adminClaimGas` can seize only **unmatured** credits.
+        - **Accounting tests:** add invariants: (1) no state where `etherSeconds` exceeds the cap; (2) withdrawing to zero balance leaves `etherSeconds == 0`; (3) long-horizon accrual cannot finance continuous full-block refunds beyond configured duration.
+- [ ]  **Precompile invalid-input revert + zero RequiredGas → free CPU work / DoS**
+    - **Core idea:** If a precompile returns **0 gas** for bad/unknown inputs and `Run` yields **`ErrExecutionReverted`**, the EVM **doesn’t charge remaining gas** but still does work. Attackers spam invalid calls (often with large inputs amortized via caller memory) to **exceed block-time** and DoS.
+    - **Where to look:** Precompile `RequiredGas` fallback; selector parsing/dispatch; precompile error handling in the EVM dispatcher (charging behavior on `ErrExecutionReverted`).
+    - **Red flags:** `RequiredGas` default **0**; invalid selector → `ErrExecutionReverted`; no per-word cost scaling with input; no input size caps.
+    - **Fix pattern (tight, actionable):** On invalid inputs, return a **custom error** that **burns all remaining gas**; make `RequiredGas` **non-zero** for any input with a **per-word component**; enforce **max input length** with gas-consuming rejects.
+- [ ]  **Non-determinism in `FinalizeBlock` (RPC/IO in consensus path) → consensus halt**
+    - **Core idea:** `FinalizeBlock` must be *purely deterministic*. Calling RPC/IO (e.g., querying validators/status) or spawning side-effects inside `FinalizeBlock` introduces node-local variability and error paths that can bubble up, halting a validator and risking chain halt.
+    - **Where to look:**
+        - App’s `FinalizeBlock` implementation and any callbacks it invokes (e.g., `PostFinalize`, “optimistic build” hooks).
+        - Any use of CometBFT clients inside the consensus path (validators/status/paging, snapshot bounds, pagination loops).
+        - Error propagation from these calls back to ABCI (returned errors vs. logged/ignored).
+    - **Red flags:**
+        - Fetching validator sets or node status during `FinalizeBlock`.
+        - Dependence on local node state (snapshot sync height, paging over validators).
+        - Returning errors (or panics) from “best-effort” logic invoked by `FinalizeBlock`.
+        - Starting goroutines/async tasks from within `FinalizeBlock`.
+    - **Fix pattern (tight, actionable):**
+        - Remove all RPC/IO from `FinalizeBlock`; use only data deterministically derived from block/previous committed state.
+        - Make “optimistic build”/proposer checks *best-effort and async after commit*; never block or return errors to ABCI.
+        - If lookups are unavoidable, *cache* required data in state before `FinalizeBlock`, or pass via proposal/consensus params.
+        - Convert all failures in these auxiliary paths to **log-and-continue**; guarantee `FinalizeBlock` cannot return non-deterministic errors.
+- [ ]  **Blob versioned-hash mismatch (Engine API v3) → block rejection / chain halt**
+    - **Core idea:** With Engine API v3 (EIP-4844), the proposer must call `NewPayloadV3` with the **expected `versionedHashes`** for any blob txs in the payload. The EL recomputes blob hashes from the payload and **rejects** if they don’t match. If the app always passes an **empty list**, any block containing a blob tx is **invalid**, leading validators to prevote nil and potentially halting the chain.
+    - **Where to look (and grep):**
+        - The code path that pushes execution payloads: functions wrapping **`NewPayloadV3`** (e.g., `pushPayload(...)`) and how they fill `versionedHashes`.
+        - Proposal/validation flow: **`PrepareProposal` → `ProcessProposal`** and the “optimistic payload” path to ensure blob hashes are threaded through.
+        - Transaction assembly: where **blob txs (type-3)** are parsed and their **versioned blob hashes** are extracted/plumbed.
+    - **Red flags:**
+        - `versionedHashes` is always `nil`/`[]` regardless of payload contents.
+        - No code that derives versioned hashes from blob txs before `NewPayloadV3`.
+        - Logs like: *“invalid number of versionedHashes: \[] blobHashes: \[...]”* when processing proposals.
+        - Feature toggles that disable blobs in EL but not in the app (mismatch between layers).
+    - **Fix pattern (tight, actionable):**
+        - When proposing, **collect versioned blob hashes** from all blob txs in the payload and pass them to **`NewPayloadV3`**; pass an empty slice only if **no** blob txs exist.
+        - Add **preflight validation**: recompute blob hashes from the payload locally and assert equality before calling `NewPayloadV3`.
+        - Add **e2e tests** with at least one blob tx to ensure proposals are accepted; add a guard to **reject blob txs** at mempool if the stack does not fully support EIP-4844.
+
+- [ ]  **Post-quorum vote extensions bypass validation → poisoned commit halts chain**
+    - **Core idea:** CometBFT does **not** run `VerifyVoteExtension` on vote extensions received **after** +2/3 quorum. If the app **trusts** last-commit vote extensions in `PrepareProposal` without re-validating (e.g., duplicate/invalid votes), a proposer can include **poisoned votes** in the next block. Peers then hit the stricter checks in `ProcessProposal`, reject the block, and the network enters a **perpetual proposal-reject loop** (chain halt) even with a single misbehaving validator.
+    - **Where to look:**
+        - The app’s `VerifyVoteExtension` logic (what it enforces) vs. what `PrepareProposal` assumes about last-commit extensions.
+        - The path that ingests **commit info** into `PrepareProposal` (e.g., `PrepareVotes`) and whether it re-checks duplicates/structure/signatures.
+        - `ProcessProposal` vote validation and how rejection is triggered on duplicate/invalid aggregates.
+    - **Red flags:**
+        - Comments/assumptions like “commit only contains valid VEs” and no additional checks in `PrepareProposal`.
+        - Duplicate detection done **only** in `VerifyVoteExtension` / per-block, but **not** when reading last-commit votes.
+        - Any erroring behavior on duplicates in `PrepareProposal` (causes stall) instead of **dedupe-and-continue**.
+    - **Fix pattern (tight, actionable):**
+        - In `PrepareProposal`, **re-validate** all last-commit vote extensions with the **same rules** as `VerifyVoteExtension` (duplicate/key consistency/sig checks) and **dedupe/ignore** bad or repeated votes instead of erroring.
+        - Enforce per-validator/per-header (e.g., `{sourceChainId, confLevel, attestOffset}`) uniqueness **before** assembling the proposal; log & emit evidence for slashable duplicates.
+        - Add tests: post-quorum injected duplicates must **not** cause proposal rejection; network should progress with poisoned votes ignored.
+- [ ]  **Signature-before-membership checks → proposer inflates verification work (liveness hit)**
+    - **Core idea:** In vote verification, doing **expensive signature checks** before confirming the signer is **in the current valset** lets a malicious proposer cram large `MsgAddVotes` with random keys. Validators burn CPU verifying non-members, causing multi-second/minute **proposal validation delays** and missed block times.
+    - **Where to look:**
+        - Proposal path that ingests aggregated votes (e.g., `AddVotes` → `verifyAggVotes`), especially the order: `agg.Verify()` (crypto) vs. `valset.Contains(addr)` (membership).
+        - Message/proposal size gates: consensus `MaxBlockSizeBytes`, application limits on vote counts/signature counts, and P2P rate/timeout settings that bound deliverable payloads.
+        - Any fast-path dedupe/uniqueness checks per validator/header before running crypto.
+    - **Red flags:**
+        - Signature verification runs **unconditionally** before checking validator **membership** or per-validator **uniqueness**.
+        - No hard cap on signatures per aggregate vote/message; limits rely only on max block size or P2P rates.
+        - Lack of early reject on unknown validator addresses or on duplicate signer entries.
+    - **Fix pattern (tight, actionable):**
+        - **Reorder checks:** derive signer address, **check `valset.Contains(addr)` first**, then run signature verification; drop unknowns immediately.
+        - Add **cheap prefilters**: per-validator uniqueness map for the aggregate, header/offset dedupe, and early size/count caps (per-message/per-block).
+        - Consider **batch or incremental verification** with early abort once a threshold of invalid/unknown entries is hit.
+        - Add configurable **max signatures per `MsgAddVotes`/proposal**, and document P2P `recv_rate`/`timeout_propose` expectations so large spam cannot cause prolonged stalls.
+- [ ]  **Malleable ECDSA votes + byte-equality duplicate check → FinalizeBlock DoS**
+    - **Core idea:** If vote signatures are accepted in malleable form (no **low-s** enforcement / v normalization) and “duplicate” detection compares **raw bytes** of signatures instead of the **(attestationRoot, validator)** tuple, the second (malleated) signature for the same vote triggers a uniqueness conflict that bubbles up as an error during **FinalizeBlock**, causing the block’s message bundle (often including the EVM payload) to fail → liveness/DoS while attacker repeats.
+    - **Where to look:**
+        - Signature verification helpers: `k1util.Verify`, `SigToPub`, `Verify(address, hash, sig)`; check for missing **low-s** normalization (`EIP-2`) and v handling.
+        - Vote aggregation & validation paths: `verifyAggVotes`, `AggVote.Verify`, `VerifyVoteExtension`, `ExtendVote`, `ProcessProposal`, `proposal_server.go::AddVotes`.
+        - Storage/ORM insert paths: `addOne`, `sigTable.Insert(...)`, handling of `UniqueKeyViolation`, `GetByAttIdValidatorAddress`, uniqueness on `(att_id, validator_address)`.
+        - Duplicate/double-sign logic: `isDoubleSign` decisions using `bytes.Equal(...)` on signatures, and how “double sign” vs “identical” is decided.
+        - ABCI wiring where **AddVotes** and **execution payload** share a single tx path: `FinalizeBlock`, tx building that bundles `MsgAddVotes` with the EVM payload.
+    - **Red flags:**
+        - No explicit **low-s** canonicalization; only subtracting 27 from v.
+        - Duplicate detection relies on **raw signature byte equality**; returns **error** for same vote with different (but valid) sig bytes.
+        - Insert path treats duplicates as **fatal** (error) instead of idempotent ignore/overwrite keyed by `(attestationRoot, validator)`.
+        - Any failure in **AddVotes** invalidates the whole bundle including the EVM payload.
+        - Assumes proposer-provided votes are pre-deduped across rounds/heights.
+    - **Fix pattern (tight, actionable):**
+        - **Canonicalize signatures on ingress:** enforce **low-s** (EIP-2) and normalize **v** before verify/insert; reject non-canonical.
+        - **Idempotent duplicate handling:** key by **(attestationRoot, validatorAddress)**; on existing entry, **ignore** or **overwrite**—never error—regardless of raw sig bytes.
+        - **Store semantics, not bytes:** persist canonical `(r, s_low, v_norm)` and treat equality at the message/validator level; use message mismatch (not byte inequality) to detect true double-sign.
+        - **Failure isolation:** decouple vote processing from execution payload (separate txs/msgs) or ensure AddVotes failures aren’t fatal to EVM payload execution.
+        - Add **defense-in-depth:** validate/limit vote sets in `PrepareProposal` and re-validate commit-info votes for duplicates before proposal construction.
+- [ ]  **Blind “retryForever” on Engine API errors → proposer-locked chain halt**
+    - **Core idea:** If `ProcessProposal` treats **all** `NewPayloadV3` errors the same (network vs JSON-RPC **Invalid params**) and loops in an unconditional **retryForever**, a malformed ExecutionPayload (e.g., missing `BlobGasUsed`/`ExcessBlobGas`) makes Engine API return a JSON-RPC error that is **permanently retried**, blocking `ProcessProposal` and halting progress.
+    - **Where to look:** `proposal_server.go` (`retryForever`, `ProcessProposal`), `pushPayload`, `engineclient.NewPayloadV3` → `Client().CallContext(...)`; status gates (`isInvalid/isUnknown/isSyncing`); any preflight payload checks (`parseAndVerify*`), and required Cancun fields (`Withdrawals`, `ExcessBlobGas`, `BlobGasUsed`) and `versionedHashes` handling.
+    - **Red flags:** Catch-all retry on any `error`; no separation of **transport** vs **JSON-RPC** errors; missing/nullable Cancun fields accepted; treating Engine API **InvalidParams/UnsupportedFork** like transient; infinite loop without backoff/deadline; proposal validation doesn’t pre-validate payload shape.
+    - **Fix pattern (tight, actionable):** Classify errors: **retry** only transport/timeouts; map JSON-RPC **Invalid/Unsupported** to `isInvalid` → **reject**. Add strict preflight for payload fields before Engine API call. Bound retries with backoff & context deadlines; add an allowlist of retriable error substrings/codes; emit metrics and fail fast on non-retriables.
+- [ ]  **Unvalidated validator pubkeys → FinalizeBlock crash / EVM stall**
+    - **Core idea:** Accepting a 33-byte “secp256k1” pubkey by **length only** (no on-curve/decompress check) lets an attacker register an off-curve x-coord. Later, consensus code **decompresses** it (e.g., `crypto.DecompressPubkey`) during `FinalizeBlock`, which **errors/panics** → consensus failure and no EVM blocks.
+    - **Where to look:** validator onboarding path end-to-end: staking contract `createValidator(bytes)`, EVM→Cosmos event handler (e.g., `deliverCreateValidator`), any `k1util.PubKeyBytesToCosmos` converters, and validator set sync that maps pubkey→address (e.g., valsync `insertValidatorSet` using `DecompressPubkey`).
+    - **Red flags:** only `len(pubkey)==33` checks; accepting raw x-only with `0x02/0x03` prefix but **no OnCurve test**; “convert and store” flows without validation; first real check happens inside `FinalizeBlock`/valsync; error path bubbles up as **CONSENSUS FAILURE**.
+    - **Fix pattern (tight, actionable):** Validate at the **earliest boundary**. In the staking contract and event processor: **decompress** (enforce 02/03 prefix), ensure `secp256k1` **OnCurve** and **not infinity**, and reject otherwise. Store a canonical, validated key format. In valsync, guard `DecompressPubkey` failures: **skip/ignore** invalid validators (log & metrics) instead of crashing consensus. Add unit tests for on-curve/off-curve cases and fuzz malformed 33-byte inputs.
+- [ ]  **Proposal-bloat via empty txs → block size inflation & slow blocks**
+    - **Core idea:** If `ProcessProposal` accepts **many transactions** and doesn’t reject **zero-message/empty** txs, a malicious proposer can stuff the proposal with thousands of empty txs. Nodes spend CPU/memory decoding/executing junk and spam per-tx error logs, inflating blocks toward consensus limits and **delaying block production**.
+    - **Where to look:** ABCI `PrepareProposal` (how `Txs` is assembled), `ProcessProposal` (loop over `req.Txs`, checks on tx **count**, **size**, and `GetMsgs()` **non-empty**), and `FinalizeBlock` (per-tx failure logging that amplifies disk usage).
+    - **Red flags:** Only per-message-type quotas (e.g., `allowedMsgCounts`) but **no invariant** on “exactly one tx”; no check for **len(tx)==0** or **GetMsgs()==0**; accepting unsigned/placeholder txs; logging **every** failed tx at error level.
+    - **Fix pattern (tight, actionable):** Enforce **single synthetic tx** per proposal (or a small **max tx count** far below consensus limits); reject txs with **no messages** or **empty bytes** early in `ProcessProposal`; bound total proposal **byte size** at the app layer; aggregate/rate-limit per-tx failure logs; keep Prepare/Process invariants in sync with tests.
+- [ ]  **Attestation DB blow-up via vote-extension spam → EndBlock O(N) DoS**
+    - **Core idea:** If `VerifyVoteExtension` accepts many distinct votes per validator within the window (e.g., consensus-chain headers across many offsets) and `Add/Approve` eagerly **inserts** each new `AttestationRoot` then **iterates all pending** attestations every block, a single validator can flood the table (kept alive by long `cTrimLag`) and force unbounded DB scans in `EndBlock`, stalling the chain.
+    - **Where to look:** Vote-extension verification path (`VerifyVoteExtension`); per-extension count/window checks; attestation insertion path (`InsertReturningId` keyed by `AttestationRoot`); pending-scan and approval loop (`Approve` over pending index); GC/retention rules (`deleteBefore`, `cTrimLag`, trim of consensus-chain attestations); duplicate detection scope (only intra-extension vs cross-block).
+    - **Red flags:** High `voteExtLimit` but no **per-validator/per-height** rate-limit; acceptance of consensus-chain attestations decoupled from real events; creation of DB rows **before** quorum; `Approve` scans “all pending” each block; very large `cTrimLag` for consensus chain; no slashing/back-pressure for useless votes.
+    - **Fix pattern (tight, actionable):** Enforce **per-validator per-height** (and per-window) caps; require threshold signatures before **materializing** an attestation row (store sigs first, create row on quorum); shorten/phase GC for consensus-chain attestations; bound pending set size with rejection/back-pressure; make `Approve` incremental (paged by index, capped per block); drop/ignore votes not tied to verifiable chain progress; add slashing for spammy duplicate/fake headers.
+- [ ]  **Validator onboarding frontrun (shared consensus pubkey) → deposit lock / validator hijack**
+    - **Core idea:** If `createValidator(pubkey)` locks funds on L1 and the relayer blindly forwards to Cosmos `MsgCreateValidator` without proving **ownership of `pubkey`** or reserving it, an allowlisted attacker can **front-run** with the victim’s `pubkey` and a small deposit. The attacker’s create succeeds first; the victim’s relayed create **fails** at Cosmos uniqueness checks while the victim’s funds remain **locked** on L1.
+    - **Where to look:** L1 staking contract `createValidator` and event; relayer/event processor (e.g., `deliverCreateValidator`) → Cosmos `MsgCreateValidator`; when/where funds are locked vs. Cosmos result; existence of `(pubkey → depositor/operator)` reservation; refund paths on Cosmos failure; PoP (proof-of-possession) for consensus pubkeys; allowlist assumptions.
+    - **Red flags:** No pubkey reservation or uniqueness check on L1; no PoP (the tx sender need not control `pubkey`); funds locked **before** Cosmos success; relayer is fire-and-forget (no ack/rollback); minimal `MinDeposit` makes grief cheap.
+    - **Fix pattern (tight, actionable):** Require **PoP**: include a signature by the consensus pubkey over a domain-separated message in `createValidator`. Add a **two-phase** flow: on-chain **reserve** `(pubkey, operator)` with timeout; relayer finalizes only once Cosmos accepts; otherwise enable **refund/withdraw**. Enforce L1 invariant: one active reservation per `pubkey`; idempotent finalization keyed by `(operator, pubkey)`.
+- [ ]  **Rounding-up in rewards share math → inflated stake, misallocation, and panic**
+    - **Core idea:** If `rewardsShares = delegatorShares * amt / rewardsTokens` uses decimal division that can **round up** (e.g., `Dec.Quo`), per-delegator **RewardsStake** can exceed its proportional share. Over time (delegations, slashes, share price drift), `∑ RewardsStake > RewardsTokens`, causing **overpayment** and eventually tripping strict checks (e.g., “allowed margin” assertions) → **panic/DoS**.
+    - **Where to look:** Validator methods converting **reward tokens ↔ reward shares** (e.g., `RewardsSharesFromRewardsTokens`, `RewardsTokensFromRewardsShares`); delegator starting info (`RewardsStake`) updates in staking/distribution hooks (`Before/AfterDelegationModified`, slashing paths); distribution math in `AllocateTokensToValidator`, `WithdrawDelegationRewards`; decimal/precision helpers (`LegacyDec.Quo`, `QuoInt`, rounding mode); invariants comparing **totalRewardStake vs totalRewardTokens** and any epsilon checks.
+    - **Red flags:**
+        - Using **round-to-nearest / round-up** when converting **tokens → shares**.
+        - Multiple tokens↔shares conversions in a single flow (compounding drift).
+        - Post-slash not re-normalizing rewards share base; “share price” only decreases.
+        - Invariants not asserted per-block; tiny legacy balances later violating epsilon.
+    - **Fix pattern (tight, actionable):**
+        - For **tokens → shares**, use **floor/truncate** (never round up); for **shares → tokens**, round **down** for payouts; route dust to community pool/treasury.
+        - Prefer a **reward index / rewardDebt** accrual model (per-validator accumulator) to avoid repeated division-based conversions.
+        - Add invariant: `abs(∑RewardsStake - RewardsTokens) ≤ ε` with **alerts**; rebase/normalize on slash & delegation changes.
+        - Consolidate conversions in one well-tested library; add property tests covering slashing, multi-delegator churn, and precision edges.
+- [ ]  **Jailed-validator short-circuit in reward sweep → accrued rewards dropped**
+    - **Core idea:** If the reward sweeper skips a validator on `IsJailed()` (e.g., `continue` / early return) without first **settling accrued rewards up to the jail height**, delegators permanently lose earnings accumulated before jailing (whether jail came from operator withdraw or slash).
+    - **Where to look:**
+        - Reward sweeping logic (e.g., `ProcessRewardWithdrawals`): handling of jailed validators, `continue`/`return` branches, and advancement of `(nextValIndex, nextValDelIndex)`.
+        - Distribution state used to compute payouts for jailed validators: `DelegatorStartingInfo{Height,PreviousPeriod}`, validator `CurrentRewards`, per-delegator reward periods.
+        - Jailing paths that can occur outside slashing (operator actions) and how they interact with reward accrual/finalization.
+    - **Red flags:**
+        - Skip-on-jail with no pre-settlement of rewards accrued before jail.
+        - `StartingInfo` for delegators on a jailed validator **never updates** after jail; payout period stuck.
+        - Sweep index advances past a jailed validator without a compensating “flush”/finalization step.
+        - Assumption that “jailed == no rewards” instead of “jailed == stop accruing new, still owe old”.
+    - **Fix pattern (tight, actionable):**
+        - On encountering a jailed validator in the sweep, **finalize payouts to the jail height**: compute `endingPeriod=jailPeriod`, settle delegators, then mark state so future sweeps skip or accrue zero.
+        - Make jail handling **idempotent**: add a “finalizedAt”/“closed” flag or zero out `CurrentRewards` only **after** settlement.
+        - Add tests: jail mid-epoch/mid-block, jail via withdraw vs. slash, multiple delegators; assert no loss vs. pre-jail accrual.
+- [ ]  **Key-ordered withdrawal sweep → starvation/indefinite delay**
+    - **Core idea:** Driving reward/withdrawal sweeps by **lexicographic KV iteration** (addresses as keys) while tracking progress with **numeric indices** lets inserts/deletes reorder the target set. New lower-sorting entries or removed predecessors shift positions, so some delegations/validators can be **perpetually skipped** or repeatedly delayed—especially if the sweep index is ever reset/dropped.
+    - **Where to look:**
+        - Reward sweep loop (e.g., `ProcessRewardWithdrawals`) and how it advances `(nextValIndex, nextValDelIndex)`.
+        - Validators/delegations iteration helpers that use **prefix iterators over address-keyed stores** (e.g., `GetAllValidators`, `GetValidatorDelegations`) and key builders like `ValidatorsKey + length-prefixed operatorAddr`.
+        - Mutations during/around the sweep: **new validator/delegation creation** (lower address) and **undelegations** that delete earlier keys.
+    - **Red flags:**
+        - Progress tracked by **position/index** instead of a **stable cursor key**.
+        - No snapshotting or pagination **page-key**; plain prefix iteration over a **moving set**.
+        - Assumption that address ordering is “fair” or stable across blocks.
+        - Sweep advances even when entries were skipped or list shrank/grew; no liveness guarantees.
+    - **Fix pattern (tight, actionable):**
+        - Replace index counters with a **stable cursor**: persist the last processed `(validator_addr, delegator_addr)` and resume with `seek(lastKey)`, using store pagination keys.
+        - Or **snapshot** the key list (bounded batch) at sweep start and iterate that snapshot; apply mutations next block.
+        - Use a deterministic **FIFO** (creation height/sequence) or **round-robin** over stable IDs; forbid reordering by address.
+        - Make sweep idempotent; on deletes, advance cursor to the **next higher key**; ensure inserts **after** the current cursor don’t jump ahead.
+        - Add liveness metrics/alerts: “max blocks since last processed for X”; fail fast if starvation is detected.
+- [ ]  **Nil vs empty slices in payloads → Engine “invalid params” & infinite retries**
+    - **Core idea:** Equality checks that only compare `len(slice)` let **nil** slices pass when `expected == 0`. Post-Shanghai/Cancun Engine APIs require **non-nil** lists (e.g., `withdrawals`). A proposer sending `nil` (instead of `[]`) yields JSON-RPC “Invalid parameters,” which naive retry loops treat as transient, causing **liveness lock / DoS**.
+    - **Where to look:**
+        - ABCI handlers building/verifying payloads: `PrepareProposal`, `ProcessProposal`, `PostFinalize`.
+        - EVM/engine integration: `NewPayloadV3` / `Execute(Stateless)PayloadV3`, `ExecutableData` struct.
+        - Validation paths that compare counts only: `if expected != len(x)`.
+        - Retry logic around Engine calls: functions like `retryForever`, error classifiers, places that log “Invalid parameters”.
+        - Serialization edges: `json.Marshal` of payloads; JSON tags with `omitempty`.
+        - Other mandatory Cancun fields that must be non-nil: `ExcessBlobGas`, `BlobGasUsed`, `versionedHashes`, `beaconRoot`.
+    - **Red flags:**
+        - Checks that accept `nil` when “zero elements” is intended (no explicit `x != nil`).
+        - Mandatory Cancun/Shanghai fields tagged with `json:",omitempty"` or not normalized.
+        - Error handling that collapses JSON-RPC **parameter errors** into “network retry”.
+        - Lack of unit tests for **zero** withdrawals / blobs / hashes cases.
+    - **Fix pattern (tight, actionable):**
+        - **Normalize on produce:** before marshal, convert `nil` slices to empty:
+        `if payload.Withdrawals == nil { payload.Withdrawals = make([]engine.Withdrawal, 0) }` (repeat for blobs/hashes).
+        - **Validate on consume:** reject proposals where mandatory lists are **nil** even if length would be 0.
+        - **Harden checks:** require **non-nil AND expected length** (`if x == nil || len(x) != expected { reject }`).
+        - **Classify errors:** treat Engine “invalid params” / spec violations as **abort (don’t retry)**; only retry network/timeout.
+        - **Tests:** add table tests for `{nil, []}` across all mandatory list fields and ensure proposer/validator symmetry.
+- [ ]  **Share↔token rounding mismatch → rewards exceed allocation**
+    - **Core idea:** When computing a delegator’s `rewardStake` from `rewardsShares`, using `Dec.Quo`/`Dec.Mul` (or `RoundInt`) without truncation can **round up**, so the sum of claimable rewards becomes **> tokens allocated** to the validator. This breaks conservation, starving last claimants and/or other validators.
+    - **Where to look:**
+        - Distribution paths: `WithdrawDelegationRewards`, `ProcessRewardWithdrawals`, `AllocateTokensToValidator`.
+        - Staking math helpers: `RewardsTokensFromRewardsShares`, `RewardsSharesFromRewardsTokens`; validator fields `DelegatorRewardsShares`, `RewardsTokens`.
+        - Hooks that (re)seed starting points: `Before/AfterDelegationModified`, slashing/unjailing hooks, validator create.
+        - Decimal→integer boundaries: uses of `Dec.Quo`, `Dec.Mul`, `RoundInt`, conversions to `Int` without `TruncateInt` / `QuoTruncate`.
+        - Invariant/ledger code: checks that total withdrawn ≤ allocated; fee/community/UBI remainder handling.
+    - **Red flags:**
+        - `Quo` instead of `QuoTruncate` in **shares→tokens** paths; any use of `RoundInt`/`Ceil` for payouts.
+        - Asymmetric rounding between **tokens→shares** and **shares→tokens**.
+        - No guardrails that clamp the final withdrawal to the validator’s remaining allocation.
+        - Missing “dust” bucket for fractional leftovers; negative UBI/community adjustments after withdrawals.
+    - **Fix pattern (tight, actionable):**
+        - **Normalize rounding policy:** tokens→shares may round up if needed, but **shares→tokens must truncate** (`QuoTruncate`, `TruncateInt`).
+        - Add conservation checks per validator-period: assert `claimed_total + pending ≤ allocated_total`; **clamp** last claimant to remaining.
+        - Track/carry **dust** per validator-period; on period close, sweep residuals to community/UBI.
+        - Tests: adversarial sequences (delegate/undelegate/slash/redelegate) proving `Σ(withdrawn) ≤ allocated` across blocks.
+- [ ]  **Stale power vs. live rewards → div-by-zero halt**
+    - **Core idea:** Allocation guards on **consensus power** (e.g., `totalPreviousPower != 0`) but divides by **current rewards tokens**. Because CometBFT power updates lag, all validators can have `rewardsTokens == 0` while power is still non-zero, making `sumRewardsTokens == 0` and triggering a **division-by-zero** during `QuoTruncate`, halting the chain.
+    - **Where to look:**
+        - Reward allocation entrypoints: `AllocateTokensToValidator`, `ProcessRewardWithdrawals`, EndBlock handlers that compute `powerFraction := v.GetRewardsTokens().QuoTruncate(totalRewardsTokens)`.
+        - Guards that short-circuit on **power** only (e.g., `if totalPreviousPower == 0 { ... }`) instead of on **token sums**.
+        - Staking/consensus plumbing: places using `LastPower`, `PreviousPower`, or valset updates (`ApplyAndReturnValidatorSetUpdates`, `BlockValidatorUpdates`) vs. instant token/withdrawal/slash effects.
+        - Bulk state transitions: simultaneous **full undelegations** or **slash-to-zero** before power updates land.
+    - **Red flags:**
+        - Any denominator like `totalRewardsTokens` not checked for zero, while the only guard checks `totalPreviousPower`.
+        - Inclusion of validators with `GetRewardsTokens() == 0` in the allocation loop.
+        - “Fallback to UBI/community pool” paths keyed on power, not on token availability.
+    - **Fix pattern (tight, actionable):**
+        - Compute `totalRewardsTokens := Σ max(v.GetRewardsTokens(), 0)` and **return/carry over** if it’s zero (do not enter division).
+        - **Filter out zero-token validators** before fraction math; allocate only across `rewardsTokens > 0`.
+        - Make the short-circuit guard depend on **`totalRewardsTokens == 0`**, not `totalPreviousPower == 0`; optionally gate on both.
+        - Add invariant tests: mass undelegation/slash in one block → allocation **does not** divide by zero; fees are deferred or routed safely.
+- [ ]  **Zero-cost precompile path → free compute & DoS**
+    - **Core idea:** A precompile’s `RequiredGas(...)` returns a **purely linear cost** (e.g., `perItem * count`) with **no intrinsic/base gas**. If inputs make the multiplier **zero** (e.g., `count == 0`), `RequiredGas` becomes **0**, but the precompile still performs **storage reads/validation** before reverting. Attackers can call it directly (bypassing higher-level Solidity guards), executing non-trivial work **for free** at scale → validator CPU saturation / instability.
+    - **Where to look:**
+        - Precompile implementations: `RequiredGas(...)` vs `Run(...)` (or equivalent) for each selector (e.g., `addParentIpSelector`).
+        - Argument parsing paths that compute item counts/lengths and any **pre-revert checks** (e.g., permission checks like `isAllowed()` or storage lookups) that happen **before** charging gas.
+        - Callers that can invoke the precompile **directly** (contracts using `CALL/STATICCALL`) rather than going through a Solidity facade enforcing non-zero inputs.
+        - Any precompile that mixes **dynamic pricing** with **IO/crypto** inside `Run(...)`.
+    - **Red flags:**
+        - `return perItemGas * count` with **no `max(base, …)`** or clamp.
+        - Assumptions like “`count` can’t be zero (enforced in Solidity)” while precompile accepts raw calldata.
+        - Storage reads / crypto ops / selector dispatch done **even when `RequiredGas` == 0**.
+        - Permissive `STATICCALL` paths that still hit storage reads inside the precompile.
+    - **Fix pattern (tight, actionable):**
+        - Add a **non-zero intrinsic**: `return baseGas + perItemGas * count` (choose `baseGas` to cover parsing/permission checks).
+        - **Validate inputs early** in `Run(...)` (e.g., `if count == 0 { return error }`) but make sure `RequiredGas(...)` for that case **still returns ≥ baseGas**.
+        - Move any storage/permission checks **after** gas accounting assumptions; avoid doing work before the cost gate.
+        - Add tests/benchmarks forcing `count == 0` (and other degenerate sizes) to assert **non-zero gas** and bounded CPU time.
+- [ ]  **Banker’s rounding in undelegation → frozen rewardsShares (perma-stuck dust)**
+    - **Core idea:** Using `math.LegacyDec.Mul` (banker’s rounding) to compute `rewardsShares` during `Unbond` can round **up** when precision overflows, so the computed removal exceeds the delegation’s recorded `RewardsShares`. After a few (slash + multiple unbonds) steps, the final “withdraw all” fails with `ErrNotEnoughDelegationRewardsShares`, permanently freezing the remainder.
+    - **Where to look:**
+        - Staking undelegation path: `x/staking/keeper/delegation.go::Unbond(...)`—the computation of `rewardsShares := shares.Mul(rewardsMultiplier)` and subsequent `Sub(...)` on `delegation.RewardsShares` / period records.
+        - Decimal precision/rounding policy: all places using `math.LegacyDec` for shares/tokens exchange rate, especially after **slashing** (fractional exchange rate).
+        - Other reward-share math that uses `Mul`/`Quo` (not `MulTruncate`/`QuoTruncate`) when **debitting** shares.
+        - Invariants/guards that compare computed `rewardsShares` vs stored fields (`LT`, `GTE` checks) and then mutate state.
+    - **Red flags:**
+        - `shares.Mul(rewardsMultiplier)` (banker’s rounding) used to *remove* shares, followed by `if delegation.RewardsShares.LT(rewardsShares) { return ErrNotEnough... }`.
+        - Exchange rates with many decimals (after **downtime slashing** or similar) + repeated partial unbonds.
+        - Mixed rounding policies across code paths (credit with truncation, debit with banker’s rounding).
+        - Errors like `not enough delegation rewards shares` when attempting to withdraw the final portion.
+    - **Fix pattern (tight, actionable):**
+        - Use **truncating math** when debiting: `rewardsShares := shares.MulTruncate(rewardsMultiplier)` (and mirror with `QuoTruncate` where appropriate).
+        - Enforce monotonic safety: clamp debits, e.g., `rewardsShares = rewardsShares.Min(delegation.RewardsShares)`.
+        - Standardize rounding policy: **credit with banker’s/round-half-even is OK**, but **debit must truncate** to avoid over-removal attempts.
+        - Add regression tests: (a) slash → two partial unbonds → final full unbond succeeds; (b) randomized sequences of delegate/slash/undelegate preserve `rewardsShares >= 0` and never error on “not enough shares.”
+- [ ]  **Unchecked Tx extraneous fields → bloated blocks & soft-DoS**
+    - **Core idea:** If ABCI++ `ProcessProposal`/`VerifyVoteExtension` paths **bypass ante** and don’t enforce emptiness/size caps on nonessential Tx fields (e.g., `Memo`, `FeePayer`, `FeeGranter`, `Signatures`, `AuxSignerData`), a proposer can stuff huge blobs into these fields. Blocks remain “valid” and get committed, driving storage bloat, slow propagation, and potential validator instability.
+    - **Where to look:**
+        - App’s `ProcessProposal` handler (often in `app/prouter.go` or module keeper wrappers) that decodes `Tx` and only checks message types/counts.
+        - Tx construction in `PrepareProposal` (builders using `SetMemo`, `SetFeePayer`, `SetFeeGranter`, `SetSignatures`, `AuxSignerData`).
+        - Ante chain wiring: confirm ante is **not** executed on proposal verification and that no equivalent checks exist in-process.
+        - Consensus params (`Block.MaxBytes`) vs per-Tx size caps—ensure per-Tx caps exist in proposal path.
+        - Protobuf types used (`cosmos.tx.v1beta1.Tx`, `AuthInfo`, `SignerInfo`, `AuxSignerData`): ensure fields aren’t populated on system-generated txs.
+    - **Red flags:**
+        - Comments like “transaction is not signed” combined with **no** explicit `Memo/fees/signatures == empty` checks.
+        - Accepting `FeePayer/FeeGranter` bytes without address decoding/validation.
+        - No per-Tx raw size limit; reliance only on large block max (≈100MB).
+        - `Signatures` accepted but unused for verification.
+    - **Fix pattern (tight, actionable):**
+        - In `ProcessProposal`, **hard-reject** any nonempty `Memo`, `FeePayer`, `FeeGranter`, `Signatures`, `AuxSignerData` for system pipeline txs.
+        - Add **per-Tx size cap** on encoded `TxRaw` (e.g., ≤ 50–100KB) in the proposal path; also bound `Memo` length (e.g., 0 or ≤ 128B).
+        - In `PrepareProposal`, **zero** these fields explicitly; use a minimal, canonical container tx type (or custom protobuf) for consensus payloads.
+        - Validate `FeePayer/FeeGranter` by decoding to `sdk.AccAddress`; reject on decode error.
+        - Add tests: (a) tx with huge `Memo`/`Signatures` is rejected in `ProcessProposal`; (b) blocks with only minimal fields are accepted; (c) fuzz lengths for these fields.
+- [ ]  **Unvalidated `Authority` in system msg → block bloat & consensus/EVM mismatch**
+    - **Core idea:** If a module message (e.g., `MsgExecutionPayload`) includes an `Authority` **string** that isn’t verified against the module account (or even basic bech32/size checks) in `ProcessProposal`, a proposer can stuff megabytes into this field. Cosmos will still commit the block (field is just data), while the EVM side may reject/ignore, causing **huge blocks**, wasted bandwidth/disk, and possible cross-layer inconsistencies.
+    - **Where to look:**
+        - `ProcessProposal` handler that validates `MsgExecutionPayload` before executing: confirm it enforces `Authority == ModuleAddress(types.ModuleName)` and decodes as a valid bech32 account.
+        - The msg definition and builder sites (`PrepareProposal`): ensure `Authority` is always set to the **module account** (e.g., `authtypes.NewModuleAddress(ModuleName).String()`), not attacker-controlled.
+        - Any message/ABCI path that bypasses ante checks: verify **explicit** length caps on string/bytes fields inside messages (not just Tx-level fields).
+        - Downstream handlers of the message: check they re-derive the expected authority internally rather than trusting the payload string.
+    - **Red flags:**
+        - `Authority` accepted as arbitrary string without: (a) bech32 decode; (b) equality to module account; (c) max length guard.
+        - Cosmos accepts the block while EVM step later fails (e.g., when malformed authority causes engine-side reject), indicating cross-layer validation gaps.
+        - Comments like “transaction is not signed” with no compensating message-field validation.
+    - **Fix pattern (tight, actionable):**
+        - In `ProcessProposal`:
+            - `addr, err := sdk.AccAddressFromBech32(msg.Authority)` → reject on error.
+            - `require addr.Equals(authtypes.NewModuleAddress(types.ModuleName))` → reject if not equal.
+            - Enforce `len(msg.Authority) ≤ SMALL_CAP` (e.g., 128B); reject oversize.
+        - In `PrepareProposal`: always set `Authority` programmatically from the module address; do **not** accept external input.
+- [ ]  **Precompile unbounded memory + RPC state override → OOM on `eth_call`**
+    - **Core idea:** Precompiled contracts that size buffers from **untrusted state** (e.g., `ancestorsCount`) can be abused via Geth’s **state override** in `eth_call` to force **huge allocations** (e.g., `make([]T, n)` with forged `n`). This crashes RPC nodes (OOM) even though no consensus state changes occur—creating an easy DoS against public endpoints.
+    - **Where to look:**
+        - Precompiles with dynamic allocation: functions like `getAncestorIps`, `getDescendantIps`, or any path that converts on-chain integers (or `big.Int`) into slice/map lengths or `bytes.Buffer.Grow`.
+        - RPC `eth_call` execution path that applies state overrides before running the EVM (ensure precompiles aren’t trusting overridden storage for sizing).
+        - Gas calculators in precompiles: verify that memory size growth is reflected in **required gas** and not bypassed for “view”/static calls.
+    - **Red flags:**
+        - `n := new(big.Int).SetBytes(...); buf := make([]byte, n.Uint64())` (or `int(n.Int64())`) with no cap or sanity bound.
+        - Length/offsets derived from storage without **min/max** checks; use of `Uint64()` on attacker-controlled values.
+        - `eth_call` allowed with **unbounded state overrides** and no RPC-side limits (payload size, override size, or execution complexity).
+        - Precompile methods callable via `STATICCALL` that skip fee/charging yet perform large allocations.
+    - **Fix pattern (tight, actionable):**
+        - Add **hard per-call caps** on list sizes and memory growth in precompiles (e.g., `if n > MaxAncestorsPerCall { return error }`).
+        - Compute **required gas** as a function of **data volume** (e.g., `intrinsic + memCostPerItem*n`) and **enforce** it before allocating.
+        - Prefer **bounded iteration** / streaming over preallocation; avoid trusting stored counters—recalculate with early-exit once cap is hit.
+        - On the RPC side: **limit or disable state overrides** for precompiles (feature flag), enforce **strict limits** on override map size and values, and set execution **time/memory ceilings** for `eth_call`.
+- [ ]  **Retroactive reward-multiplier changes → undelegation lock/frozen funds**
+    - **Core idea:** If undelegation uses the **current** rewards multiplier(s) (period/token) to recompute the shares required to withdraw, but delegations’ **recorded rewardsShares** were created under an **older multiplier**, any **increase** makes `requiredShares = shares * newMultiplier` exceed the delegation’s recorded rewardsShares. The safety check then fails and **undelegation becomes impossible** (funds effectively locked).
+    - **Where to look:**
+        - Governance `UpdateParams` handlers that change **reward multipliers** (per period/token-type) and their **validation**.
+        - Staking `Unbond` / `Undelegate` paths that compute `rewardsMultiplier := tokenTypeInfo.RewardsMultiplier * periodInfo.RewardsMultiplier` at **withdraw time**.
+        - Data model for **Delegation/PeriodDelegation**: is the **multiplier at entry** (or an index) stored per-position?
+        - Any “flexible period” logic that can change period type **after** deposit without adjusting historical multipliers.
+    - **Red flags:**
+        - Undelegation check compares `delegation.RewardsShares` against `shares * currentMultiplier` (not the **entry** multiplier / index).
+        - No per-delegation snapshot/index of reward multiplier at **deposit** (or last compounding).
+        - Param validation allows **arbitrary increases** to multipliers without migration or bounds.
+        - No migration/adjustment when params change; no “version” on delegations to gate recalculation.
+    - **Fix pattern (tight, actionable):**
+        - **Snapshot index model:** Store a per-period (and per-token-type) **rewards index** that only increases; each delegation stores its **index at entry**. On undelegation, compute owed rewards/shares via **(globalIndex / entryIndex)**—never by today’s raw multiplier.
+        - At minimum, store the **effective multiplier** used when minting `delegation.RewardsShares` and use **that** to compute requiredShares on exit.
+        - On parameter updates, either (a) **migrate** delegations’ recorded shares to the new basis, or (b) enforce changes apply **only to new accruals** by advancing the index rather than replacing the base multiplier.
+        - Add param guards: cap **delta** and/or **schedule** changes (grace period) so migrations can run; unit tests for “can fully withdraw after multiplier ↑”.
+- [ ]  **Cross-layer validator-existence race → deposit blackhole/lost stake**
+    - **Core idea:** If the EVM-side staking contract accepts a **stake to a validator** without an atomic ack from the Cosmos side, a malicious would-be validator can **front-run** by fully undelegating (removing its Cosmos record) right before the deposit is processed. The Cosmos handler then returns `ErrNoValidatorFound`, and if the bridge path just **drops the deposit on error** (no refund/compensation), the delegator’s funds are **permanently lost**.
+    - **Where to look:**
+        - EVM→Cosmos staking bridge: deposit handler (`ProcessDeposit` / `deliverCreateValidator` / `stake(...)`) that calls Cosmos `GetValidator` and **what happens on error** paths.
+        - Cosmos staking keeper removal conditions (e.g., **remove validator when `DelegatorShares==0 && IsUnbonded()`**), and timing windows around unbonding/singularity height.
+        - Any **inflight/pending** queues for deposits vs. immediate execution; whether failed deposits are **enqueued for refund**.
+        - Mapping/authority checks on the EVM side: does “operator exists” get validated **before** accepting a deposit?
+    - **Red flags:**
+        - Error like `validator_not_found` causes the deposit to be **discarded** with no compensating withdrawal/refund.
+        - No “pending validator” state or **grace period** that prevents immediate validator record removal when deposits are in flight.
+        - Validator removal is **instant** on full undelegation for non-active validators; no safeguard against first-delegator race.
+        - EVM accepts deposits for **any whitelisted operator** without checking a **live Cosmos validator record**.
+    - **Fix pattern (tight, actionable):**
+        - Make deposits **two-phase**: (1) record deposit as **pending** on EVM; (2) finalize only after Cosmos **acks** validator existence; else **auto-refund** via a dedicated “failed deposits” withdrawal queue (with fair scheduling alongside rewards).
+        - Add an **operator existence gate** on the EVM side (e.g., sync’d mapping `operatorId->exists`) updated from Cosmos; reject deposits when the Cosmos validator record is absent.
+        - Prevent validator record removal while there are **pending inbound deposits** or enforce a **cool-down** before removal.
+        - Consider a **persistent operator ID** separate from current validator record; if missing, deposits must revert/refund rather than be processed and dropped.
+- [ ]  **Under-metered precompile + mempool head-of-line blocking → permanent empty-blocks DoS**
+    - **Core idea:** A precompile does work that scales with **dynamic state (graph/loops/DFS)** but its `RequiredGas` underestimates worst-case reads. One tx can then take **> block budget** to execute. Because builders pick/persist the same pending tx (nonce-ordered) each block, it’s **retried forever**, starving other txs and yielding **permanent empty EVM blocks** even while consensus keeps finalizing.
+    - **Where to look:**
+        - Precompile `RequiredGas(...)` vs. implementation: any **state-proportional loop** (e.g., `findAncestors`, BFS/DFS, adjacency scans) and whether gas scales with **edges/depth** and **SLOAD cold/warm costs**.
+        - “Cheap” read paths (e.g., `get*Count`, `staticcall`) that still traverse large structures.
+        - Hard caps: **max depth / max neighbors / total visits**; ensure caps are enforced **inside** precompile, not only by config.
+        - Block builder / proposer logic: does it **retry the same pending tx first** each block; is there a **per-tx execution budget** or skip/demote logic after timeouts?
+    - **Red flags:**
+        - `RequiredGas` uses a **fixed constant** or “average count” instead of a **provable upper bound** on reads/writes.
+        - Graph/collection traversal without **visited set limit** or **iteration cap**.
+        - Read functions priced as **O(1)** but doing **O(N+E)** storage accesses.
+        - No **builder fallback** (e.g., if tx > time budget, **skip and continue** with others).
+        - Reliance on **block time** or CL timeouts to abort long precompile calls.
+    - **Fix pattern (tight, actionable):**
+        - Make `RequiredGas` an **upper bound** for worst-case path: charge at least **intrinsic + (#unique slots × cold SLOAD)** (+ margin). For graph ops, meter by **(visited\_nodes + traversed\_edges)** and include loop overhead.
+        - Enforce **strict, on-chain caps** (depth, neighbors, total visits). Abort traversal once caps hit; return partial with a **well-defined status** (no unbounded loops).
+        - Add **builder anti-HOL**: if a tx exceeds a **per-tx CPU/gas-to-time budget** during payload construction, **demote/skip it for this block** and proceed with other txs; re-queue behind others after **N failed attempts**.
+        - Add **pre-admission simulation** (light `Call` with block budget) before putting tx at mempool head; tag/penalize txs that repeatedly exceed budget.
+        - Telemetry & guards: metrics for **precompile slot reads**, traversal length, and **retry counters**; circuit-break inclusion when thresholds are breached.
+- [ ]  **Sweep-over-live-delegations omits exiting delegators → stuck rewards off-bridge**
+    - **Core idea:** Reward distribution is done by an **EndBlock sweep over current delegations** (e.g., `GetValidatorDelegations`). When a delegator **fully undelegates**, their delegation is removed from KV and they **drop out of the sweep**, so accrued rewards since the last sweep can **remain stranded** (e.g., in the Cosmos-side account rather than bridged/payout path).
+    - **Where to look:**
+        - EndBlock reward sweep code (e.g., `ProcessRewardWithdrawals`) that iterates **active** delegations and advances indices/cursors.
+        - Staking keeper’s **full-undelegate path** (`Unbond`, `RemoveDelegation`) and whether any **hooks** run **before deletion**.
+        - Distribution keeper: how **delegator rewards** and **validator commission** are cashed out; check if a **claim on removal** exists.
+        - Cross-module bridge/glue (EVM staking/engine keepers): how a reward **withdrawal is enqueued** to EVM; does it require the delegation to still exist?
+        - Hook registrations: presence/absence of `BeforeDelegationRemoved`, `BeforeDelegationSharesModified`, `AfterDelegationModified` doing **final settlement**.
+    - **Red flags:**
+        - Reward sweeps depend **only on current delegation set** (KV iteration) with **no terminal settlement** when a delegation hits zero shares.
+        - No `BeforeDelegationRemoved` hook or it doesn’t **force a rewards withdrawal** / enqueue a payout **before** deleting state.
+        - Validator **self-delegation** and **commission** follow the same sweep and can be stranded on validator exit.
+        - Comments like “TODO: withdraw later” or reliance on **user re-delegating** to recover rewards.
+    - **Fix pattern (tight, actionable):**
+        - Add a `BeforeDelegationRemoved` (and validator-removal) hook that:
+            - Calls **`WithdrawDelegationRewards`** (and **commission withdrawal**) and **enqueues** any cross-chain payout **before** deletion.
+            - If the cross-chain path is busy, write to a **“pending payouts” ledger** decoupled from the live delegation set; drain it with bounded per-block limits.
+        - Make the sweep **idempotent** and **delegation-independent** by also scanning **pending payouts** each block.
+        - Provide a **direct user claim** path (Cosmos/EVM) for legacy/pending rewards not tied to an active delegation.
+        - Tests: full-undelegate then verify **no residual rewards** remain; include validator self-delegation & commission exit cases; include jailed/removed scenarios.
+- [ ]  **Unchecked `validatorIndex` in withdrawals → forged `WithdrawalsRoot` / EL header manipulation**
+    - **Core idea:** If consensus-side verification skips a field in `withdrawals` (e.g., `validatorIndex` that your app repurposes as an enum), a malicious proposer can stuff arbitrary values that still pass local checks but alter the **withdrawals list used to derive `WithdrawalsRoot`** in EL (`ExecutableDataToBlock → DeriveSha`). The block header will embed a root computed from attacker-chosen data, creating silent state drift risks and future incompatibilities.
+    - **Where to look:**
+        - Proposal verification paths (`ProcessProposal`/`FinalizeBlock`) that **compare expected vs. actual withdrawals**; ensure **every field** (index, validatorIndex/type, address, amount) is checked.
+        - Any code/comments that **assume a default** (e.g., “always 0”) and therefore **skip equality checks**.
+        - The CL→EL handoff (`pushPayload` / Engine API `NewPayloadVx`) and EL build path (`ExecutableDataToBlock`) where **no extra validation** occurs before hashing withdrawals.
+        - Schema/type definitions for withdrawals: are enum-like fields actually **unbounded integers** at the wire level?
+    - **Red flags:**
+        - “Skip the validator index check” comments or conditionals in comparison helpers.
+        - Mismatch between **application-level meaning** (enum/typed) and **wire encoding** (raw uint) with no range check.
+        - Verification compares **counts and a subset of fields** but not the full tuple.
+        - EL accepts whatever `Withdrawals` the proposer sent; CL doesn’t **recompute** or **fully validate** before forwarding.
+    - **Fix pattern (tight, actionable):**
+        - In proposal verification, **reconstruct the expected withdrawals deterministically** and require **exact field-by-field equality** (index, validatorIndex/type, address, amount, ordering).
+        - Enforce **range/enum validation** on `validatorIndex` (or rename to an explicit `type` field) and reject out-of-domain values.
+        - **Re-derive `WithdrawalsRoot` locally** from the validated list and either (a) compare to the provided header root or (b) refuse to forward payloads that don’t match.
+- [ ]  **Node-dedup in path-sensitive graph sums → undercount on diamond DAGs (royalty LAP)**
+    - **Core idea:** Royalty “LAP stack” is **path-sensitive**: $S(v)=\sum_{p\in Parents(v)} (S(p)+w_{p\to v})$. If the implementation **DFS/BFS-walks ancestors once** and adds each edge royalty at most once (using a global `visited/ancestors` set), it effectively computes a **sum over edges**, not over **all paths**. In diamond shapes (shared ancestors), the same upstream edge must contribute **multiple times** (once per distinct path). Node-level dedup therefore **undercounts** (e.g., missing the second $p_{1\to2}$ in two branches), breaking `getRoyaltyLAP` / `getRoyaltyStackLAP`.
+    - **Where to look:**
+        - Precompile/keeper code that **traverses IP graphs** (`getRoyalty*`, `Stack*`, `findAncestors`) and accumulates totals while maintaining a **global visited set**.
+        - Loops that read parent lists and do `totalRoyalty.Add(totalRoyalty, royalty)` inside traversal; check whether royalties are **added once per edge** rather than **weighted by number of paths**.
+        - Mismatch between **spec recurrence** (“sum of parents’ stacks + edge royalties”) and code that just walks and sums edges.
+        - Absence of **topological DP** / **memoization** or **path multiplicity** counting.
+    - **Red flags:**
+        - `ancestors := map[Address]struct{}` / `if !visited[parent] { … }` around royalty accumulation.
+        - No **topological order**; no **per-node S(v)** memo; no **path count** propagation.
+        - Tests only cover **chains/trees**, not **diamond DAGs** (shared parents).
+    - **Fix pattern (tight, actionable):**
+        - Implement **DAG DP with memoization**: `S(v) = Σ_p (S(p)+w_{p→v})`, base `S(root)=0`. Compute in **topological order** over the ancestor subgraph of the query node.
+        - Alternative equivalent: compute **path multiplicities**. Let `paths[x]` be number of distinct paths from `x` to target; then sum `Σ_{edge u→v} (w_{u→v} * paths[v])` plus propagate `paths[u]+=paths[v]`. Either approach must count shared-ancestor edges **per path**.
+        - Keep a **cycle guard** (for safety) but **do not suppress contributions via node-level dedup**.
+        - Add **diamond-graph tests** where the same upstream edge should contribute **k** times for **k** distinct paths; assert `getRoyalty*` matches the spec recurrence.
+- [ ]  **Fork-boundary evidence check mismatch → post-fork tombstones for pre-fork offenses**
+    - **Core idea:** At a protocol “singularity” (fork) height, some infractions (e.g., downtime) are explicitly **forgiven/reset**, but double-sign handling only checks the **reporting block height**, not the **infraction height**. If evidence submitted **after** singularity references a double-sign **before** singularity, validators can still be **slashed & tombstoned**, violating the fork’s amnesty intent and creating inconsistent treatment across modules.
+    - **Where to look:**
+        - Evidence processing entrypoints (e.g., `BeginBlocker` / `ProcessEvidence`) that gate handling on **current block height** vs. **evidence.Height**.
+        - Double-sign logic in `x/evidence` vs. downtime resets in `x/slashing`—ensure both apply **singularity** in a consistent way.
+        - The path from CometBFT misbehavior (`Misbehavior.Height`) into the keeper: confirm the **infraction timestamp/height** is plumbed and used.
+        - Parameter/keeper getters for `SingularityHeight`; audit **all** comparisons around it.
+    - **Red flags:**
+        - Conditional like `if ctx.BlockHeight() < singularity { skip }` without consulting `evidence.Height` (or infraction time).
+        - Downtime path explicitly **clears** state at singularity, while double-sign path has **no equivalent** check.
+        - Tests cover pre/post-fork downtime but **lack** pre-fork double-sign evidence submitted post-fork.
+    - **Fix pattern (tight, actionable):**
+        - Gate double-sign handling on **infraction height/time**, not submission time:
+            - `if evidence.Height < singularityHeight { return nil /* ignore pre-fork */ }`.
+        - Align module semantics: mirror downtime’s **state reset** for double-signs at singularity (e.g., ignore/treat as expired).
+        - Add invariant/CI tests:
+            - Evidence made at `h < singularity`, submitted at `h' > singularity` ⇒ **no** slash/tombstone.
+            - Evidence made at `h ≥ singularity` ⇒ normal handling.
+        - Document fork policy (which infractions are forgiven vs. not) and enforce uniformly across `x/slashing` and `x/evidence`.
+- [ ]  **Non-deterministic map iteration in precompiles → consensus divergence / chain halt**
+    - **Core idea:** Returning data built by iterating a Go `map` (or any unordered set) causes **different node orders** for the same elements. If that byte-encoded array is read by a contract and **stored on-chain**, nodes compute **different state roots** (invalid gas/merkle root during proposal), halting consensus. Example: `getAncestorIps` builds an ABI array by ranging over a `map[Address]struct{}`.
+    - **Where to look:**
+        - Precompiles in execution clients (e.g., `core/vm/*`) that return lists: functions like `getAncestorIps`, `findAncestors`, `getRoyalty*`, or anything that aggregates into a `map`/“set” before encoding to bytes.
+        - Any ABCI/EL code paths that **marshal** collections to bytes/JSON/RLP for proposals or payloads.
+        - Cosmos modules or utilities that collect results in maps then emit arrays (replies, events, or state writes).
+        - Helpers that return “sets” as `map[T]struct{}` or `map[K]V` and immediately encode them to ABI/RLP/JSON.
+    - **Red flags:**
+        - `for k := range myMap` (or `for k, v := range myMap`) used to **populate slices/bytes** returned outside the function.
+        - Building ABI arrays/byte blobs from maps **without sorting**.
+        - Comments implying “order doesn’t matter” for a value that is later **persisted or hashed**.
+        - JSON/RLP encoding of a map directly (natural order is unspecified).
+    - **Fix pattern (tight, actionable):**
+        - Convert map keys to a slice, **sort deterministically** (e.g., lexicographic by 20-byte address or by key bytes), then encode.
+        - Prefer **ordered structures** at write time: store parents/ancestors as **sorted arrays** in state so reads are inherently stable.
+        - If iteration over KVStore is required, rely on **key-ordered iterators** (e.g., prefix-ordered) instead of maps.
+        - Add consensus tests: same graph, two nodes/processes ⇒ **identical output bytes** from precompile; property-test that order is stable across runs.
+- [ ]  **Dual-queue withdrawal indices collide → skipped payouts / silent burns**
+    - **Core idea:** If two independent CL queues (e.g., unstake/UBI withdrawals and staking-reward withdrawals) each assign `Withdrawal.Index` starting from 0 and are later merged into one EL `Withdrawals` array, index collisions can occur. EL and CL code often assume **globally unique, strictly increasing** indices; duplicates may be ignored or mismatched, leading to apparent “fund loss” (CL burns recorded, EL transfer missing) or proposal validation brittleness.
+    - **Where to look:**
+        - The per-queue producers: reward sweep vs. unstake/UBI sweep; their `Front()`/`Get()` and how `Index` is computed when peeking/merging.
+        - The merger that builds the final `etypes.Withdrawals` in `PrepareProposal` (and any prior aggregation helpers).
+        - Proposal validation path that compares local vs. received withdrawals (e.g., `compareWithdrawals`) and any assumptions about index monotonicity.
+        - Any persistence/restart logic for queue heads/tails (front pointers) that could reset or drift indices.
+        - Tests/invariants that assert uniqueness/ordering across **all** sources, not just within a single queue.
+    - **Red flags:**
+        - Multiple queues each assigning `Index = front + i` with **no global sequencer**.
+        - Comments implying “monotonically increasing” but scoped only to a single queue.
+        - Reindexing only inside a queue peek function; merger simply concatenates arrays.
+        - Reliance on current EL behavior “not caring” about duplicates (fragile across clients/versions).
+        - Missing runtime invariant: “indices are strictly increasing and unique across the whole block.”
+    - **Fix pattern (tight, actionable):**
+        - Introduce a **single global withdrawal sequence** (e.g., `GlobalWithdrawalSeq` in state). When assembling the block’s withdrawals, assign `Index = ++GlobalWithdrawalSeq` to every item post-merge (do not reuse per-queue indices).
+        - Persist the global seq atomically with block assembly; on failure/rollback, revert it to avoid gaps or reuse.
+        - In `compareWithdrawals`, assert **strictly increasing** indices and **no duplicates**; fail fast if violated.
+        - Add an **invariant check** in end-block (or a simulation test) that scans constructed `Withdrawals` for uniqueness and monotonic order.
+        - (Optional hardening) Encode source type in a separate field (e.g., keep using `Validator` as type discriminator) but never overload `Index` for typing.
+- [ ]  **Broken topological sort → duplicated nodes inflate DAG propagation (royalties, scores)**
+    - **Core idea:** A DFS-style topo sort that (a) marks `visited` too late (on pop rather than on first discover) and (b) re-pushes the same node when reached via multiple inbound edges can yield **duplicate entries** in the topological order. Any “propagate in topo order” routine (e.g., LRP royalty accumulation) will then double-count paths and overpay.
+    - **Where to look:**
+        - Precompiles or modules that implement **manual topo sort / DFS with an explicit stack**.
+        - Functions named like `topologicalSort`, `getRoyaltyLrp`, `findAncestors`, or any “propagate over DAG” logic that consumes a topo order.
+        - Code that builds `allParents`/adjacency on the fly while traversing and pushes parents conditionally based on `visited`.
+        - Output assembly that assumes **one node appears once** in the order (no dedupe before use).
+    - **Red flags:**
+        - `visited[current] = true` combined with immediately **re-pushing** `current`, then pushing **all parents**; later, “if visited → append to topo.”
+        - No separate `discovered/inQueue` set; `visited` used to mean “finished” but not “enqueued,” allowing **multiple enqueues** of the same node.
+        - Topo order length **> unique node count**; presence of the **same node twice** in logs/arrays.
+        - Propagation loops that iterate the returned topo list **backwards** to push values upstream without verifying uniqueness.
+        - Multiple edges into a node are common; code does not guard against **multi-edge push storms**.
+    - **Fix pattern (tight, actionable):**
+        - Use **Kahn’s algorithm** (indegree queue) to guarantee each node appears **exactly once**; or
+        - If staying with DFS, implement **three-color marking** (WHITE/GRAY/BLACK) and **append on post-visit** only, with a separate `enqueued`/`discovered` set so each node is pushed **at most once**.
+        - Before consuming the topo order, **assert invariants**: `len(order) == uniqueNodes`, and `order` contains no duplicates; fail fast if violated.
+        - In propagation (e.g., royalty calc), operate on **unique topo order** and, if necessary, **dedupe parallel edges** or accumulate per-edge with an explicit edge-visited guard when semantics require it.
+        
+        *Note: This is distinct from the previously covered “non-deterministic map iteration” heuristic; here the bug is **duplicate nodes in topo order**, not iteration order randomness.*
+        
+- [ ]  **EL/CL delegation-id override mismatch → unstake/redelegate failures**
+    - **Core idea:** If the consensus layer (CL) **overrides** the user-requested period to **flexible** (e.g., validator only accepts locked tokens → force `periodType=flex`, `delegationId=0`) but the execution layer (EL) **returns/records a non-flexible delegationId (>0)**, users will later call `unstake/redelegate` with the **wrong id**. CL can’t find that period delegation and rejects the operation, leading to stuck funds until the user guesses the real id.
+    - **Where to look:**
+        - Staking deposit path where CL may **override** period type / delegation id (e.g., `deposit.go` setting `periodType = flex`, `delID = FlexiblePeriodDelegationID` when `SupportTokenType == locked`).
+        - Unstake/redelegate handlers and validation (e.g., `ValidateUndelegateMsg`, `GetPeriodDelegation`, error returns like `ErrNoPeriodDelegation`).
+        - Event/ABI surfaces from EL that **return** `delegationId` to users/wallets; ensure they reflect the **actual** id used in CL.
+        - Any docs/UI that suggest a non-flex period while validators **force** flexible for locked tokens.
+    - **Red flags:**
+        - Deposit path mutates `periodType`/`delegationId` **after** EL decided/displayed an id.
+        - Unstake path trusts **caller-supplied** `delegationId` with **no fallback** to the forced flex id (`0`) on not-found.
+        - EL events/returns include a non-zero delegation id for validators that only accept locked tokens.
+        - Errors like `period_delegation_not_found` on otherwise valid positions; users report “works with id 0, fails with returned id.”
+    - **Fix pattern (tight, actionable):**
+        - **Single source of truth:** On successful stake, have CL emit/log the **actual** `(periodType, delegationId)` and return it to EL so UIs store the **effective** id.
+        - **Unstake fallback:** If `GetPeriodDelegation` fails for provided id **and** validator/tokenType implies a flex override, **retry with `delegationId=0`**.
+        - **Pre-translate on CL ingress:** When processing EL `unstake` events, **translate** the incoming id to the **effective** id stored for `(delegator, validator, tokenType)` before lookup.
+        - **Validate at deposit time:** Reject deposits where EL insists on non-flex while validator enforces flex, **or** normalize and **surface** the normalized id in the same transaction/event.
+        - **Tests:** Add cases where user requests non-flex to a “locked-only” validator; assert the returned id is `0` and that later `unstake` with that id succeeds; also assert failure when using non-zero id without fallback.
+- [ ]  **Nil-vs-empty withdrawals bypass → EL loop/chain stall**
+    - **Core idea:** Consensus validates withdrawals only by **length equality**; when `expected==0`, a proposer can set **`Withdrawals=nil`** (not `[]`) to pass checks. EL (geth) paths expect a **non-nil empty list**, so a `nil` value can yield malformed payloads and **infinite processing loops / stalls**.
+    - **Where to look:**
+        - Proposal validation: `ProcessProposal`, `compareWithdrawals`, `parseAndVerifyProposedPayload`, `ExecutionPayload(...)` (Cosmos module → EL handoff).
+        - Proposal construction: `PrepareProposal` where `payload.ExecutionPayload.Withdrawals` is set/overridden.
+        - EL ingestion: geth `ExecutableDataToBlock`, `NewPayloadV3/newPayload`, and places computing `WithdrawalsHash` / `DeriveSha`.
+        - JSON/codec layer that could drop empty arrays via `omitempty` or pointer/slice ambiguity (e.g., `[]*Withdrawal` vs `nil`).
+    - **Red flags:**
+        - Checks like `if expectedTotalWithdrawals != len(actualWithdrawals)` with **no explicit `actualWithdrawals != nil` guard**.
+        - Builders that set `Withdrawals` conditionally and **never normalize zero case** to `[]`.
+        - JSON structs using `omitempty` so empty arrays are **omitted**, producing `null` on the other side.
+        - EL code paths that do `if params.Withdrawals != nil { ... }` and assume **non-nil → present**, else treat as **not-enabled**, diverging from CL semantics.
+    - **Fix pattern (tight, actionable):**
+        - **Normalize at source:** In `PrepareProposal`, always set `payload.ExecutionPayload.Withdrawals = make([]*Withdrawal, 0)` when there are 0 items.
+        - **Validate at consensus:** In `compareWithdrawals`/`ProcessProposal`, require `actualWithdrawals != nil` and then check `len(actualWithdrawals) == expected`. Reject `nil` when withdrawals are enabled.
+        - **Decode-time hardening:** After unmarshal, map `nil` to empty slice **or** fail fast if feature is active and field missing. Avoid `omitempty` on withdrawals.
+        - **EL-side assertion:** In `ExecutableDataToBlock`, if withdrawals are enabled and `params.Withdrawals == nil`, **return error** (don’t loop). Also verify `WithdrawalsHash` equals the **empty-list root** when length is zero.
+- [ ]  **EL error conflation → proposer-amplified block delays**
+    - **Core idea:** If `ProcessProposal` treats **all** `NewPayloadV3` errors as *transient networking* and retries (e.g., via `retryForever`), a proposer can craft a payload that makes the EL return **JSON-RPC InvalidParams** (e.g., `withdrawals`, `excessBlobGas`, or `blobGasUsed` set to `nil`). Validators will spin on retries until timeout (e.g., 10s), inflating block time by ≥5× without slashing the proposer.
+    - **Where to look:**
+        - Proposal path: `ProcessProposal` / `proposal_server` calling `retryForever(...)`, `pushPayload(...)`, `isInvalid(...)` branching.
+        - Engine client wrapper: `EngineClient.NewPayloadV3(...)` call site and how **errors vs. statuses** are surfaced (does an EL-side INVALID come back as an `error` or as `Status=INVALID`?).
+        - Payload verification: pre-call checks like `parseAndVerifyProposedPayload(...)` ensuring **post-Shanghai/Cancun** invariants (non-nil `Withdrawals`, `ExcessBlobGas`, `BlobGasUsed`, `versionedHashes`, `beaconRoot`).
+        - Retry/timeout knobs: the **per-try timeout** (e.g., 10s), retry loops in both `ProcessProposal` and `FinalizeBlock`.
+    - **Red flags:**
+        - Comments like “**retry all errors**” or code paths returning `(false, nil)` on any error to force a retry.
+        - Missing **nil checks** for fork-mandated fields before calling EL.
+        - Engine client that **returns an `error`** for EL-invalid payloads (e.g., “Invalid parameters”) instead of `Status=INVALID`, defeating invalid-payload short-circuiting.
+        - No differentiation between **transport errors** (timeouts, connection reset) and **semantic EL rejections**.
+    - **Fix pattern (tight, actionable):**
+        - **Validate upfront:** In `parseAndVerifyProposedPayload(...)`, enforce fork rules—reject if `Withdrawals`, `ExcessBlobGas`, `BlobGasUsed`, `versionedHashes`, or `beaconRoot` are `nil` when required.
+        - **Classify errors:** In `pushPayload(...)`, map JSON-RPC errors like `InvalidParams`/`UnsupportedFork` to a **synthetic `Status=INVALID`** (no retry). Only retry **I/O/transient** errors.
+        - **Bound retries:** Add a **retry budget** or shorter per-try timeout for proposal verification; fall back to next round quickly on EL-invalid payloads.
+        - **Telemetry & policy:** Emit metrics for repeated invalid proposals; optionally **slash or dock rewards** for proposers submitting EL-invalid payloads to discourage griefing.
+- [ ]  **Event-accumulator overwrite in challenger → missed discrepancy challenges**
+    - **Core idea:** When building a list of challenges from multiple passes (e.g., **discrepancy checks** + **timeout checks**), code that **reassigns** the `challenges` slice and then sends that slice—rather than the **aggregated** `pendingChallenges`—will silently drop earlier findings, letting malicious executions pass unchallenged.
+    - **Where to look:**
+        - End-block handlers that aggregate events (e.g., `endBlockHandler`) and call sequences like `CheckValue(...)`, `GetUnprocessedPendingEvents(...)`, `CheckTimeout(...)`, `DeletePendingEvents(...)`, `SetPendingEvents(...)`.
+        - Places that **append** into an accumulator (`pendingChallenges = append(pendingChallenges, ...)`) but later call a sender/publisher with a **different** variable (e.g., `SendPendingChallenges(challenges)`).
+        - Channel producers that enqueue challenges for async processing (e.g., `SendPendingChallenges`, `challengeCh`)—verify the **exact slice** being sent is the **aggregated** one.
+        - Any function where a local `challenges` variable is **redeclared/overwritten** between steps (shadowing).
+    - **Red flags:**
+        - Multiple assignments to `challenges` with no final merge step.
+        - Accumulator exists (e.g., `pendingChallenges`) but the sender uses another variable.
+        - Comments or TODOs indicating alerts “later” while the pipeline already **drops** data now.
+        - Unit/integration tests missing for “both discrepancy and timeout present in same block” path.
+    - **Fix pattern (tight, actionable):**
+        - Always **accumulate** into a single slice (e.g., `pendingChallenges`) and **send that slice**: `SendPendingChallenges(pendingChallenges)`.
+        - Avoid variable shadowing; prefer explicit names (`discrepancyChallenges`, `timeoutChallenges`) and **merge** before send.
+        - Add a test where both paths produce challenges and assert the sender receives **both**.
+        - Instrument with counters/logs: number of discrepancies, timeouts, and **sent** totals must match; alert if mismatch.
+- [ ]  **Head-of-line DoS via oversized L1→L2 deposit payloads**
+    - **Core idea:** If L2 must **finalize deposits strictly in sequence**, a single `MsgFinalizeTokenDeposit` that **can’t be submitted** (exceeds **RPC body** or **mempool `maxTxBytes`**) blocks that sequence number and **DoS’es all later deposits**. Attackers craft a huge `data` on L1 (`MsgInitiateTokenDeposit`) that expands on L2 (extra fields / batching), pushing the L2 tx over limits.
+    - **Where to look:**
+        - The **bridge message types**: `MsgInitiateTokenDeposit` (L1) vs `MsgFinalizeTokenDeposit` (L2); check `Data []byte` and any **lack of max length**.
+        - L2 finalize **sequence gate** (e.g., `GetNextL1Sequence(...)` and equality checks) that enforces **strict in-order processing**.
+        - **Executor/broadcaster** code that **batches** multiple finalizations into one tx without **incremental size checks** or back-pressure.
+        - Node/runtime limits: **RPC body size** (e.g., `rpc-max-body-bytes`, `max_body_bytes`) and **consensus mempool size** (`maxTxBytes`) and whether they’re surfaced to the executor.
+    - **Red flags:**
+        - No upper bound on `data` (bytes) in L1 message; no validation that **derived L2 message size** stays under `maxTxBytes`.
+        - Finalizer enforces **strict sequence** with **NO skip/park** option for an over-large item.
+        - Executor relies on a single **RPC limit** (configurable) and ignores **consensus-relevant mempool size**.
+        - Batching until send without **simulate-and-split** logic; retries return “**request body too large**” or **OOG in txSize**.
+    - **Fix pattern (tight, actionable):**
+        - **Bound** `data` at L1 with a protocol param (e.g., `max_deposit_data_bytes`) chosen so that **encoded L2 finalize** (including added fields) **always** < `maxTxBytes` with safe headroom.
+        - In the executor, implement **streaming/size-aware batching**: track protobuf/tx **encoded size**, **split** batches before hitting RPC or `maxTxBytes`; on simulation failure with size errors, **halve and retry**.
+        - Surface chain limits to the bot (fetch `maxTxBytes`, block bytes, RPC body caps) and apply **dynamic margins**.
+        - If strict ordering must remain, add a **quarantine lane**: when finalize N is oversize, **mark N as invalid/parked** and continue with N+1 using a **bounded timeout** plus **alerting**; or provide an **admin path** to forcibly drop/trim the offending item.
+- [ ]  **Lost state root due to missing assignment → output never emitted**
+    - **Core idea:** A function finalizes a Merkle/state tree and **computes the root**, but fails to **assign it to the returned variable** (or shadows it). Callers gate critical logic on `if root != nil/len(root)>0`, which **never triggers**, so **outputs/challenges/state-sync** work is silently skipped.
+    - **Where to look:**
+        - Tree finalization paths: functions like `FinalizeWorkingTree(...)`, `CommitTree(...)`, `BuildRoot(...)` whose result should flow into **storage root** / **state root** return values.
+        - EndBlock/handler code that calls the above and then checks `if root != nil` or `if len(root) > 0` before invoking **output handling / challenge emission**.
+        - Go code using **named returns** and inner short declarations (`:=`) that may **shadow** an outer var (e.g., `root, err := ...` instead of `root, err = ...`), or compute `treeRootHash` but never write `storageRoot = treeRootHash`.
+        - Return sites that `return storageRoot, nil` without **ever assigning** to `storageRoot`.
+    - **Red flags:**
+        - Comments/logs show a computed root (e.g., `treeRootHash`) but the returned variable is **different** and remains **nil**.
+        - `if finalizedHeight == height { ... root := ... } return storageRoot, nil` (inner `root` not propagated).
+        - Sentinel checks in callers (`if root != nil { handleOutput() }`) that **never execute** in practice.
+        - Lack of unit tests asserting that **finalization height** yields a **non-nil / non-empty** root and triggers downstream handling.
+    - **Fix pattern (tight, actionable):**
+        - **Assign the computed root** to the returned var (`storageRoot = treeRootHash`) or, better, **avoid named returns** and `:=` shadowing; return explicit values (`return treeRootHash, nil`).
+        - Add a **boolean flag** to make control-flow explicit: `return root, finalized, err` and check `if finalized { handleOutput(root) }`.
+        - Enable/static-check for shadowing & nil-slice pitfalls (`go vet -shadow`, `revive`), and add tests that **simulate finalization height** and assert output/challenge paths run with the expected root.
+- [ ]  **Duplicate validator votes inflate quorum → unilateral oracle updates**
+    - **Core idea:** Quorum checks that simply **sum voting power over received votes**—without enforcing **one vote per validator**—let a single validator submit **duplicate entries** (or be counted multiple times), inflating `sumVP` past the threshold (≥ 2/3 + 1) and enabling **unauthorized oracle updates**.
+    - **Where to look:**
+        - Vote-extension validation paths used before applying state-changing updates (oracle, bridge params, upgrades): functions like `ValidateVoteExtensions(...)`, `UpdateOracle(...)`, `Apply*Update(...)`, handlers in `EndBlock/FinalizeBlock`.
+        - Loops over `ExtendedCommitInfo.Votes` (or similar) that accumulate voting power into `sumVP` without tracking **uniqueness per validator** (consensus address / pubkey).
+        - Any code that “ignores unknown validator” but still **adds power** for duplicates within the current set.
+    - **Red flags:**
+        - `sumVP += power` inside a loop with **no `seen[consAddr]` check**.
+        - Keys built from **stringified addresses** (`.String()`) rather than canonical bytes (risk of representation drift).
+        - No unit tests for scenarios with **duplicate votes** or mixed valid/duplicate entries.
+        - Comments assuming upstream layers de-duplicate votes, but no local guard.
+    - **Fix pattern (tight, actionable):**
+        - Enforce **one vote per validator**: maintain `seen := map[ConsAddress]struct{}` (using canonical `[]byte`/`sdk.ConsAddress`) and **reject** or **skip** duplicates before adding power.
+        - Compute quorum over the **deduplicated set**; optionally require **strict matching** with the active validator set snapshot for that height/round.
+        - Add tests: (a) duplicate votes from same validator must **fail** validation; (b) near-threshold quorum with a duplicate must **not** pass; (c) mixed unknown/known validators does not inflate `sumVP`.
+- [ ]  **Unvalidated bridge ID advances L1 sequence → future L1→L2 deposit DoS**
+    - **Core idea:** If `InitiateTokenDeposit` **increments** a per-bridge `nextL1Sequence` (and escrows funds/emits events) **without first ensuring the bridge exists/active**, users can “burn” early sequence numbers for a future bridge ID. When that bridge is later created, L2 enforces **strict sequencing** (`req.Sequence == finalizedL1Sequence`), so legitimate deposits arrive with **gapped/too-high** sequences and get rejected → deposits for that bridge are effectively DoS’d.
+    - **Where to look:**
+        - L1 host: deposit entrypoints (`InitiateTokenDeposit`), sequence mutators (`IncreaseNextL1Sequence`), bridge registry (`CreateBridge`, `GetNextBridgeId`, `BridgeExists`, bridge module account creation).
+        - L2 child: finalization path (`FinalizeTokenDeposit`) that compares `req.Sequence` vs `GetNextL1Sequence` (NOOP if `<`, **error if `>`**).
+        - Off-chain executor/relayer: where it sources `sequence` from L1 events, any filtering on bridge existence, and whether “start height” configs affect **height** only (not **sequence**).
+    - **Red flags:**
+        - Sequence is incremented **before** (or without) checking `BridgeExists(bridgeId)` / active status.
+        - Ability to send deposits to **arbitrary** bridge IDs; events/funds recorded under a non-existent bridge account.
+        - L2 strict equality check with **no gap-repair** path (only NOOP for `<`, hard error for `>`).
+        - Executor blindly relays L1 event `sequence` and cannot backfill/insert the missing earliest sequence after bridge creation.
+    - **Fix pattern (tight, actionable):**
+        - **Gate sequence increment & escrow** on bridge existence: early return `ErrBridgeNotFound` if `bridgeId >= nextBridgeId` or `!BridgeExists(bridgeId)`.
+        - Initialize per-bridge sequence **at creation time**; refuse mutations for unknown bridges (no lazy creation).
+        - Add an **invariant/telemetry**: alert if `nextL1Sequence` on L1 advances without a matching L2 processed count.
+        - (Optional safety valve) Provide an **admin repair**/catch-up routine or relayer logic to process any “pre-creation” deposits **only after** explicit operator approval—never by default.
+- [ ]  **Dropped events from nested handlers → bridge actions not propagated / funds can get stuck**
+    - **Core idea:** When L2 “bridge hooks” execute arbitrary messages via `router.Handler(msg)` inside a **cached context**, if the code **ignores the returned `sdk.Result`** (which carries emitted events) the events are lost. Cosmos SDK’s `msg_service_router` installs a **fresh `EventManager`** per handler call, so unless you **copy `res.GetEvents()` back** to the parent context, off-chain agents depending on events (e.g., `EventTypeInitiateTokenWithdrawal`) won’t see them → withdrawals not mirrored to L1, stuck funds / operational DoS.
+    - **Where to look:**
+        - L2 deposit/hook execution paths that route messages: e.g., loops over `tx.GetMsgs()` calling `handler(cacheCtx, msg)`.
+        - Any module that executes **lists of arbitrary `sdk.Msg`** (bridge hooks, “execute messages”, governance/ICA), especially when using `cacheCtx := ctx.CacheContext()`.
+        - Compare similar paths that **do** collect events (e.g., “execute messages” implementations that `append(res.GetEvents()...)`) vs. ones that don’t.
+        - SDK glue that resets EventManager per call (baseapp `msg_service_router`) and how your context is threaded.
+    - **Red flags:**
+        - Code pattern: `_, err := handler(cacheCtx, msg)` with the `sdk.Result` discarded.
+        - `cacheCtx` used but **no** `events = append(events, res.GetEvents()...)` and **no** final `sdkCtx.EventManager().EmitEvents(events)`.
+        - TODOs like “merge events” or comments acknowledging dropped events.
+        - Critical flows relying on ABCI events (bridging/IBC) but tests only assert state, **not** event emission.
+    - **Fix pattern (tight, actionable):**
+        - Capture handler results and **bubble events up**:
+            - `res, err := handler(cacheCtx, msg)` → collect `res.GetEvents()`; after `writeCache()`, call `sdkCtx.EventManager().EmitEvents(collected)`.
+        - Alternatively, **reuse parent EventManager** for sub-calls: `cacheCtx = cacheCtx.WithEventManager(sdkCtx.EventManager())` (ensure no double-emission).
+        - Add tests for hook-triggered flows that **assert presence** of required events (e.g., withdrawal initiation) and verify off-chain indexers/bots can consume them.
+- [ ]  **Timestamp-derived DB keys → collisions overwrite state / missed rebroadcasts**
+    - **Core idea:** Using wall-clock timestamps (even “nano”) as the **primary key** for batched/processed messages lets multiple batches share the **same key** within a tight loop or coarse OS timer resolution. Collisions cause overwrites/deletes of the wrong record, so after a restart the executor may **skip** rebroadcasting critical Cosmos txs (e.g., finalizing deposits).
+    - **Where to look:**
+        - Batch builders that assign `Timestamp` inside loops (e.g., `MsgsToProcessedMsgs`), and any `Key()` function that derives the DB key from that timestamp.
+        - Broadcaster persistence paths: `SaveProcessedMsgsBatch`, `DeleteProcessedMsgs`, and any “pending tx info” keyed by time.
+        - Helpers/wrappers like `CurrentNanoTimestamp()`; conversions like `int64→uint64` used directly for keys.
+        - Any resume/restart logic that scans by timestamp keys to decide “what’s left to send”.
+    - **Red flags:**
+        - `Key() = prefix + timestamp` (no disambiguator).
+        - Batching in fixed chunks while computing timestamp **per chunk iteration**.
+        - Same-tick keys across goroutines (parallel producers) or platforms with µs resolution.
+        - Tests that assert count but never assert **key uniqueness** or collision handling.
+    - **Fix pattern (tight, actionable):**
+        - Replace time-based keys with **content or sequence keys**:
+            - Deterministic key = `hash(sender || msgs || batchIndex)` or `(sender, monotonicCounter)`; or use ULID/UUIDv7 **per batch**.
+            - If time is kept, add a **disambiguator**: `(timestamp, sender, localBatchIndex)` and encode both into the key.
+        - Maintain a per-sender **monotonic batch seq** in DB; increment atomically when persisting.
+        - Make saves **idempotent** by storing a checksum of the batch and de-duping on read.
+        - Add tests that create 100+ batches in the same tick and assert **unique keys** and correct resume behavior.
+- [ ]  **Timestamp-derived DB keys → collisions overwrite state / missed rebroadcasts**
+    - **Core idea:** Using wall-clock timestamps (even “nano”) as the **primary key** for batched/processed messages lets multiple batches share the **same key** within a tight loop or coarse OS timer resolution. Collisions cause overwrites/deletes of the wrong record, so after a restart the executor may **skip** rebroadcasting critical Cosmos txs (e.g., finalizing deposits).
+    - **Where to look:**
+        - Batch builders that assign `Timestamp` inside loops (e.g., `MsgsToProcessedMsgs`), and any `Key()` function that derives the DB key from that timestamp.
+        - Broadcaster persistence paths: `SaveProcessedMsgsBatch`, `DeleteProcessedMsgs`, and any “pending tx info” keyed by time.
+        - Helpers/wrappers like `CurrentNanoTimestamp()`; conversions like `int64→uint64` used directly for keys.
+        - Any resume/restart logic that scans by timestamp keys to decide “what’s left to send”.
+    - **Red flags:**
+        - `Key() = prefix + timestamp` (no disambiguator).
+        - Batching in fixed chunks while computing timestamp **per chunk iteration**.
+        - Same-tick keys across goroutines (parallel producers) or platforms with µs resolution.
+        - Tests that assert count but never assert **key uniqueness** or collision handling.
+    - **Fix pattern (tight, actionable):**
+        - Replace time-based keys with **content or sequence keys**:
+            - Deterministic key = `hash(sender || msgs || batchIndex)` or `(sender, monotonicCounter)`; or use ULID/UUIDv7 **per batch**.
+            - If time is kept, add a **disambiguator**: `(timestamp, sender, localBatchIndex)` and encode both into the key.
+        - Maintain a per-sender **monotonic batch seq** in DB; increment atomically when persisting.
+        - Make saves **idempotent** by storing a checksum of the batch and de-duping on read.
+        - Add tests that create 100+ batches in the same tick and assert **unique keys** and correct resume behavior.
+- [ ]  **Unvalidated proposer-supplied L2 block number → withdrawal pipeline lock**
+    - **Core idea:** Output proposals accept a **proposer-provided** `l2BlockNumber` and only check it is **> last**. A malicious proposer can submit `max(uint64)` (or jump far ahead), making all **subsequent outputs invalid** (`<= last`) and effectively **DoS** withdrawals until governance/bots delete the bad output in time.
+    - **Where to look:**
+        - Host chain `ProposeOutput`/`UpdateProposer`/`DeleteOutputProposal` logic that persists and compares `L2BlockNumber` against the **last stored** value.
+        - Validation that treats `L2BlockNumber` as **trusted input** instead of deriving it from state (e.g., output index or proven L2 header height).
+        - Challenge/finalization windows and any **on-chain** auto-invalidators vs **off-chain** challenger reliance.
+    - **Red flags:**
+        - Monotonic checks like `if l2BlockNumber <= last { err }` with **no upper bound** or relation to **verified L2 height**.
+        - `L2BlockNumber` typed as `uint64` and **taken straight from the proposer**.
+        - Recovery depends on **governance/challenger intervention** before finalization; no automatic rollback.
+    - **Fix pattern (tight, actionable):**
+        - **Do not accept** `l2BlockNumber` from the proposer. **Derive** it on-chain from an **output index** (last+1) or from a verified **L2 header/commitment**.
+        - Add a hard check: proposed height must equal **`last + 1`** (or bounded small delta) **and** be **≤ verified L2 tip** from the embedded client/state root.
+        - Add an **auto-invalidating guard**: if height jump exceeds a configured bound or overflows, **reject immediately** (no reliance on challengers).
+        - Provide an **admin escape hatch** limited to correcting the **last output height** only when **no funds-impacting finalization** has occurred; emit alerts/metrics.
+- [ ]  **Unvalidated tokenfactory BeforeSend hook → staking/ABCI DoS**
+    - **Core idea:** Token creators can set a `BeforeSendHook` to a **malformed or non-contract** CosmWasm address. Because bank transfers are invoked inside **staking/distribution** flows (e.g., `BeforeDelegationSharesModified` during rewards, unbonding, redelegation), any hook error bubbles up and **blocks transfers**, freezing staking ops; in slash paths triggered from `BeginBlocker`, errors can **halt the chain**.
+    - **Where to look:**
+        - Tokenfactory: `MsgSetBeforeSendHook`, keeper setter, and storage of hook addr; check validation of **address kind** (contract vs EOA) and existence of code info.
+        - Bank send restriction path: bank keeper’s **BeforeSend/SendRestriction** integration that dispatches to tokenfactory hook and how errors are propagated.
+        - Staking/distribution/slashing flows that perform bank sends prior to state updates:
+            - `BeforeDelegationSharesModified`, `WithdrawDelegationRewards`, `Unbond`, `Redelegate`, slashing handlers (`SlashRedelegation`), and ABCI `BeginBlocker` slashing/evidence routes.
+        - CosmWasm sudo/contract call site for the hook: gas limits, error wrapping, and **panic-to-error** conversion.
+        - Any governance/kill-switch feature to disable hooks for a denom.
+    - **Red flags:**
+        - `MsgSetBeforeSendHook` accepts **any bech32** with no check that it’s a **Wasm contract** (no `HasContractInfo`/code ID validation).
+        - Hook execution **returns errors directly** to callers in staking/ABCI paths (no containment/fallback), allowing **global DoS**.
+        - No **whitelist/ACL** on who may set hooks; creators can brick a widely used denom (e.g., rewards token).
+        - Missing **liveness guard** (e.g., disable-on-first-failure), or governance bypass to clear a bad hook quickly.
+    - **Fix pattern (tight, actionable):**
+        - **Validate on set:** require hook addr to be an **existing CosmWasm contract** (check code info), optionally verify it **implements the expected sudo entrypoint** (e.g., dry-run).
+        - **Restrict who can set:** add **whitelist/ACL** (governance or module-allowlist) for `MsgSetBeforeSendHook`; optionally require a **2-step** proposal/confirm.
+        - **Fail-soft in critical paths:** in staking/ABCI contexts, treat hook failures as **non-fatal** for protocol safety: log & **skip hook** (or disable hook for that denom) rather than propagating error; persist a **“hook\_disabled\_until”** flag to prevent loops.
+        - **Admin escape hatch:** governance callable `ClearBeforeSendHook(denom)` and **auto-disable** after N consecutive failures; emit alerts/metrics.
+        - **Rate-limit & gas-cap** the hook call; normalize errors (no panics) and **wrap with context** so operational tooling can detect and remediate fast.
+- [ ]  **Fee-grant refund misattribution → granter balance drain & bad accounting**
+    - **Core idea:** Post-execution refund logic sends unused gas/tip back to `FeePayer()` even when a **fee granter** actually paid. Sponsored/relayed txs then refund the **user**, not the **granter**, slowly draining sponsor balances and breaking fee-settlement assumptions.
+    - **Where to look:**
+        - Posthandler/refund path (e.g., x/feemarket) such as `PostHandle(...)`, `BurnFeeAndRefund(...)`, and tip refund helpers.
+        - Ante fee deduction path (`DeductFeeDecorator` / feegrant module) to see **who funds were deducted from**.
+        - Tx interfaces used in refunds: `FeePayer()`, `FeeGranter()`, and any context values carrying the **actual payer**.
+        - Event attributes for refunds (ensure payee matches the true payer) and unit tests that cover **feegrant + refund**.
+    - **Red flags:**
+        - Refund code always uses `feeTx.FeePayer()`; `feeTx.FeeGranter()` is ignored.
+        - No context/state handoff from ante → post indicating **actual funding account**.
+        - Tips refunded the same way as fees, regardless of who funded them.
+        - Missing tests where a feegranter funds a tx that **under-consumes gas**.
+    - **Fix pattern (tight, actionable):**
+        - In ante, after successful deduction, **store the actual payer** (granter if present, else payer) in `ctx` (e.g., `context.WithValue` or a transient store key).
+        - In posthandler, **read that value** and refund unspent gas/tips to the **actual payer**; emit events with the correct refundee.
+        - If feegrant module performs the deduction, expose/return the resolved payer so the posthandler can consume it.
+        - Add tests: (a) payer pays, (b) granter pays; assert bank balances and refund events match expectations.
+- [ ]  **Full-fee escrow + full refund → cheap block-gas reservation & priority gaming**
+    - **Core idea:** If ante **escrows the full paid fee** (gasLimit × price) and posthandler **refunds all unspent tip**, attackers can set **huge gas limits** (≈ block max) yet execute tiny work, getting most fees back. They monopolize the **block gas meter** and also game **mempool priority** if it’s computed from the **paid (not effective) fee**.
+    - **Where to look:**
+        - Fee market ante decorator that escrows fees and sets **tx priority** (e.g., conversion to base denom, `WithPriority(...)`).
+        - Block gas metering in **Prepare/FinalizeBlock** to see how `GasWanted` contributes to block filling.
+        - Post-exec refund path that returns **unused tip/fees** to the payer.
+        - Mempool admission/ordering logic that uses **absolute paid fee** rather than **fee-per-gas actually consumed**.
+    - **Red flags:**
+        - Tx priority derived from **total paid amount** (or “priorityFee”) instead of **effective fee per gas**.
+        - Refund logic returns **all** unspent tip with no penalty for reserving block gas.
+        - No bound on per-tx **gas limit** relative to block `max_gas`.
+        - No **reservation charge** or **min tip burn** for the unconsumed portion.
+    - **Fix pattern (tight, actionable):**
+        - Compute **priority from effective price per gas** (basefee+tip per gas), not total paid amount.
+        - Introduce a **reservation cost**: burn a small fraction of the **unspent** portion (e.g., min(basis points × (gasLimit−gasUsed) × price, cap)) to deter gas hoarding.
+        - Add a **per-tx gasLimit cap** (e.g., ≤ X% of `max_gas`) and/or require **higher min tip** when gasLimit exceeds a threshold.
+        - In posthandler, **partial refunds only**: always burn basefee on **gasUsed**, and burn a configurable **floor** of tip on **gasReserved but unused**.
+        - Add tests: (a) tx with gasLimit≈block max + tiny work doesn’t evict honest txs; (b) overpaying doesn’t unfairly boost priority without real cost.
+- [ ]  **Fee denom conversion bug → wrong multipliers, mispriced fees & priorities**
+    - **Core idea:** Multi-denom fee markets often store **multipliers relative to a base denom**. A common bug is looking up the multiplier by the **target denom** instead of the **input coin’s denom** (e.g., using `denom` instead of `coin.Denom`). That applies the wrong rate, causing **mispriced fees, skewed tx priority, and bad refunds/accounting**.
+    - **Where to look:**
+        - Fee conversion helpers (e.g., `ConvertToDenom(ctx, coin, denom)`), and any **resolver** that turns arbitrary fee coins into the base denom.
+        - Keeper state for **`DenomMultipliers`** (mapping “denom → multiplier vs base”) and all call sites reading it.
+        - Any code computing **tx priority**, **min gas price checks**, or **refund amounts** that first converts fees across denoms.
+    - **Red flags:**
+        - Early-return `if coin.Denom == denom { return coin }` followed by **`Get(multiplier, denom)`** instead of `Get(..., coin.Denom)`.
+        - Converting **non-base → base** using the **target denom** multiplier.
+        - No unit tests for **cross-conversions** (A→base, base→B, A→B via base); only identity conversions tested.
+        - Missing invariant that **base denom multiplier = 1** and present.
+    - **Fix pattern (tight, actionable):**
+        - For conversion, always **normalize via base denom**:
+            - If `coin.Denom != base`, **amountBase = coin.Amount × M\[coin.Denom]**.
+            - If `denom == base`, return `amountBase`.
+            - Else **amountTarget = amountBase ÷ M\[denom]**.
+        - In the simple “to base” helper, lookup with **`coin.Denom`**, not the target.
+        - Add tests: (a) identity (base→base), (b) non-base→base, (c) base→non-base, (d) non-base A→non-base B via base; assert **round-trip** accuracy within tolerance.
+        - Validate config on start: **all allowed fee denoms** must have multipliers; **reject tx** if multiplier missing.
+- [ ]  **Pre-refund gas snapshot → unpaid post-ops gas & inflated refunds**
+    - **Core idea:** If the post handler **computes tip/refund from a gas snapshot taken before** it executes fee burns/transfers, the user isn’t charged for the **gas spent by those post-ops** (e.g., burning fees, sending refunds). Refund ends up **too high**, creating systematic under-collection and a potential griefing vector.
+    - **Where to look:**
+        - Fee market **post handlers** that calculate refunds/tips after execution (e.g., `PostHandle` paths).
+        - Calls to **`CheckTxFee(...)`** (or equivalents) fed with **gas limit** or an early snapshot instead of **`GasMeter().GasConsumed()`**.
+        - The sequence around **fee burn/lock** and **refund transfers** (`SendCoinsFromModuleToAccount`, keeper `SetState`, event emission) to see whether they occur **after** refund math.
+        - Simulation branches that **do not** charge a synthetic cost for the refund/burn path.
+    - **Red flags:**
+        - Variables like `feeGas := feeTx.GetGas()` used as “snapshot” for refund math.
+        - Refund/tip computed **before** `BurnFeeAndRefund(...)` and bank sends.
+        - No adjustment for **post-refund gas** (no constant overhead, no recompute).
+        - Unit tests assert only “refund exists” but never assert **refund decreases** when refund path is executed.
+    - **Fix pattern (tight, actionable):**
+        - Compute refund using **current consumed gas**: call `GasMeter().GasConsumed()` **after** all fee burns/refund transfers (or re-invoke refund math with the delta).
+        - If recompute is impractical, **charge a fixed overhead** for refund/burn ops (defined constant) and **consume it** on both deliver and simulate paths.
+        - Make refund logic **last** in the post handler and ensure no further gas-consuming operations occur afterward.
+        - Add tests that compare refunds with/without the refund path and assert **no unpaid gas** (refund strictly accounts for post-ops).
+- [ ]  **Early gas snapshot for block utilization → under-counted gas & depressed base fee**
+    - **Core idea:** If the post handler **captures `GasConsumed()` too early** and then does more gas-consuming work **before** calling the base-fee state `Update(...)`, the block’s utilization is **under-reported**. That yields a **lower-than-correct base fee**, weakening congestion pricing and spam resistance.
+    - **Where to look:**
+        - Fee market **post handlers** that call `state.Update(gas, params)`; verify the **`gas` value is taken immediately before** the update.
+        - Any work done **between** the snapshot and `Update(...)`: e.g., `GetMinGasPrice(...)`, fee/tip math (`CheckTxFee(...)`), keeper `SetState(...)`, bank sends, and event emission.
+        - Base-fee computation that uses a **sliding window of utilization**—small undercounts per tx can aggregate into a noticeable fee underestimate under load.
+    - **Red flags:**
+        - A line like `gas := ctx.GasMeter().GasConsumed()` appears **well above** `state.Update(...)`.
+        - Additional logic (fee resolution, refunds, state writes) occurs **after** the snapshot but **before** the update.
+        - No tests asserting that **block utilization grows** when those post-ops execute.
+    - **Fix pattern (tight, actionable):**
+        - Move the **`GasConsumed()` read to just before** `state.Update(...)`, or recompute `gas` there.
+        - Alternatively, **accumulate a fixed overhead** for post-ops and include it in the utilization passed to `Update(...)`.
+        - Add tests that measure **`gasDiff`** (consumed after snapshot) and assert block utilization reflects it under realistic tx paths.
+- [ ]  **Unwired Cosmos SDK module → dead CLI/MsgServer/genesis paths**
+    - **Core idea:** If a custom module (e.g., `xfeemarket`) isn’t fully **registered in `app/app.go`** (stores, keeper init, module manager, init/export order, basics), its CLI/Msg services and genesis state simply **don’t exist** at runtime—so messages error as “unregistered service”, CLI subcommands are missing, and state isn’t initialized/exported.
+    - **Where to look:**
+        - `app/app.go`:
+            - **Store keys:** included in `storetypes.NewKVStoreKeys(...)` (and mem/transient keys if used).
+            - **Keeper:** constructed with correct **store key**, **codec**, **bank/auth keepers**, and **authority**.
+            - **ModuleBasics:** module’s `AppModuleBasic` present so CLI & gRPC routes register.
+            - **ModuleManager:** module added to `module.NewManager(...)` and participates in `RegisterServices(...)`.
+            - **Genesis order:** module name present in `SetOrderInitGenesis(...)` and `SetOrderExportGenesis(...)`.
+            - **Begin/End blockers:** included if the module needs them.
+        - Module’s `module.go`:
+            - `NewAppModule(...)` exists and **`RegisterServices`** wires Msg/Query servers.
+        - Runtime smoke checks:
+            - Running CLI: missing subcommands for the module.
+            - Broadcasting module msgs: errors like **“unknown request / unregistered service”**.
+            - Export/genesis: module state absent.
+    - **Red flags:**
+        - Keeper field exists on `App` but **never initialized**.
+        - Module name **missing** from `ModuleBasics` or `ModuleManager`.
+        - Store key defined in the module, but **not** in `NewKVStoreKeys(...)`.
+        - `RegisterServices` implemented in the module, but **`app.ModuleManager.RegisterServices(app.Configurator)`** not called.
+        - Governance/authority string not passed to keeper when module expects it.
+    - **Fix pattern (tight, actionable):**
+        - Add the module’s **store key** to `NewKVStoreKeys(...)`; initialize the **keeper** with codec, store service, deps, and authority.
+        - Include the module in **`ModuleBasics`** and **`module.NewManager(...)`**; call **`RegisterServices`** via the manager.
+        - Insert module name into **`SetOrderInitGenesis`/`SetOrderExportGenesis`** (and begin/end blockers if needed).
+        - Verify **CLI** routes appear, **Msg** calls succeed, and the module **exports/initializes** state in genesis.
+- [ ]  **Uninjected denom resolver → wrong fee conversions at ante**
+    - **Core idea:** If the chain defines a custom **denom resolver** (e.g., multipliers map) but doesn’t **inject it** into the fee-market keeper used by the ante stack, the ante falls back to the library’s default resolver. Multi-denom gas payments then use **stale/empty multipliers**, yielding incorrect fee checks, priorities, and refunds.
+    - **Where to look:**
+        - The custom fee module’s keeper: does it implement the **DenomResolver** interface and expose `ConvertToDenom`?
+        - Fee-market keeper construction in `app/app.go`: is the **resolver instance passed** to the fee-market `NewKeeper(...)` that ante uses?
+        - Ante handler setup: confirm ante reads **the same keeper** (with resolver) used in post-handler/refunds.
+        - Unit/integration tests: paying fees in a **non-base denom** should reflect expected base-fee equivalence.
+    - **Red flags:**
+        - Fee-market keeper constructed **without** a resolver or with a **nil/default** resolver.
+        - Duplicate/parallel keepers: ante uses one keeper, post-handler another (state divergence).
+        - `ConvertToDenom` implemented in a custom keeper but **never referenced** by fee-market keeper or ante.
+    - **Fix pattern (tight, actionable):**
+        - Make the custom keeper implement `DenomResolver` and **pass it** to the fee-market keeper in `NewKeeper(...)`.
+        - Ensure the **same** fee-market keeper (with resolver) is wired into **ante** and **post** handlers.
+        - Add tests: define a non-base denom multiplier, pay fees in that denom, and assert **identical** acceptance/priority/refund behavior to paying in base denom.
+- [ ]  **Premature “paid” flag on unconfirmed receipts → unstake payout DoS**
+    - **Core idea:** If the ledger **marks an unstake request as paid** upon seeing **any** notary session/receipt (even **unconfirmed**), later payout matching that requires an **unpaid** request will fail. An attacker can submit forged, unconfirmed receipts to **flip the paid bit early**, causing the approver to reject the real payout and grief users.
+    - **Where to look:**
+        - Receipt processing path (e.g., `processReceipt(...)`): does it set `paid` (or equivalent) **before** checking `status == Completed/Confirmed` by quorum?
+        - Notary session ingestion (`MsgSubmitPayload` handler) and storage: are **unconfirmed** sessions retrievable by the approver path?
+        - Approver-side payout matcher (e.g., `validateUnstakingOutput(...)`): does it require **unpaid** requests and fail hard if marked paid?
+        - Receipt status enum/state machine: are `Pending/Expired/Completed` transitions enforced prior to mutating request state?
+    - **Red flags:**
+        - “Paid” (or “processed”) flag set based on **existence** of a receipt, not on **quorum-confirmed status**.
+        - Approver queries **all** receipts (confirmed + unconfirmed) without filtering by `Completed`.
+        - No **two-phase** state (e.g., `reserved` → `paid`) separating dedup from final payout authorization.
+        - Errors like “no valid unpaid unstake notarization found” when a matching UTXO exists.
+    - **Fix pattern (tight, actionable):**
+        - In receipt handling, **only mark the request as paid when `status == Completed`** (quorum confirmed). Ignore/record unconfirmed receipts without changing the request’s paid state.
+        - Introduce a **two-phase state**: `reserved` on first seen receipt (optional, doesn’t block payout matching), and flip to `paid` **only** on confirmation; allow payout matcher to accept `reserved` if tied to the same confirmed receipt ID.
+        - Ensure approver paths **filter by confirmed receipts** and cross-check the exact request/receipt IDs and UTXO.
+        - Add invariants/tests: forged **unconfirmed** receipts must **not** transition requests to `paid`; confirmed receipts must be **idempotent**.
+- [ ]  **UTXO sum equality check rejects miner fees → unstake/withdrawal DoS**
+    - **Core idea:** If validation requires `sum(outputs) == sum(inputs)` for BTC-like UTXOs, it **forbids miner fees** (which must be `inputs - outputs`). Any transaction with a fee gets rejected, effectively **DoSing** unstake/withdraw flows that must pay miners.
+    - **Where to look:**
+        - Unstake/withdrawal validation (e.g., `validateUnstakingOutputs(...)`): comparisons between total inputs and total outputs.
+        - Receipt/MFA approval paths that recompute or verify UTXO balances before broadcasting.
+        - Helpers that aggregate input/output values and enforce equality instead of allowing `inputs ≥ outputs`.
+    - **Red flags:**
+        - Checks like `if totalOut != totalIn { return err }`.
+        - No explicit calculation of `fee := totalIn - totalOut` with bounds checks.
+        - Missing acceptance of a **change** output; assumptions that one output must equal the input.
+        - No configurable min/max fee policy (dust, feerate, absolute caps).
+    - **Fix pattern (tight, actionable):**
+        - Compute `fee := totalIn - totalOut` and require `fee > 0` and `fee ≤ maxFee` (or within a feerate window for `vsize` if available).
+        - Accept transactions where `totalIn ≥ totalOut` and at least one valid **change** or recipient output exists; forbid negative change.
+        - Add chain params for `minRelayFee`, `maxAbsFee`, and optional feerate checks; reject only when **outside** these bounds.
+        - Unit-test: single-output with fee, output+change with fee, multi-input aggregation, dust-threshold handling, and boundary cases (fee=0 rejected if policy requires fee).
+- [ ]  **Fail-fast batch upsert on single conflict → notary session DoS**
+    - **Core idea:** Batch handlers that **return** on the first per-item inconsistency (e.g., scriptPubKey/amount mismatch) will abort the whole batch. Because the bad record **persists** in upstream feeds, every run re-hits the same error, **stalling the entire notary/unstake processing pipeline**.
+    - **Where to look:**
+        - Batch DB writers (e.g., `BulkCreateUnstakes`, `BulkUpsert*`) that loop items and `return err` on a single conflict.
+        - Notary/approver processors that call batch writers inside a higher-level `processBatch(...)` or service tick and bubble errors up to stop the tick.
+        - Conflict checks during idempotency (existing row vs incoming): scriptPubKey equality, amount equality, status transitions.
+    - **Red flags:**
+        - Patterns like:
+            - `for item := range items { if conflict { return err } }`
+            - Errors propagated to the outer service loop (`process... → service.Run`), causing the whole job to fail.
+        - No quarantine/skip path for **known-bad** records; no metric or dead-letter queue.
+        - No de-dup / “already processed” markers; reliance on **exact** field equality only.
+    - **Fix pattern (tight, actionable):**
+        - Convert per-item conflicts to **soft failures**: `log.Error(...); metrics.Inc("unstake_conflict"); continue` — process the rest of the batch.
+        - Add a **quarantine table/flag** (e.g., `unstakes.quarantined`, `quarantine_reason`) and move/mark conflicting rows; exclude quarantined rows from normal scans.
+        - Make batch result **multi-error**: return summary `{processed, skipped, quarantined, failed}`; never hard-stop the service tick.
+        - Implement **idempotent upsert** rules:
+            - Allow replays with identical `(id, scriptPubKey, amount)`; reject only **incompatible** changes.
+            - Gate status transitions with a finite-state machine; ignore illegal downgrades rather than erroring.
+        - Add backoff & alerting for recurring conflicts; expose Prometheus counters and structured logs to triage.
+- [ ]  **Single-key checks ignore “no-mix” staking wallets → blocked ops & stranded funds**
+    - **Core idea:** Code paths that validate “staking wallet” ownership/eligibility against **only one** key type (regular) will reject flows that legitimately use an alternative key class (e.g., **no-mix** staking key). This silently bricks Babylon deposit/early-unbond/withdraw and Lombard transfer/unstake flows, and can strand funds that arrive via change outputs.
+    - **Where to look:**
+        - Input/output validators for staking flows (e.g., `validateStakingInputs`, `validateStakingOutputs`, `validateStakerKey`) that compare against a single configured public key.
+        - Anywhere that derives/loads “the” staking key from session/ledger config without attempting a **fallback/union** across wallet classes.
+        - UTXO routing that permits change to no-mix wallets while downstream validators only accept the regular wallet.
+    - **Red flags:**
+        - Hard-coded equality checks like `if pubKey != stakingWalletPubKey { return err }`.
+        - Separate getters for “main staking key” and “no-mix key” with callers using only one.
+        - No feature/enable flag checks before deciding which staking key(s) are valid.
+        - Tests/fixtures that only cover the regular wallet path.
+    - **Fix pattern (tight, actionable):**
+        - Introduce a unified resolver `GetActiveStakingKey(ctx) -> (pubKey, walletType, enabled)` that:
+            - Tries **both** regular and no-mix sources (at most one should exist/be enabled).
+            - Honors per-type **enabled** flags.
+        - Replace strict single-key guards with **membership checks**: `isAllowedStaker(pubKey) := pubKey ∈ {regular, no-mix} ∩ enabled`.
+        - Update validators (`validateStakingInputs/Outputs`, `validateStakerKey`) and unstake/deposit/transfer paths to accept either active staking key.
+        - Add invariants & tests:
+            - Funds can’t become unspendable if they land on a no-mix wallet via change.
+            - Both wallet types pass the full deposit → (early) unbond → withdraw pipeline.
+        - Log wallet type used in critical paths and add metrics/alerts for unexpected wallet-type mismatches.
+- [ ]  **Relying on `numAddrs` without checking slice length → out-of-bounds panic on malformed scripts**
+    - **Core idea:** Libraries like Bitcoin’s `ExtractPkScriptAddrs` may return a **required sig count** (`numAddrs`) that says “1” while the **addresses slice is empty** (invalid pubkey omitted). Code that checks only `numAddrs == 1` and then indexes `addrs[0]` will panic, letting any tx/input with a bad pubkey **crash the approver** (DoS).
+    - **Where to look:**
+        - All address extraction sites using `txscript.ExtractPkScriptAddrs(...)` (e.g., approver paths, custodian manager) that do: `_, addrs, numAddrs, err := ...` → check `numAddrs != 1` → `inputAddr := addrs[0].EncodeAddress()`.
+        - Validators that “ignore multisig/non-standard” by only testing the **count** and not the **slice length**.
+        - Any utility that derives recipients from `PkScript` and later assumes `addrs[0]` exists.
+    - **Red flags:**
+        - Pattern `if numAddrs != 1 { return err }` followed immediately by `addrs[0]...`.
+        - Comments implying “invalid keys are omitted” without compensating length checks.
+        - No guards using `len(addrs)` or `cap(addrs)` before indexing; no checks on returned `ScriptClass`.
+    - **Fix pattern (tight, actionable):**
+        - Enforce **both** invariants before indexing:
+            - `if numAddrs != 1 || len(addrs) != 1 { return errorf("invalid extracted address set: num=%d len=%d", numAddrs, len(addrs)) }`.
+        - Prefer validating the returned `ScriptClass` (e.g., allow only P2PK/P2PKH as intended) **before** address use.
+        - Wrap extraction in a safe helper (`ExtractSingleAddr(pkScript) (addr, error)`) used everywhere; unit test with malformed pubkeys to ensure no panic.
+        - Add fuzz tests for `PkScript` parsing to assert the service **never panics** on adversarial inputs.
+- [ ]  **Missing “enabled” checks for staking keys → accept disabled/compromised keys**
+    - **Core idea:** Key fetch paths accept a staking key if it merely exists, but **don’t verify it’s enabled** (or they exit early on the first session without checking the alternate “no-mix” role). A disabled/compromised key from the KMS can slip through and be approved, breaking the revocation model.
+    - **Where to look:**
+        - All helpers that fetch staking keys from external KMS/secret managers (e.g., functions in `common.go` and `custodian_manager.go`) and any callsites that proceed after only `err == nil`.
+        - Multi-session/dual-role codepaths (standard vs **no-mix** staking keys) that try just one role ID or return success on nil/disabled keys.
+        - Client wrappers around Cubist (or equivalent) that return `(key, enabled bool, err)`—verify callers actually gate on `enabled`.
+        - Places where a wrong role ID is used (e.g., returning `stakingRoleID` where `noMixStakingRoleID` is intended).
+    - **Red flags:**
+        - Patterns like: “if err != nil { return err } // else use key” with **no** `enabled` check.
+        - Treating `nil key` or `disabled` as success because `err == nil`.
+        - Early return after checking only the primary session/role; never tries the alternate role.
+        - Silent fallbacks that mask “disabled” as “not found” and continue.
+    - **Fix pattern (tight, actionable):**
+        - Centralize key retrieval in a single helper: `GetActiveStakingKey(ctx) (key, role, error)` that:
+            1. queries **both** roles (standard + no-mix),
+            2. returns an error unless it finds **exactly one** key with `enabled == true`,
+            3. treats `disabled` as a **hard error** (distinct from not found).
+        - Require callers to use only this helper; ban direct KMS calls via a linter or reviewer checklist.
+        - Add unit tests for: disabled key, nil key with `err == nil`, wrong role ID, both roles present, and “only no-mix enabled”.
+        - Telemetry/alerts on disabled-key usage attempts; explicit error messages to avoid silent acceptance.
+- [ ]  **Dual-session MFA routing blind spot → “no-mix” requests ignored/misapplied**
+    - **Core idea:** When you maintain **two Cubist/KMS sessions** (e.g., retail vs **no-mix** institutional), listing/approving/rejecting MFA requests must be **routed by the correct session**. If code hard-codes a single `clientSession` for all MFA ops (while only using `noMixClientSession` for key fetches), “no-mix” requests won’t be surfaced or approvals will be sent to the wrong tenant.
+    - **Where to look:**
+        - Service layer that **lists/approves/rejects** MFA requests (e.g., `service.go`): verify the session used for each call.
+        - Places that **track request context** (IDs/metadata) from `ListMfaRequests` → `Approve/Reject`; check that the **originating session is preserved**.
+        - Any helper that **always** calls `clientSession` for MFA, while another helper fetches **no-mix staking keys** via `noMixClientSession`.
+        - Config/bootstrap where **both sessions** are constructed and injected; confirm both are **wired into** the MFA workflow.
+    - **Red flags:**
+        - Functions like `ApproveMfaRequest/RejectMfaRequest/GetMfaRequest` that never accept a **session handle/tenant**.
+        - `ListMfaRequests` aggregating results without **annotating each item with its session**.
+        - Comments/TODOs about “no-mix” support but **no code path** using `noMixClientSession` for MFA.
+        - Silent fallbacks: if a request isn’t found in `clientSession`, code **does not try** `noMixClientSession`.
+    - **Fix pattern (tight, actionable):**
+        - **Annotate** each listed MFA request with `{session: client|noMix}` and **require** callers to pass this through to `Approve/Reject`.
+        - Refactor MFA API to `Approve(ctx, sess, reqID)` / `Reject(ctx, sess, reqID)`; **ban** single-session helpers.
+        - In `ListMfaRequests`, **union** results from both sessions; de-dupe by `(session, reqID)`.
+        - Add unit tests: (a) “no-mix only” request appears and is approvable; (b) wrong-session approve **fails**; (c) mixed queues round-trip with session fidelity.
+        - Telemetry: log session/tenant on **every** MFA list/approve/reject to catch misroutes.
+- [ ]  **Missing change/fee bounds in UTXO transfers → miner siphoning / value leakage**
+    - **Core idea:** If a BTC transfer validator doesn’t enforce that **sum(outputs) + fee == sum(inputs)** with a **reasonable fee bound** and a **change output to a whitelisted staking address**, a proposer can set an absurd fee (or omit change entirely). The “unspent” value becomes miner fee, silently leaking funds.
+    - **Where to look:**
+        - Transfer signing/approval path (e.g., `validateLombardTransferRequest(...)`) that checks PSBT/UTXO inputs and outputs before approval.
+        - Any helper that computes **fee = Σinputs − Σoutputs**; confirm a **min/max feerate** (per vsize/weight) is enforced and **dust/change rules** are applied.
+        - Change-output selection: ensure change exists when `inputs − recipient ≥ dust + minFee` and that change **scriptPubKey** is to **allowed staking addresses** (regular & “no-mix”).
+        - Unit handling: places converting **BTC ↔ sats** and comparing PSBT fields (`in.WitnessUtxo.Value`) vs `txOut.Value*1e8`.
+    - **Red flags:**
+        - Acceptance of transactions with **no change output** when inputs materially exceed recipient amount.
+        - Fee checked only for **non-negativity**, with **no upper bound** (no feerate sanity).
+        - Change allowed to **arbitrary** addresses (no allowlist of staking scripts / key sets).
+        - Mixed float/decimal math for BTC; comparisons done in BTC instead of **integer sats**.
+        - No cross-check that `in.WitnessUtxo.Value == utxo.Value == referenced output value (in sats)`.
+    - **Fix pattern (tight, actionable):**
+        - Compute in **sats**:
+        `inputs = Σ in.WitnessUtxo.Value; outputs = Σ txOut.Value; fee = inputs − outputs`.
+        Enforce: `fee ≥ minFee(vsize, targetFeeRate)` and `fee ≤ maxFee(vsize, capFeeRate)`; reject otherwise.
+        - If `inputs − recipient ≥ dust + minFee`, **require a change output** to a **whitelisted staking script** (support both regular & no-mix wallets). Reject if change goes elsewhere.
+        - Validate each input maps to the referenced UTXO: `in.WitnessUtxo.Value == referencedOutput.Value` and scripts match expected **P2WPKH/P2TR** templates.
+        - Add tests: (a) no-change high-fee siphon → reject; (b) change to foreign addr → reject; (c) proper change & bounded fee → accept; (d) unit mismatch (BTC vs sats) → reject.
+- [ ]  **No persisted watermark for ledger scans → endless rescan & perf drag**
+    - **Core idea:** If the “start offset” for pulling external/notary sessions is derived from “oldest pending item” and defaults to `0` when none exist, the worker will repeatedly scan from the beginning whenever the pending set is empty—reprocessing all historical sessions every tick and degrading throughput.
+    - **Where to look:**
+        - Pagination seeders like `FindOldestPendingID(...)`, `MIN(id)`/`MAX(id)` queries over pending tables and their call sites that set `offset`/`cursor` for `List*` RPCs.
+        - Batching loops that compute `offset` from DB state each iteration (e.g., `processNotarySessionBatch` / `processUnstakeNotarizations`) rather than from a persisted cursor.
+        - Union queries over multiple “pending” tables used as a cursor source (e.g., `unstakes ∪ unstake_receipts`) and the empty-set behavior.
+    - **Red flags:**
+        - Returning `0` (or empty cursor) when there are no pending rows, then using it as the next `offset`.
+        - No dedicated “progress/watermark” table (high-watermark / lastProcessedID) updated after successful processing.
+        - Cursors computed from *unconfirmed/pending* rows instead of from *what was last processed*.
+        - Tight loop with `offset, limit := oldestPendingID, pageSize` that never advances when the batch has only failures or when pending becomes empty.
+    - **Fix pattern (tight, actionable):**
+        - Introduce a persisted **watermark** (e.g., `processor_progress(last_processed_notary_id)`); read it on startup, advance it after each successful batch.
+        - When no pending rows exist, **continue from watermark**, not `0`; on success set `watermark = max(watermark, batch_max_id)`.
+        - Make listing calls accept a **cursor** (`start_id`/`after_id`) instead of `offset` when possible; otherwise translate watermark to offset once and cache.
+        - Add guardrails: if `FindOldestPendingID()` returns `0`, short-circuit the scan or fall back to `watermark+1`; add exponential backoff/metrics to avoid hot-looping.
+- [ ]  **Compressed key parity stripped → mutated covenant keys & failed quorums**
+    - **Core idea:** If code **drops the 0x02/0x03 prefix** from a 33-byte secp256k1 key and reconstructs the point assuming **even-Y** (e.g., via a Schnorr helper that prepends 0x02), any key originally with **0x03 (odd-Y)** is silently changed—leading to signature/verifier mismatches and potential **quorum failures**.
+    - **Where to look:**
+        - Key parsing on API inputs: functions that `hex.DecodeString(...)`, then `if len==33 { bytes = bytes[1:] }` and call `schnorr.ParsePubKey(...)` on the remaining 32 bytes.
+        - Any conversion path that turns **SEC1 compressed (33B)** into **x-only (32B)** without preserving or handling **Y parity**.
+        - Places where both proposer and approver parse the same key but via helpers that **force even parity**.
+    - **Red flags:**
+        - Use of `schnorr.ParsePubKey(xOnly)` on data derived by **simply dropping** the first byte of a compressed key.
+        - Comments like “remove format byte” / “strip prefix” on public keys coming from external APIs.
+        - Mixed libraries: sometimes `btcec.ParsePubKey(33B)` (keeps parity), elsewhere `schnorr.ParsePubKey(32B)` (assumes even-Y).
+        - Intermittent “can’t reach quorum / invalid signature” only for a subset (\~50%) of keys.
+    - **Fix pattern (tight, actionable):**
+        - **Parse the full 33-byte compressed key** with `btcec.ParsePubKey(...)` and store/propagate it **as-is** (including parity).
+        - If you need x-only for BIP340 verification, derive it via the library’s **lift-x** rules or by converting from the parsed point; do **not** guess parity by forcing 0x02.
+        - Standardize one canonical form at module boundaries: accept **33B compressed** on ingress; for Schnorr ops, convert to x-only **while ensuring even-Y normalization** per BIP340 (negate secret key or point as required).
+        - Add tests: feed both 0x02 and 0x03 variants of the same x to parsing/verification and assert identical acceptance behavior end-to-end.
+- [ ]  **Babylon deposit param drift → indexer rejection or long fund lock**
+    - **Core idea:** If L2 approves a BTC staking deposit without enforcing **Babylon’s own bounds** (e.g., `TxnLockHeight == 0`, `Value ∈ [MinStakingAmount, MaxStakingAmount]`, `LockTime ∈ [MinStakingTime, MaxStakingTime]`) and without verifying **input sum matches declared stake + fee**, Babylon’s indexer may **ignore** the tx or the BTC may be **timelocked far out**, stranding liquidity.
+    - **Where to look:**
+        - Deposit request validator (e.g., `validateBabylonDepositRequest(...)`) for checks on `TxnLockHeight`, `Value`, `LockTime`.
+        - Babylon params fetch/adapter (min/max staking amount & time) and how they’re **cached and compared** in validation.
+        - BTC PSBT/tx builders: verification that `Σ(inputs) == stake Value + miner fee` and that `TxnLockHeight` is **unset/zero**.
+        - Lock-time helpers (e.g., `validateLockTime(...)`) to ensure they use **Babylon’s bounds**, not only generic numeric ranges.
+    - **Red flags:**
+        - `TxnLockHeight` accepted as-is or **never checked**.
+        - `Value` only range-checked via off-chain policy, **not** against Babylon params; no assertion that `Σ(inputs) - Value` equals **reasonable fee**.
+        - Lock time validated against **uint16 bounds** but **not** against `MinStakingTime/MaxStakingTime`.
+        - Approver “greenlights” deposits that later **fail on Babylon indexer**, or deposits mined much later than operational expectations.
+    - **Fix pattern (tight, actionable):**
+        - **Reject nonzero `TxnLockHeight`** (or enforce a tight, configurable bound of “current height + ε” if truly needed).
+        - Validate `Value` against **Babylon’s `MinStakingAmount`/`MaxStakingAmount`** and assert `Σ(inputs) = Value + fee`; bound `fee` within a **reasonable range** (min relay fee ≤ fee ≤ policy cap).
+        - Replace generic lock-time checks with **param-aware** checks: `LockTime ∈ [MinStakingTime, MaxStakingTime]` (convert units correctly).
+        - Add a “Babylon-compat” preflight: fail fast if any required param is **missing/stale**; surface errors to the requester.
+        - Test matrix covering: `TxnLockHeight ≠ 0`, `Value` just outside min/max, `LockTime` just outside bounds, and fee anomalies.
+        
+        *Note:* A separate heuristic on **fee/change consistency** (ensuring unspent BTC becomes change after a reasonable miner fee) has already been covered; not repeating it here.
+        
+- [ ]  **Unmetered BeginBlock balance scan → denom-flood chain halt**
+    - **Core idea:** Doing a `GetAllBalances`/full-denom iteration inside **BeginBlock** runs on an **infinite gas meter**. An attacker can spam a plan’s address with thousands of tiny-denom balances (e.g., IBC or tokenfactory denoms). Each block, the unmetered scan scales with the number of denoms and can **stall/halt block production** on demand.
+    - **Where to look:**
+        - BeginBlock/EndBlock handlers that call bank APIs like `GetAllBalances`, `IterateAccountBalances`, or any **unbounded per-denom loops** over module/plan accounts.
+        - Rewards/airdrop/incentives modules that compute per-block allocations by **reading all balances** of a pool address.
+        - Any code path in BeginBlock that **derives logic from “all coins on account”** rather than a fixed allowlist of reward denoms.
+    - **Red flags:**
+        - Use of `GetAllBalances` (or equivalent iterator) in BeginBlock.
+        - No **allowlist/bound** on reward denoms; plan config accepts arbitrary-length `[]Coins`.
+        - Logic proportional to **count of distinct denoms** held by the plan account.
+        - No early-exit, pagination, or rate limits; assumes “few denoms” by convention.
+    - **Fix pattern (tight, actionable):**
+        - Replace `GetAllBalances` with **per-denom `GetBalance` calls over a fixed, validated reward-denom allowlist** stored in plan config/module state.
+        - **Bound** the length of configured reward denoms at plan creation/update (e.g., `maxRewardDenoms`), and reject duplicates.
+        - Add **defensive caps** in BeginBlock: short-circuit if denom count exceeds a safe threshold; log/alert instead of iterating.
+        - Move any heavy balance scans **out of BeginBlock** or perform them against a **manually metered cached context** with strict step limits.
+        - Optional: maintain a **module-owned index** of “active reward denoms with nonzero balance” updated on **controlled code paths** (deposits/withdrawals), so BeginBlock reads a **small keyed set** instead of the bank store.
+- [ ]  **Unbounded reward-denom arrays in BeginBlock → plan-created chain halt**
+    - **Core idea:** If rewards plans can include an arbitrarily long `sdk.Coins` list, and BeginBlock logic (**allocation** / **termination**) iterates those denoms each block without metering or caps, an attacker can create a plan with thousands of denoms to force O(n) per-block work and effectively halt the chain when the plan becomes active or ends.
+    - **Where to look:**
+        - Rewards plan type/schema: fields like `AmountPerDay` / initial deposits that use `sdk.Coins`; creation/validation paths that accept user-supplied denom lists.
+        - BeginBlock handlers that process plans: functions like `AllocateRewards(...)` and `TerminateEndedRewardsPlans(...)` that loop over plan denoms.
+        - Bank interactions inside those loops (per-denom balance reads/writes) and any nested loops (plans × denoms × recipients).
+        - Parameterization/caps: existence (or lack) of max-denoms-per-plan, whitelist/allowlist, or chunking across blocks.
+    - **Red flags:**
+        - `AmountPerDay` (or similar) typed as `sdk.Coins` with no max length or whitelist checks at plan creation.
+        - Per-denom iteration inside BeginBlock with no gas metering, chunking, or early-exit limits.
+        - Ability for any account to create plans that start “now/next block” with arbitrary denom sets.
+        - Nested iteration over large `Coins` plus additional `GetAllBalances`/bank ops.
+    - **Fix pattern (tight, actionable):**
+        - **Constrain the schema:** change plan amount from `sdk.Coins` → **single `sdk.Coin`** (strongest), or enforce **hard cap** (e.g., ≤ 1–3 denoms) at creation; reject plans exceeding the cap.
+        - **Validate inputs:** on plan creation/update, enforce **denom whitelist/allowlist** and **max-denoms-per-plan**; reject duplicate denoms.
+        - **Bound per-block work:** in BeginBlock, **chunk** per-plan denom processing (e.g., process ≤K denoms per block, persist cursor) and/or move heavy work to EndBlock/worker with quotas.
+        - **Precompute targets:** store expected denom set per plan; avoid dynamic/aggregate scans; use direct `GetBalance(ctx, addr, denom)` for the known set.
+        - **Circuit-breakers & telemetry:** add time/iteration guards, metrics on per-block processing time and denom counts; if exceeded, defer remaining work and emit alerts.
+- [ ]  **Unmetered EndBlock unbond completion + multi-denom amplification → on-demand chain halt**
+    - **Core idea:** If matured unbondings are processed **linearly in EndBlock** and each undelegation can include **many denoms**, an attacker can pre-accumulate multi-denom delegations and then batch-undelegate so that EndBlock performs a **large number of `SendCoins`** without metering—causing geometric growth in unmetered work and eventually a chain halt.
+    - **Red flags:**
+        - Undelegation processing loops over **all matured items** each block with no cap.
+        - Each undelegation iterates over **`sdk.Coins`** and performs a **per-denom** transfer in EndBlock.
+        - No per-block quota (cursor/offset) or “work budgeting” for matured unbonds.
+        - Parameters allow many restakable **denoms per delegation** (amplifier).
+        - Note: A general “unmetered Begin/EndBlock iteration DoS” heuristic is already covered elsewhere; this is the **multi-denom amplification** variant that escalates it.
+    - **Fix pattern (tight, actionable):**
+        - **Defang amplification:** change delegation/undelegation amounts to **`sdk.Coin` (single denom)**, or hard-cap **denoms per delegation** (e.g., ≤1–3).
+        - **Bound EndBlock work:** maintain a cursor and process at most **N matured unbonds per block**; carry remainder to next block.
+        - **Move heavy work to metered txs:** record matured claims and require users (or a sweeper bot) to **claim via transaction**; EndBlock only marks eligibility.
+        - **If multi-denom must stay:** aggregate per-delegation payouts into **one transfer** where possible, and/or charge a **scaling gas fee at undelegation time** proportional to `len(Coins)` to internalize EndBlock cost.
+- [ ]  **Empty/placeholder KV writes → broken iteration & address decode panics**
+    - **Core idea:** Writing **`[]byte{}`** (or otherwise invalid/placeholder bytes) as the **value** for delegation records causes downstream iterators/hooks that **decode addresses or delegations** to fail (e.g., “empty address string is not allowed”)—breaking accreditation updates and any logic that scans delegations.
+    - **Red flags:**
+        - `store.Set(key, []byte{})` or writing zero-length/placeholder bytes for delegation entries.
+        - Hooks that iterate delegations/services and immediately **decode** value → `AddressCodec` / Bech32 / proto unmarshal without guarding against empty payloads.
+        - Conversions like `string(bz)` → `[]byte(...)` / `[]byte(...)` → address with **no nil/empty checks**.
+        - Accreditation or status-change flows that **scan** KVs and assume well-formed values.
+        - No **state migration** to repair historical bad entries.
+    - **Fix pattern (tight, actionable):**
+        - Store the **actual serialized delegation** (e.g., proto `Marshal` or encoded address bytes) instead of `[]byte{}`; validate **non-empty** before `Set`.
+        - Add **defensive decode**: if value is empty/invalid, **skip with error log** (don’t panic).
+        - Introduce a **typed store** (`collections.Map[...]`) with schema-checked value types to prevent empty payloads.
+        - Add an **invariant** / end-to-end test: iterating all delegations must not error on decode.
+        - Provide a **migration** that scans keys and deletes/backfills empty values; gate accreditation updates until migration completes.
+- [ ]  **Unmetered governance hooks × delegation scans → proposal-time chain halt**
+    - **Core idea:** If a governance-executed handler/hook (e.g., `AfterServiceAccreditationModified`) runs **without gas metering** and **linearly iterates** over delegations/user-preferences—especially when each delegation can contain **multiple denoms** that trigger `SendCoins`/state-heavy work—an attacker can pre-spam delegations and cause a **deterministic halt** at proposal execution.
+    - **Red flags:**
+        - Gov message execution or post-hooks that **iterate all delegations/users/services** in one shot (KV iterators over entire prefixes) with no pagination/cursor.
+        - Per-item loop body does **bank/distribution ops** (`SendCoins`, reward accounting) or expensive cross-module calls.
+        - Delegations allow **sdk.Coins (multi-denom)**, multiplying loop cost per delegator.
+        - No hard caps/quotas on **delegations per service** or **denoms per delegation**.
+        - No **time-slicing** (no progress checkpoint) and no defensive early-exit under load.
+    - **Fix pattern (tight, actionable):**
+        - **Move heavy work out of gov execution**: on accreditation change, write a version/flag and process effects **asynchronously** in capped EndBlock/worker with a **cursor** (paginate and persist progress).
+        - **Constrain input surface**: prefer **single-denom** delegations (`sdk.Coin`), or enforce a **hard cap** on denoms per delegation; alternatively, add a **scaling gas surcharge** proportional to `len(denoms)` at *delegation/undelegation* time.
+        - **Bound loops**: add per-block processing limits and **backpressure** (re-enqueue remaining work).
+        - **Pre-index** relationships (e.g., service → delegator set) so updates touch only impacted keys, not full scans.
+        - Add **load tests/invariants** ensuring accreditation changes cannot execute unbounded work in a single tx/hook.
+- [ ]  **Unmetered BeginBlock scan of rewards plans → permissionless block-time explosion**
+    - **Core idea:** If `BeginBlock` (or `EndBlock`) **linearly iterates all rewards plans** with no hard cap/pagination and performs per-plan work (allocations, bank sends, bookkeeping) **without gas metering**, an attacker can mass-create cheap plans and force a **deterministic chain halt** the very next block.
+    - **Red flags:**
+        - `BeginBlock/EndBlock` loops over **all plans** (active+ended) with per-plan effects (e.g., allocation, termination, `SendCoins`) and **no cursor/pagination**.
+        - No **upper bounds** on: total plans, plans per service/admin, or plans activated in the same time window.
+        - Creation fee is **flat** (not scaling with total plan count) or refundable without covering downstream execution cost.
+        - Per-plan state includes **multi-denom** rewards (amplifies per-item work), or uses `GetAllBalances` on plan pools.
+        - No **rate limiting** of plan activation by time (e.g., many plans start at the same block).
+    - **Fix pattern (tight, actionable):**
+        - **Time-slice the work:** Maintain an **active-plans index** and process at most **N plans per block** with a **persisted cursor**; re-enqueue remainder (bounded, deterministic progress).
+        - **Bound inputs:** Add governance params for **max plans total**, **max plans per creator/service**, and **min start lead time**; optionally require a **bond/deposit** per plan sized to expected processing cost.
+        - **Economic guardrails:** Make plan creation cost **scale with current plan count** (e.g., `base + k*activePlans`) and **burn** a portion to internalize chain maintenance costs.
+        - **Reduce per-item cost:** Prefer **single-denom** plans; if multi-denom needed, cap denoms per plan or charge **denom-count–scaled fees** at creation.
+        - **Fail-safe mechanics:** If active-plans > threshold, **defer new activations** to a future block window; emit metrics/alerts and block-level limits to avoid unbounded work.
+- [ ]  **InitGenesis/Upgrade balance scan → pre-start DoS via spam denoms**
+    - **Core idea:** If `InitGenesis` (or an upgrade/migration path) calls **`GetAllBalances`** on a module or plan address that is **externally fundable**, an attacker can pre-deposit thousands of tiny-denom balances. At start time, the unmetered full-balance iteration blocks node bootstrapping or upgrade execution.
+    - **Red flags:**
+        - `InitGenesis`/upgrade handler does **full balance iteration** (`GetAllBalances`, `SpendableCoins`) on module/pool addresses.
+        - The scanned address can be **funded by anyone** (rewards pool, community pool–like, plan vaults).
+        - Logic compares “all balances” against targets using whole-`Coins` ops (e.g., `IsAnyGT`) instead of targeted reads.
+        - No **denom allowlist**/cap; IBC+tokenfactory enable **unbounded denom creation** pre-upgrade.
+        - Genesis/upgrade code path is **unmetered** and lacks pagination/cursors.
+    - **Fix pattern (tight, actionable):**
+        - Replace `GetAllBalances` with **per-denom `GetBalance`** over a **bounded, param-defined set** of reward/expected denoms.
+        - Add a **denom allowlist/cap** for pools checked at genesis; reject or quarantine unexpected denoms.
+        - Make plan/pool accounts **non-receivable** from the public (bank send hooks/permissions), or route deposits via a **whitelisted router** that enforces denom limits.
+        - In upgrades, **pre-scan with bounds** (offline tool) and store a compact snapshot; have `InitGenesis`/migrations validate against that snapshot instead of iterating live balances.
+        - Add a **start-up guard**: if unexpected-denom count > threshold, skip processing and mark plan for deferred cleanup with metrics/alerts rather than halting.
+- [ ]  **Empty allowlist ⇒ “allow-all” restakable denoms → per-denom reward loops DoS**
+    - **Core idea:** If the “allowed restakable denoms” param is **empty/nil** and the code interprets this as **“all denoms allowed”**, any per-denom reward/operator calculation that iterates `sdk.Coins` becomes unbounded. Attackers can delegate with **long spam-denom lists** (IBC/tokenfactory) so unmetered Begin/EndBlock paths linearly scan huge sets and stall the chain.
+    - **Red flags:**
+        - Param logic like `if len(allowed)==0 { /* skip checks → all allowed */ }`.
+        - Reward/commission calc that loops over **all coins** in delegations without a **cap** or **allowlist filter**.
+        - Multi-denom delegations accepted; no gas scaling with denom count; execution happens in **BeginBlock/EndBlock**.
+        - Governance can reset params to **defaults**; param `Validate()` accepts empty lists.
+    - **Fix pattern (tight, actionable):**
+        - Make empty/nil allowlist **fail-closed** (no denoms restakable) unless an explicit **AllowAll** boolean is set via governance.
+        - In delegation paths, **intersect** `Amount` with the allowlist before processing; reject non-allowed denoms early.
+        - Add **caps** (preferably 1 denom per delegation) or **linear gas surcharges** proportional to `len(coins)` on delegation/undelegation.
+        - Harden param validation: reject empty allowlist (unless `AllowAll==true`) and cover with unit/property tests.
+        - Telemetry/alerts when config flips to allow-all; guard rails in genesis builder and upgrades to ensure a **non-empty** allowlist.
+- [ ]  **Allowlist bypass in Join/Enroll → unauthorized membership & state bloat**
+    - **Core idea:** Mutations that **create membership links** (e.g., `JoinService`, `Enroll`, `RegisterOperator`) sometimes **skip allowlist/whitelist checks**, while **read/settlement paths** (e.g., rewards distribution) do enforce them. This asymmetry lets anyone join, creates **dangling/unauthorized links**, wastes storage, and can become exploitable if later code assumes “link ⇒ permission.”
+    - **Red flags:**
+        - Join/enroll handlers that don’t call a canonical `Is*Allowed(...)`/`InAllowList(...)` gate before writing.
+        - Cleanup/removal routines that only delete **allowed** links, leaving unauthorized ones behind.
+        - Error types/messages that suggest the wrong condition (e.g., returning `AlreadyAllowed` on a **not allowed** path), indicating inverted/missing checks.
+        - Spec/docs say “allowlisted only,” but the write-path doesn’t enforce it.
+    - **Fix pattern (tight, actionable):**
+        - Add a **mandatory precondition** in the join/enroll keeper/MsgServer: `if !IsOperatorInServiceAllowList(...) { return ErrNotAllowed }`.
+        - Centralize allowlist checks in a **single keeper method** and use it in *all* writers (join, migrate, batch add).
+        - Add **state invariants**: every operator–service link must have a corresponding allowlist entry.
+        - Consider a **migration** to prune existing unauthorized links and a metric to alert on future violations.
+- [ ]  **Late/invalid vote extensions in LocalLastCommit → ProcessProposal liveness halt**
+    - **Core idea:** ABCI++ apps that **inject `LocalLastCommit`** into proposal TXs and then **require all vote extensions to validate** in `ProcessProposal` can halt if **late or bad vote extensions** slip into `LocalLastCommit`. Because `VerifyVoteExtension` isn’t guaranteed to run for late precommits, a single invalid extension (from a malicious/slow validator) gets propagated by the proposer and **causes `ProcessProposal` to reject the block**, repeating every height.
+    - **Where to look (and grep):**
+        - App ABCI handlers: `PrepareProposalHandler`, `ProcessProposalHandler`, any code that **marshals/unmarshals** `ExtendedCommitInfo` / **injects** it into `req.Txs` (search: `LocalLastCommit`, `ExtendedCommitInfo`, `VoteExtension`, `injection`, `json.Marshal`, `json.Unmarshal`).
+        - Validation gates: calls to `ValidateVoteExtensions(...)`, quorum checks, and any **assumption that *all* votes must pass** vs **threshold**.
+        - Filtering logic before injection: ensure **invalid/late/unknown-set** votes are **dropped** (search terms: `BlockIDFlagCommit`, `GetPowerByConsAddr`, `IsValidator`, `duplicates`).
+    - **Red flags:**
+        - `PrepareProposal` **blindly marshals** `req.LocalLastCommit` without re-validating or filtering votes (no set-membership check, no per-vote app-level verification, no dedupe).
+        - `ProcessProposal` **fails the entire proposal** on **any** invalid vote extension instead of computing a **>=2/3 valid** threshold.
+        - No cache/marker of **“verified vote extensions this height”**; proposer just rebroadcasts whatever CometBFT hands it.
+        - No handling of **late precommit extensions** that never passed `VerifyVoteExtension` locally.
+    - **Fix pattern (tight, actionable):**
+        - In `PrepareProposal`:
+            - **Re-validate & filter** `LocalLastCommit.Votes`: keep only validators in the **current set**, drop duplicates, and **re-run app-level validation** for each vote extension; **do not inject** any failing entry.
+            - Optionally maintain a per-height **verified set** (addr → ok) marked during `VerifyVoteExtension`; **inject only verified** ones.
+        - In `ProcessProposal`:
+            - Treat invalid entries as **non-votes**; require **quorum of valid vote extensions** (≥2/3 power) instead of “all must pass”. **Soft-fail** per-vote, **hard-fail** only if quorum unmet.
+            - Add **defensive decoding**: if `req.Txs[0]` isn’t a valid `ExtendedCommitInfo`, fallback to default processing (or reject only if batch/quorum strictly required).
+        - Add **unit tests**:
+            - Late invalid vote present → proposer filters it; block **accepted** (quorum ok).
+            - Mixed valid/invalid votes → **quorum enforcement** passes/fails correctly.
+            - Duplicate/unknown-validator votes → ignored, no halt.
+- [ ]  **Unfreed CGO allocations in hot paths → linear memory leak & OOM**
+    - **Core idea:** Any `C.CString(...)`/`C.malloc(...)` created in Go and not paired with a `C.free(...)` will leak native heap memory. If this sits in **per-block** or **per-tally** code paths (e.g., `BeginBlock/EndBlock`, batch loops), the leak becomes **linear over time**, eventually exhausting RAM and crashing nodes.
+    - **Red flags:**
+        - `C.CString(...)` without an adjacent `C.free(unsafe.Pointer(...))`.
+        - Only **some** C strings in a function are freed (asymmetry); one or more are missed.
+        - Allocation occurs **inside loops** but `defer C.free(...)` is used (defers run at function end → leaks per-iteration).
+        - Early `return`/`error` paths after allocation that skip `C.free(...)`.
+        - Long-lived goroutines calling CGO functions repeatedly with fresh `C.CString` each time.
+    - **Fix pattern (tight, actionable):**
+        - Immediately after each allocation, add `p := C.CString(x)` **and** `defer C.free(unsafe.Pointer(p))` **if not in a loop**. If in a loop, call `C.free(...)` **explicitly at the end of each iteration** (don’t use `defer`).
+        - Centralize CGO calls in small helper functions whose scope ensures `defer C.free(...)` always runs, even on errors.
+        - For constants (e.g., a log dir) used repeatedly, allocate once and **reuse the same `C.char`**; free it on shutdown.
+        - Add a CI check (simple static scan) to flag `C.CString(` without a matching `C.free` in the same scope; add a long-running soak test with pprof/RSS monitoring to catch regressions.
+- [ ]  **Unbounded WASM stdout/stderr → host RAM blowup & EndBlock DoS**
+    - **Core idea:** If guest WASM can write unlimited data to `stdout/stderr`, and the host **captures/accumulates** these streams (often inside **EndBlock** tallying) without byte caps, memory usage grows with each data request. Batching multiplies the effect (copies across WASM→Rust→C FFI→Go, stored in arrays and emitted as events), enabling cheap, permissionless OOM and validator crashes.
+    - **Red flags:**
+        - No explicit byte cap/truncation on `stdout`/`stderr` (only result-size limits exist).
+        - Streams collected into `Vec<String>` / `[]byte` then **joined** for events/logs.
+        - Batch paths allocate slices sized to request count (e.g., `make([]T, len(list))`) and store full outputs.
+        - Execution occurs in **BeginBlock/EndBlock** (unmetered) and accepts **multiple** requests per block.
+        - WASI `fd_write` import implemented without enforcing a per-request/per-stream limit.
+        - Gas or “result-size” checks do **not** charge/count I/O bytes.
+        - Cross-language copies (Rust→C→Go) with no pre-copy length checks or hard caps.
+    - **Fix pattern (tight, actionable):**
+        - Enforce **hard per-stream limits** at the VM boundary (e.g., `MAX_STDOUT_BYTES`, `MAX_STDERR_BYTES`); truncate and return a specific status (`StdoutTooLarge` / `StderrTooLarge`).
+        - Replace unbounded accumulators with a **ring buffer** or **capped writer**; never build giant strings. Avoid including full streams in ABCI events—emit only the **first N bytes** + hash/size.
+        - **Meter I/O bytes**: account `stdout/stderr` toward a request’s byte budget (and/or block budget); abort when exceeded.
+        - Bound **batch memory**: cap concurrent tallies per block; process sequentially; spill oversized logs to temp files with a global cap; include only references/hashes on-chain.
+        - Add **pre-copy length checks** on FFI boundaries; prefer zero-copy or bounded slices; reject frames exceeding caps before duplication.
+        - Ship tests: fuzz WASM that spams `fd_write`; assert truncation, bounded RSS, and stable block times under worst-case inputs.
+- [ ]  **Outdated IBC-Go ack deserialization → non-determinism & chain halt**
+    - **Core idea:** Affected IBC-Go versions (e.g., **v8.4.0**) deserialize IBC **acknowledgements** in a way that can be **non-deterministic** across nodes. A malicious counterparty can craft an ack so different validators compute different state → **consensus failure / chain halt**.
+    - **Where to look (and grep):**
+        - `go.mod` / `go.sum` for `github.com/cosmos/ibc-go/v*` (flag anything **< v8.6.1** on v8.x line).
+        - Custom module handlers touching acks: `OnAcknowledgementPacket`, `Acknowledgement`, `channeltypes.Acknowledgement`.
+        - Any use of generic JSON parsing on acks: `encoding/json.Unmarshal`, `map[string]interface{}`, `codec.UnmarshalJSON` in IBC ack paths.
+        - Relayer / channel permissions: open-channel policy that allows **permissionless** channels increases exploitability.
+    - **Red flags:**
+        - `require github.com/cosmos/ibc-go/v8 v8.4.0` (or other vulnerable tags) present.
+        - Modules assembling/parsing acks with maps or interface{} (key-order / type-coercion dependent).
+        - Lack of tests for malformed or edge-case acknowledgements.
+        - Chains accepting IBC channels from untrusted counterparties with no allowlist.
+    - **Fix pattern (tight, actionable):**
+        - **Upgrade IBC-Go to `v8.6.1` (or latest patched)**; if pinned to older lines, apply the vendor patch or backport from ASA-2025-004.
+        - Ensure ack handling uses **canonical, deterministic** types/APIs (`channeltypes.Acknowledgement`, `ack.Success()`/`ack.Error()`) and **never** `map[string]interface{}`.
+        - Add **conformance tests** with adversarial acks to assert identical state transitions across nodes.
+        - As defense-in-depth, restrict IBC channel creation (allowlist) until all counterparty chains are patched.
+- [ ]  **Unchecked/duplicate jailing in EndBlock → activation blocked / early return**
+    - **Core idea:** EndBlock logic that **jails all validators missing keys** calls `Jail(...)` without first checking `validator.Jailed`. Cosmos slashing rejects re-jailing with an error; if that error **bubbles up**, EndBlock **returns early** and any **activation step** (e.g., proving-scheme activation) in the same handler never executes.
+    - **Where to look:**
+        - Module EndBlockers that orchestrate **activation/upgrade gates** (e.g., “activate proving scheme if all validators have keys”).
+        - Loops that iterate validators and call **slashingKeeper.Jail / jailValidator**.
+        - Error handling in EndBlock paths: does **any** jail error abort the whole block handler?
+        - Pre-filters for candidates: are **already-jailed** validators excluded when enforcing “must have keys or jail”?
+    - **Red flags:**
+        - `for validators { err := slashingKeeper.Jail(...); if err != nil { return err } }` with **no `if !validator.Jailed` guard**.
+        - Activation is conditioned on “all non-keyed validators have been jailed”, but jailed validators **can’t be re-jailed**.
+        - EndBlock combines **state checks + punitive ops + activation** in one pass with **fail-fast** semantics.
+        - No allowance to **skip** permanently-jailed/tombstoned validators when evaluating readiness.
+    - **Fix pattern (tight, actionable):**
+        - Add an **idempotent guard**: `if !validator.Jailed { if err := Jail(...); ... }` or implement a `JailIfNotJailed(...)` helper.
+        - Treat “already jailed” as a **no-op**, not an error (map the specific error to success in this path).
+        - **Do not abort** EndBlock on individual jail failures; **accumulate & log** errors, proceed with activation checks that **exclude jailed/tombstoned** validators.
+        - Reframe the readiness criterion to “**active set** validators must have registered keys (≥2/3 voting power)”, excluding jailed/unchosen validators.
+        - Add tests: (1) validator missing key & already jailed ⇒ **activation still proceeds**; (2) mixed set with some jailed & no-key ⇒ **no early return**.
+- [ ]  **No-op mempool in proposal path → invalid-tx injection & BlockStore bloat**
+    - **Core idea:** If `PrepareProposal/ProcessProposal` are wired with a **NoOp mempool**, proposers can stuff blocks with **invalid transactions** (up to `MaxTxBytes`). Even if those txs fail in `DeliverTx`, CometBFT still **stores raw tx bytes** in the BlockStore—wasting bandwidth/CPU and permanently bloating disk and sync time.
+    - **Where to look:**
+        - App wiring where proposal handlers are created (e.g., `NewDefaultProposalHandler(mempool.NoOpMempool{}, app)`).
+        - `ProcessProposal` implementation: does it **re-run ante/stateless checks** or just accept all `req.Txs`?
+        - Node storage policy: presence/absence of **BlockStore pruning/compaction** and limits on `MaxTxBytes/MaxTxs`.
+    - **Red flags:**
+        - Production build uses `mempool.NoOpMempool` (or `nil`) in proposal handlers.
+        - `ProcessProposal` does **no tx decoding/ante simulation** and simply returns the default response.
+        - High ratio of `DeliverTx` failures but blocks still carry full-sized tx payloads.
+        - No BlockStore pruning, snapshots, or compaction strategy.
+    - **Fix pattern (tight, actionable):**
+        - Replace `NoOpMempool` with a **real mempool** (e.g., SDK priority/nonce mempool) in proposal handlers.
+        - In `ProcessProposal`, **pre-validate** each tx: decode + `AnteHandler` (simulate) and **drop** failures from `req.Txs`.
+        - Enforce **block-level guards**: conservative `MaxTxBytes`, per-tx size caps, and **reject malformed/oversized** payloads.
+        - Implement **BlockStore pruning**/retention policies (height- or time-based) and monitoring for invalid-tx rates.
+- [ ]  **Non-deterministic JSON-path wildcards in consensus filters → state divergence / chain halt**
+    - **Core idea:** Any consensus-time filter/tally that applies a JSONPath-like **wildcard** (e.g., `$.*`) over maps can yield elements in **non-deterministic order**. If the code then selects `elems[0]` or aggregates without first imposing a **stable ordering**, different validators derive different results → divergent state commits → chain halt.
+    - **Where to look:**
+        - Filter/tally code that parses reveals and applies **path expressions** (JSONPath/JMESPath) inside **BeginBlock/EndBlock** or other consensus-critical paths.
+        - Calls that return **lists of nodes/elements** (e.g., `GetNodes`, `Find`, `Query`) followed by picking the **first/any** element or performing **mode/stddev** on that list.
+        - Any iteration over **Go maps / hash maps** (unordered) inside filters or result assembly.
+    - **Red flags:**
+        - Supported path expressions include **wildcards** (`$.*`, `[*]`) or object-scan operators without guaranteed order.
+        - Code uses `elems[0]`, “first element”, or **frequency counts** over an **unsorted** `[]Node` result.
+        - No explicit **sorting/canonicalization** step before computing consensus results or storing them.
+        - Mixed-language pipelines (Rust/Go/C) passing arrays/objects without documented **deterministic ordering** guarantees.
+    - **Fix pattern (tight, actionable):**
+        - **Ban or gate** nondeterministic expressions (wildcards) in consensus filters; alternatively, require a **deterministic projection** (e.g., `$.* | sort_by(@)`).
+        - Before using results: **canonicalize** by sorting with a stable comparator (by **JSON pointer**, key path, or **canonical JSON** per RFC 8785) and **dedupe** deterministically.
+        - For statistical filters (mode/stddev), operate on the **sorted** list and define **tie-breakers** deterministically (e.g., lexicographic).
+        - Add **property-based tests** that randomize input key order and assert identical outputs across runs/nodes.
+- [ ]  **Zero-gas “privileged” messages without de-dup/rate limits → batchable DoS**
+    - **Core idea:** If certain messages (e.g., Commit/Reveal) are flagged as **free gas** in the ante (gas price set to 0) purely by eligibility checks, an attacker can stuff a single tx with **many duplicate copies** of the same eligible message. Because execution is effectively unmetered for those messages, validators burn CPU/mem per copy, enabling **block delays or node DoS**.
+    - **Where to look:**
+        - Ante decorators that mark messages **fee-exempt** (set gas price to 0, skip min-fee) based on contract queries/role checks.
+        - Multi-message tx handling: any loop that **executes each message** with no per-tx cap or **duplicate detection**.
+        - Mempool admission/sorting under **0 gas price** for these messages; any special “free” lanes.
+        - Post-handlers that **refund** all fees for these types (combined with ante free gas ⇒ totally unmetered).
+    - **Red flags:**
+        - A boolean “isEligibleForFreeGas(msg)” gate with **no**: per-tx **max message count**, per-block **rate limit**, or **dedup** within a tx.
+        - Eligibility checked via a **read-only** query (e.g., “can commit/reveal now?”) that doesn’t change after the first success.
+        - No canonical **message key** (e.g., (requestID, executor)) used to guard against repeats **inside the same tx**.
+        - Free-gas path combined with **NoOp mempool** or mempool that doesn’t penalize 0-fee traffic.
+    - **Fix pattern (tight, actionable):**
+        - **Meter then refund:** Charge normal gas in ante; on success, **refund** a capped amount in post (prevents free batching).
+        - **Hard caps & dedup:** Enforce a **max N privileged messages per tx** and **reject duplicates** by hashing each message’s canonical key (e.g., (requestID, executor, action)) within the tx.
+        - **Per-sender/Per-block budgets:** Add rate limits (e.g., **X** privileged msgs per sender per block) and drop excess in ante.
+        - **Mempool safeguards:** Require **non-zero min gas price** or separate fee lane with **strict limits** for privileged ops.
+        - **Stateful replay guard:** During ante, check a lightweight in-block cache/set for seen (requestID, executor, action) and **abort** repeats.
+- [ ]  **Missing lower-bound checks on cryptographic blobs → slice OOB panic / chain halt**
+    - **Core idea:** Handlers that parse signatures or vote extensions often **slice fixed prefixes** (e.g., first 65 bytes for `r||s||v`) after only checking a **maximum** size. If the input is **shorter than required**, slicing like `buf[:65]` panics, halting consensus.
+    - **Where to look:**
+        - Vote extension verification paths: functions that validate **ExtendedCommitInfo** payloads and then recover keys (`ecrecover`, ed25519 verify, etc.).
+        - Any code that does `sig := b[:65]`, `pk := b[:33]`, or similar **fixed-length slices** after loose or missing checks.
+        - JSON/Base64/hex decoding sites that accept variable-length inputs and pass them directly to crypto routines without **exact-length assertions**.
+        - Both proposer-side (Prepare/ProcessProposal) and validator-side (**VerifyVoteExtensionHandler**) code paths to ensure **identical** validation and safe failure (no panic).
+    - **Red flags:**
+        - Only **max-length** guards (e.g., `len(b) > MaxLen`) with no **min/equality** checks.
+        - Mixing hex/base64/raw bytes without reconciling lengths (e.g., hex-decoded 130 chars → 65 bytes but path assumes raw).
+        - Recover/verify helpers that take **slices** rather than fixed arrays and callers pass unvetted user bytes.
+        - Error handling that **logs and continues** right before a fixed slice, enabling a subsequent panic.
+    - **Fix pattern (tight, actionable):**
+        - Define **constants** for expected lengths (e.g., `const Sig65 = 65`) and **require** `len(b) == Sig65` (or `>=` when format allows trailing data) **before** any slice.
+        - Copy into fixed-size arrays after validation:
+            
+            ```go
+            if len(b) < Sig65 { return ErrInvalidLength }
+            var sig [Sig65]byte; copy(sig[:], b[:Sig65])
+            
+            ```
+            
+        - Return deterministic **errors** (not panics) from both Verify and Process handlers; ensure both paths share the **same validator**.
+        - Add **fuzz/property tests** for zero-length, short (<65), exact (==65), and oversized inputs; include regression for malformed vote extensions.
+- [ ]  **Min-tie bug in divergent gas aggregation → under/over-charging executors**
+    - **Core idea:** In “divergent” metering paths that pick a **single lowestReporterIndex** and apply a special `lowestGasUsed` only to that index, **equal minima** (e.g., reports `[10,10,20]`) won’t get the same treatment. This silently **mis-accounts gas** across executors (some charged “normal,” one charged “lowest”), skewing economics and incentives.
+    - **Where to look:**
+        - Tally / VM gas accounting that aggregates **multiple executor gas reports** and then iterates executors to `ConsumeExecGas…`.
+        - Code that computes a single `lowestReporterIndex` (via `i==0 || v<lowest`) and later checks `if i == lowestReporterIndex { gasUsed = lowestGasUsed }`.
+        - Any adjustment combining `CorrectExecGasReportWithProxyGas`, `RemainingExecGas()/replicationFactor`, and a **min selection** applied to only one index.
+    - **Red flags:**
+        - Strict `<` comparison to set the “lowest,” ignoring ties; or initializing with `i==0` sentinel.
+        - Applying special gas to **one** index instead of **all** indices with `report == lowestReport`.
+        - Using `min(adjusted[i], remaining/replication)` inconsistently across equal minima.
+        - Lack of unit tests with **duplicate minima** (e.g., `[x,x,y]`, `[x,x,x]`).
+    - **Fix pattern (tight, actionable):**
+        - Compute the **lowest value** first, then **apply the special path to all i where `adjGasReports[i] == lowestReport`**:
+            
+            ```go
+            lowest := minAll(adjGasReports)
+            for i := range executors {
+                gasUsed := adjGasReports[i]
+                if adjGasReports[i] == lowest {
+                    gasUsed = lowestGasUsed
+                }
+                gasMeter.ConsumeExecGasForExecutor(executor[i], gasUsed)
+            }
+            
+            ```
+            
+        - Alternatively, precompute a **bitset/slice of lowest indices** and branch on membership (deterministic, no panic).
+        - Add tests for ties: `[10,10,20]`, `[10,10,10]`, and **near-ties** after proxy corrections/rounding.
+- [ ]  **Outlier-insensitive gas cap splits by full replication factor → underpay + refund leakage**
+    - **Core idea:** Per-executor gas cap is computed as `RemainingExecGas / replicationFactor` even when some executors are flagged as **outliers** (and skipped). Honest executors are then capped too low, leaving **residual gas** unconsumed and **refunded to the requester**—i.e., executors are underpaid despite sufficient budget.
+    - **Where to look:**
+        - Gas metering for executor payments in tally/endblock paths (e.g., `MeterExecutorGasUniform`, `MeterExecutorGasDivergent`).
+        - The per-executor cap calculation that uses `RemainingExecGas()/replicationFactor` and the loop that skips `outliers[i]`.
+        - Any refund logic that returns unconsumed execution gas to the requester.
+    - **Red flags:**
+        - Cap uses **fixed** `replicationFactor` without subtracting the number of outliers/filtered executors.
+        - Outlier slice present but not used to **adjust active count**.
+        - Residual `RemainingExecGas()` after paying all non-outliers, followed by a **refund**.
+        - No guard for the case “all executors are outliers” (division by zero risk when adjusted).
+    - **Fix pattern (tight, actionable):**
+        - Let `active := replicationFactor - countTrue(outliers)`; if `active == 0`, **abort** or mark batch invalid.
+        - Compute `gasUsed := min(correctedReport, RemainingExecGas()/uint64(active))` and apply **only** to non-outlier executors.
+        - Optionally perform a **second pass** to distribute any small residual (due to integer division) to non-outliers up to their reported usage.
+        - Mirror the fix in both **uniform** and **divergent** metering paths; add tests where outliers ∈ {0,1,active−1,active}.
+- [ ]  **Off-by-one at batch genesis → first vote extensions always rejected**
+    - **Core idea:** The first batch’s signatures are verified against a **previous batch’s validator key snapshot**. If batch numbering starts at `DefaultSequenceStart+1` but the “first-batch” condition checks `== DefaultSequenceStart`, the special-case fallback (use current pubkey module key) never runs. Verification then queries `batchNum-1` (nonexistent), treats the extension as unexpected, and rejects **all first-batch signatures**.
+    - **Where to look:**
+        - ABCI vote-extension verification (e.g., `VerifyVoteExtensionHandler` / `verifyBatchSignatures`).
+        - Batch numbering/initialization (`DefaultSequenceStart`, first assigned batch number, handling of “batching not started”).
+        - Key lookup source selection: “use previous validator tree entry for `batchNum-1` **else** pubkey module for first batch”.
+    - **Red flags:**
+        - Condition `if batchNum == DefaultSequenceStart { … }` while batch creation sets first batch to `DefaultSequenceStart + 1`.
+        - Unconditional read of validator tree at `batchNum-1` for the first actual batch.
+        - Error path maps “no previous entry” to `ErrUnexpectedBatchSignature` instead of first-batch fallback.
+    - **Fix pattern (tight, actionable):**
+        - Correct predicate to `if batchNum == DefaultSequenceStart + 1 { use current pubkey } else { use validator tree at batchNum-1 }`.
+        - Encapsulate “expected signer for batch N” in one function that handles genesis/first-batch cleanly.
+        - Add tests: (a) first batch signed with current pubkey passes; (b) batch N>start+1 validated against `N-1` snapshot; (c) missing previous snapshot → deterministic error (not panic).
+- [ ]  **Mean-based sigma filter → adversarial skew & consensus sabotage**
+    - **Core idea:** If outlier detection computes **mean ± k·σ** on the full sample (including adversarial points), a single extreme value can drag μ and inflate/deflate σ so that many honest reports are flagged as outliers. This can drop inliers below the ≥2/3 quorum, halting consensus, or selectively bias the final aggregate.
+    - **Red flags:**
+        - Code/comment mismatch: comments say “median” but implementation uses **mean** for center.
+        - One-pass filter: σ computed on the **unfiltered** set; no re-estimation after removing outliers.
+        - No lower bound on sample size; no guard that **post-filter inliers ≥ quorum**.
+        - Unbounded/loose **sigma multiplier**; no clamping of inputs to sane min/max.
+        - Float/uint conversions around big values (overflow/precision loss) in mean/variance.
+    - **Fix pattern (tight, actionable):**
+        - Use **robust center/scale**: median + MAD (or trimmed mean with ≥10–20% trim) and sort deterministically before evaluation.
+        - **Iterative**: compute center/scale → drop k·scale outliers → **recompute** once (or use Huber/Tukey weights).
+        - Add **safety rails**: if inliers < quorum, **abort without state change** or fall back to median-of-all; bound the sigma multiplier and input range.
+        - Ensure deterministic tie-breaking and stable ordering prior to filtering; keep calculations in **big/int-dec** types with overflow checks.
+- [ ]  **Zero-valued gas price → division-by-zero panic & chain halt**
+    - **Core idea:** If a user-controlled economic parameter (e.g., `gasPrice`) is allowed to be **zero** and later used as a **divisor** during tallying/settlement, a single request can trigger a **division-by-zero** panic inside EndBlock/BeginBlock logic, halting all validators.
+    - **Red flags:**
+        - Request structs/ABI allow `gasPrice == 0` (no min checks at ingress).
+        - Arithmetic like `Dec.Quo(...)`, `QuoInt`, `QuoTruncate`, or integer division using **unvalidated** fields (`gasPrice`, `replicationFactor`, weights) in tallying, fee metering, or reward split paths.
+        - EndBlock/BeginBlock code path performs these divisions and **cannot safely fail** (panics halt the chain).
+        - “Free gas” or zero-fee pathways elsewhere (ante/contract) that make `gasPrice` zero a realistic input.
+    - **Fix pattern (tight, actionable):**
+        - **Validate at ingress:** enforce `gasPrice > 0` in the contract/msg handler; add a **param floor** (e.g., `MinGasPrice > 0`) and reject requests below it.
+        - **Defensive math:** wrap all divisions in a `safeQuo(x, y)` helper that returns an error/skip when `y == 0`; never panic in EndBlock—**skip the item and emit an event** instead.
+        - **Config guards:** forbid `replicationFactor == 0` and similar zero denominators; add validation to param updates.
+        - **Tests/invariants:** fuzz request fields for zero/near-zero; add invariant tests that EndBlock never panics on adversarial inputs.
+- [ ]  **New-validator vote-extension gating → false quorum failure & chain stall**
+    - **Core idea:** If vote-extension validation **requires a prior-batch record** (e.g., “must exist in previous validator tree”) but quorum is computed against the **current active set**, newly joined validators’ extensions are rejected while their **voting power still counts in the denominator**. If new validators’ power > 1/3, `ValidateVoteExtensions` can never reach 2/3, causing perpetual proposal rejection and a chain halt.
+    - **Red flags:**
+        - Verification code checks `prevBatch`/`batchNum-1` membership before accepting an extension.
+        - First-block-after-set-change lacks a **grace path**; new validators can’t contribute extensions yet.
+        - Quorum math uses **total current voting power** (including new validators) while the **eligible signers set** excludes them.
+        - Errors from Prepare/ProcessProposal **bubble up** (no soft-fail) → block is always rejected.
+        - Similar “cold start” logic already special-cased for other “first time” scenarios but **not** for set changes.
+    - **Fix pattern (tight, actionable):**
+        - **Exclude** new validators from both numerator and denominator for the **first block** after they join (derive expected-eligible set from `prevBatch` validator tree; compute quorum over that set only).
+        - Or **permit** new validators to sign using their **current key** when `prevBatch` entry is missing (single-block grace), and verify against the **current** pubkey for `batchNum == lastBatch+1`.
+        - Make proposal handlers **tolerant**: treat missing extensions from newly joined validators as **non-fatal** for that block; log & continue.
+        - Add invariants/tests: simulate validator-set changes where **>1/3 power joins**; assert proposals succeed.
+- [ ]  **Vesting creation gated on non-existent recipient → dust-send front-run blocks vesting**
+    - **Core idea:** If `MsgCreateVestingAccount` (or custom vesting msg) **requires the recipient account not to exist**, anyone can **pre-create** that account by sending dust via `bank.Send`, causing vesting creation to **permanently fail** (accounts can’t be deleted). This is a cheap, permissionless griefing vector that blocks grants/airdrops/vesting programs.
+    - **Red flags:**
+        - Vesting creation returns “account already exists” when `GetAccount(to) != nil` / `HasAccount(to) == true`.
+        - Bank keeper **auto-creates** recipient accounts on first inbound transfer.
+        - No “migrate/convert” path from a BaseAccount to a VestingAccount, or conversion requires privileged ops only.
+        - Vesting creation **doesn’t require the recipient’s signature** (so an attacker can create the base account without the recipient’s cooperation and still block).
+    - **Fix pattern (tight, actionable):**
+        - **Support migration:** Add a `CreateOrMigrateVestingAccount` (or allow `MsgCreateVestingAccount`) to **convert an existing base account** into a vesting account **if the recipient signs** the tx; preserve sequence/number and balances.
+        - **Two-step escrow:** Sender funds a **module escrow** and emits a claim record; the recipient later calls `AcceptVesting` (must sign) which creates/migrates their account to vesting atomically. Add timeout/refund.
+        - **Stronger preconditions:** If you must forbid migration, then require the recipient’s **Sig + zero sequence & zero balance** to create vesting, eliminating third-party pre-creation by dust.
+        - **Operational guardrails:** Document that vesting recipients should **pre-create and sign** their vesting (self-tx) or be **allowlisted** and required to co-sign, removing third-party griefing.
+- [ ]  **Deterministic sorting of participants → reward priority bias/gaming**
+    - **Core idea:** If executors/proxies are **sorted deterministically** (e.g., lexicographically by pubkey/address) before metering gas or distributing rewards, actors can **grind vanity keys** that sort early and **monopolize payouts** whenever allocation stops after “remaining gas” runs out—creating a persistent unfair advantage without higher contribution.
+    - **Where to look:**
+        - Tally/settlement paths that **sort** participants (e.g., `sort.Strings(keys)`, sorting `ProxyPubKeys`) and then **iterate** to allocate gas/rewards until budget exhausted.
+        - Gas metering functions that use **remaining-gas loops** or “first N get paid” semantics.
+        - Any stable ordering derived from **raw pubkeys/addresses** (hex strings) with **no randomness**, **rotation**, or **pro-rata** fallback.
+        - Key registration flows that allow **frequent key changes** without cost (enables grinding for favorable order).
+    - **Red flags:**
+        - Plain `sort.*` over participant IDs followed by linear allocation that stops when **RemainingExecGas == 0**.
+        - No per-request **shuffle/seeded permutation**; no **round-robin** cursor; no **pro-rata** split when insufficient funds.
+        - Rewards depending on **iteration index** rather than stake/weight/performance.
+        - Executors/proxies can **re-register keys** cheaply (vanity grinding feasible).
+    - **Fix pattern (tight, actionable):**
+        - **Seeded permutation:** Order executors/proxies by `hash(block_randomness || request_id || pubkey)` each tally, not by raw key; use prior block hash + domain separation.
+        - **Fair split when insufficient:** If remaining gas/rewards can’t cover all, **pro-rate** across all eligible (or across the next K selected by permutation), not first-come in order.
+        - **Rotation:** Maintain a **round-robin cursor** across requests so everyone gets head-of-line over time.
+        - **Anti-grinding:** Bind identity to a **stable operator key**; charge a **key-change fee / cooldown**; or derive ordering from **operator ID** rather than mutable pubkey.
+        - **Determinism tests:** Add tests asserting **no participant gains** by changing pubkey; simulate many vanity keys and verify identical expected payout over large samples.
+- [ ]  **Off-by-one in 2/3 consensus checks → misclassification & unfair payouts**
+    - **Core idea:** Logic that decides “consensus (≥ 2/3)” using a **strict ‘>’** comparison (e.g., `errors*3 > total*2`) will **fail exactly-at-threshold cases** (when errors are exactly 2/3). This mislabels “consensus on errors” as “no consensus,” flipping payout paths so the **non-erroneous outlier is penalized** and error reporters get reduced/incorrect rewards.
+    - **Where to look:**
+        - Tally/filter consensus code that determines **consensus vs no-consensus** and **error-consensus** branches (mean/mode/stddev filters, error counting).
+        - Any integer arithmetic implementing **fractional thresholds** (1/3, 2/3) by cross-multiplying instead of floats.
+        - Reward metering paths that **switch payout schedules** based on consensus booleans (e.g., reduced payout on `ErrConsensusInError`).
+    - **Red flags:**
+        - Use of `>` instead of `>=` for “at least two-thirds” (e.g., `count*3 > total*2`).
+        - Integer division on thresholds without **ceiling** semantics (e.g., `needed := (2*total)/3` instead of `ceil(2*total/3)`).
+        - Missing unit tests for **edge sizes** where `total mod 3 == 0` (n = 3, 6, 9…) and mixed cases just above/below the boundary.
+    - **Fix pattern (tight, actionable):**
+        - Implement **ceiling thresholds** explicitly:
+            - Predicate: `count*3 >= total*2` (≥ 2/3), and similarly `count*3 > total` (> 1/3) where appropriate.
+            - Or compute `needed := (2*total + 2) / 3` (i.e., `ceil(2*total/3)`) and check `count >= needed`.
+        - Normalize consensus semantics across filters (mode/stddev/median) and **document** inclusive thresholds.
+        - Add **boundary tests** (n=3k, 3k±1) for both **error** and **non-error** consensus; assert payout path matches spec at exactly 2/3.
+        - Ensure payout logic reads the corrected consensus flag so **non-outliers aren’t penalized** when error-consensus holds.
+- [ ]  **Per-coin loop uses full batch amount → over-send/burn & double-charging**
+    - **Core idea:** In handlers that iterate `for _, coin := range amount { ... }`, using the **entire `amount` (all denoms)** inside the loop instead of the **current `coin`** causes the full batch to be sent/burned/refunded **once per iteration**. With mixed denoms, this multiplies transfers (e.g., community pool funding) and can also trigger follow-on burns in later branches—creating losses, accounting drift, or unexpected module balance changes.
+    - **Where to look:**
+        - ERC20 bridges/wrappers (keepers) that special-case ERC20 denoms (e.g., `IsERC20Denom`) in **Mint/Burn/Send** flows.
+        - Any keeper using `sdk.Coins` (`amount`) plus a per-item `coin` inside loops—especially when calling **`FundCommunityPool`, `SendCoins`, `BurnCoins`, `MintCoins`, `Refund*`**.
+        - Mixed paths with `continue`/`break` that send on some iterations and then perform default burns/transfers on others.
+    - **Red flags:**
+        - Calls like `FundCommunityPool(ctx, amount, ...)` **inside** `for _, coin := range amount`.
+        - Variable shadowing between `amount` (plural) and `coin` (singular); similarly `fees` vs `fee`.
+        - Special-case branches (e.g., `if IsERC20Denom(coin.Denom) { ... }`) that use the **batch** variable.
+        - Tests only covering **single-denom** flows; lack of multi-denom unit tests for burn/mint/refund.
+    - **Fix pattern (tight, actionable):**
+        - Replace batch argument with per-item coin:
+        `FundCommunityPool(ctx, sdk.NewCoins(coin), ...)` (and analogs for `SendCoins`, `BurnCoins`, refunds).
+        - Add unit tests with **multiple denoms** (at least one special-cased denom) verifying exact deltas for:
+            - Sender balance, module accounts, and community pool.
+            - No duplication when multiple ERC20 denoms are present.
+        - Consider aggregating by **denom** first (group coins by denom, then one call per denom) to avoid per-iteration side effects.
+        - Add lint rule/code review check: forbid passing a **plural** `sdk.Coins` var inside loops over the same `sdk.Coins` unless explicitly sliced to `sdk.NewCoins(coin)`.
+- [ ]  **Sign-mode/EVM classification mismatch → indexer abort & missing JSON-RPC data**
+    - **Core idea:** If a chain treats any tx signed with `SIGN_MODE_ETHEREUM` as an **EVM tx** (regardless of actual `Msg` type), downstream indexers that **assume** EVM responses (e.g., expect `MsgCreateResponse`/`MsgCallResponse`) will try to unpack incompatible **Cosmos SDK msgs** and fail. A single disguised tx can make `ListenFinalizeBlock`/block streaming abort early, leaving the **entire block unindexed** (no tx lookup, no bloom/pruning), effectively a post-commit DoS on JSON-RPC/indexer.
+    - **Where to look:**
+        - Tx conversion/classification paths: `ConvertCosmosTxToEthereumTx(...)`, `ConvertEthereumTxToCosmosTx(...)`, and any switch over `Msg` type that lacks a `default` “not EVM” branch.
+        - Ante/mempool sign-mode gates: places that equate `SIGN_MODE_ETHEREUM` with “EVM tx” without checking **message type URLs**.
+        - Indexer FinalizeBlock listeners: `ListenFinalizeBlock(...)`, helpers like `extractLogsAndContractAddr(...)`, `unpackData(...)` that hard-code expected type URLs.
+        - Error handling in streaming listeners: does a single unpack error **stop the whole block** vs. skip/continue?
+    - **Red flags:**
+        - Logic like `isEVMTx := (signMode == SIGN_MODE_ETHEREUM)` or `ethTx.To()==nil ⇒ contract create` used to infer EVM, with no Msg type check.
+        - `unpackData` comparing `msgResp.TypeUrl` to a single expected EVM response and **returning an error** (not a soft skip).
+        - No `default`/fallback in conversion switches; absent validation that all msgs are `{MsgCall, MsgCreate}` before tagging tx as EVM.
+        - FinalizeBlock listeners that **return error on first bad tx** instead of isolating per-tx failures.
+    - **Fix pattern (tight, actionable):**
+        - **Gate EVM classification by message type**, not sign mode: only treat as EVM if **all msgs** are `MsgCall`/`MsgCreate`; otherwise mark non-EVM.
+        - In indexer, **defensively parse**: if `unpackData`/type-URL doesn’t match, **skip EVM parsing for that tx** and continue; never abort block processing.
+        - Add a `default` in tx conversion that returns `(nil, nil, nil)` (or equivalent “not EVM”) for unknown/non-EVM msgs even if `SIGN_MODE_ETHEREUM` is present.
+        - Align ante/mempool and indexer classification: enforce that `SIGN_MODE_ETHEREUM` is **only allowed with EVM msgs**, reject mixed/non-EVM combos at ante.
+        - Add integration tests: tx with `SIGN_MODE_ETHEREUM` + `MsgMultiSend` (or any non-EVM msg) must **not** be indexed as EVM and must **not** break block indexing.
+- [ ]  **Context-leaked Cosmos-msg queue → unintended dispatch after reverted EVM subcall**
+    - **Core idea:** Precompiles that enqueue Cosmos SDK msgs (e.g., `ExecuteRequest`) into a **context-held slice** can accidentally persist those entries across nested EVM calls. If an inner call **reverts** but is caught via Solidity `try/catch`, the shared (pointer) queue on the outer context still contains the inner call’s enqueued msgs, so the post-EVM dispatcher **executes them anyway**. This breaks “effects after success only” and can trigger sensitive ops (IBC sends, bank transfers) from a failed path.
+    - **Where to look:**
+        - Precompile methods like `execute_cosmos` / `execute_cosmos_with_options` that `append` into `context.Value(CONTAINER_KEY)` (often a `[]ExecuteRequest`).
+        - EVM call/create wrappers that pull the queue after execution and dispatch (e.g., `EVMCallWithTracer`, `EVMCreateWithTracer`).
+        - Context scaffolding (e.g., `prepareSDKContext`) and whether the queue is **initialized once** at outer scope vs. per EVM frame/snapshot.
+        - StateDB snapshot/revert boundaries and how they interact with **non-revertible Go-side side effects** (context mutations).
+        - Nested calls and revert handling (Solidity `try/catch`, `revert()`, internal call graphs).
+    - **Red flags:**
+        - Queue stored as a **pointer** in `context.Value` and reused across frames; no frame-local copy.
+        - No push/pop or “transactional” queue semantics; single global slice for the whole transaction.
+        - Dispatcher runs unconditionally after EVM success, with no filtering of msgs **originated from reverted subcalls**.
+        - Tests only cover happy path; no cases for nested revert caught by `try/catch` or multi-frame snapshots.
+    - **Fix pattern (tight, actionable):**
+        - Make the execute-queue **frame-local**: on entering an EVM call frame, push a new queue; on **successful** return, merge into parent; on **revert**, discard frame queue. Implement as an explicit **stack** rather than a single slice in `context`.
+        - Alternatively, tag each enqueued request with a **frame ID**; on unwind, drop requests from reverted frames; only dispatch requests from frames that ultimately succeeded.
+        - Avoid storing a **pointer** in `context.Value`; pass immutable values or a frame manager that controls merges/discards.
+        - Gate dispatch by EVM outcome: only dispatch if the **originating frame succeeded** (and honor `AllowFailure` semantics explicitly).
+        - Add tests for: nested calls with revert caught by `try/catch`, partial failures, and multiple nested frames to ensure no leaked requests execute.
+- [ ]  **Missing EVM intrinsic gas (EIP-2929/2930) → access list–amplified DoS**
+    - **Core idea:** If the EVM entrypoints don’t charge **intrinsic gas** (base + calldata + access list costs), callers can attach **large access lists** and benefit from “warm” discounts at opcode-time (CALL/SLOAD=100) **without prepaying** the required up-front costs (e.g., 2,100/2,400 per key/account). The chain then performs extra account/code/state warming and iteration essentially **for free**, enabling low-cost block time inflation and DoS.
+    - **Where to look:**
+        - EVM tx entrypoints and wrappers: `Call/Create/StaticCall WithTracer` (or equivalents) and any “message execution” path that should debit intrinsic gas **before** VM execution.
+        - Intrinsic gas calculator: ensure it includes **base (21k)**, **calldata nonzero/zero bytes**, and **EIP-2930 access list** (per-account and per-storage-key) components; verify it is **subtracted** from available gas and enforced.
+        - Access list handling: code that iterates `AccessList` to pre-warm addresses/keys and StateDB warming logic (EIP-2929). Confirm warm discounts are only granted after **intrinsic** access list gas is paid.
+        - Ante/fee decorators: check if a generic “tx size gas” is (incorrectly) used as a substitute for intrinsic gas; compare against Evmos/go-ethereum behavior.
+    - **Red flags:**
+        - No explicit intrinsic gas charge; execution starts with full gas limit.
+        - Access list is parsed and applied (warmed) but **no** per-entry gas fee is charged up front.
+        - Relying solely on “gas per tx byte” in ante; mismatch vs true intrinsic costs (addresses/keys are much costlier than their byte size).
+        - Warm-cost paths (100 gas) reachable without prior intrinsic payment for the corresponding account/key.
+    - **Fix pattern (tight, actionable):**
+        - Implement EVM **intrinsic gas** per go-ethereum:
+            - `base = 21_000`
+            - `calldata = nonZeroBytes*G_txdata_nonzero + zeroBytes*G_txdata_zero`
+            - `accessList = addresses*G_accesslist_address + storageKeys*G_accesslist_storage`
+            Then **fail early** if `gasLimit < intrinsic`, else deduct from available gas.
+        - On parsing the access list, **pre-warm** the listed addresses/keys in StateDB **only after** intrinsic gas has been successfully charged.
+        - Keep ante’s tx-size gas if desired, but **don’t rely on it** for EVM intrinsic—avoid double-charging by clearly separating layers and documenting the model.
+        - Add tests: (1) tx with huge access list must pay high intrinsic and fit in block; (2) opcode costs show warm discounts only when intrinsic paid; (3) OOG if intrinsic exceeds provided gas.
+- [ ]  **Precompile-dispatched messages ignore Solidity gas limits → gas-limit bypass**
+    - **Core idea:** If a Cosmos precompile can enqueue Cosmos/EVM calls (e.g., `ExecuteRequest`) and the dispatcher runs them **with the parent context’s gas meter** (no fresh sub-meter), then a callee invoked via a **low-level `call{gas: X}`** can internally schedule work that executes with the **full parent gas**, bypassing the caller’s explicit gas cap. This breaks Solidity dev expectations, enables heavier-than-allowed work, and can cascade into DoS or unintended side effects.
+    - **Where to look:**
+        - Precompile that enqueues messages (e.g., `execute_cosmos`/`execute_cosmos_with_options`) and the queue plumbing on context.
+        - The dispatcher (e.g., `dispatchMessage`) and callback paths: check whether they reuse the **same `sdk.Context` gas meter** instead of creating a **bounded sub-meter**.
+        - EVM entrypoints (`EVMCall/Create/StaticCall WithTracer`) to see if “remaining gas” is computed and **propagated** into dispatched work.
+    - **Red flags:**
+        - Dispatched handler uses `k.msgRouter.Handler(msg)(ctx, msg)` with **no new gas meter**.
+        - No field in `ExecuteRequest`/dispatch payload that carries **remaining EVM gas**.
+        - Callback invocations after dispatch also run on the **parent gas meter**.
+        - Tests where `gasleft()` inside nested/dispatch paths reports **near-full parent gas**, despite a limited `call{gas: ...}`.
+    - **Fix pattern (tight, actionable):**
+        - Include **remaining EVM gas** (or an explicit gas cap) in `ExecuteRequest`; pass it through the dispatcher.
+        - In `dispatchMessage`, create a **sub-context** with `sdk.NewGasMeter(<cap>)` (or `NewGasMeterWithLimit`) and run the handler on that context; **propagate OOG** to revert as needed.
+        - Apply the **same cap** to any **callback** path.
+        - Add tests: (1) low-level call with small gas cannot perform large dispatch; (2) nested precompile dispatch respects cap; (3) parent gas not consumed beyond intended bound.
+- [ ]  **EVM special-error path skips gas charging → free nested calls & DoS via precompile**
+    - **Core idea:** If `EVMCall/Create` treat cases like **stack overflow / invalid jump / invalid opcode** as errors **distinct from OOG** and early-return **without accounting gas**, then any EVM call (especially those **dispatched via a Cosmos precompile**) can execute work “for free.” Attackers can loop such failing calls to waste compute and stall blocks because dispatched calls don’t prepay gas.
+    - **Where to look:**
+        - EVM entrypoints (e.g., `EVMCallWithTracer`, `EVMCreateWithTracer`): branches like `gasRemaining == 0 && err != nil && err != vm.ErrOutOfGas` that return **before** adding used gas to the Cosmos gas meter.
+        - Precompile dispatcher (`dispatchMessage`) paths that execute EVM calls **without upfront gas deduction**, relying on the callee to report usage.
+        - Error mapping between EVM VM errors and Cosmos gas accounting—ensure **all** failure modes still charge gas.
+    - **Red flags:**
+        - Early returns on non-OOG EVM errors with **no** `ctx.GasMeter().ConsumeGas(...)` for the EVM gas actually burned.
+        - Dispatched EVM calls (from precompile) that never pre-cap or pre-deduct gas and rely solely on post-exec charging.
+        - Tests where `gasRemaining==0` on error but **block / tx gas consumption** barely changes.
+    - **Fix pattern (tight, actionable):**
+        - Compute `evmGasUsed := initialGas - gasRemaining` (or interpreter-reported), and **always** convert+consume it on the Cosmos gas meter **before** returning—**even on non-OOG errors**.
+        - For precompile-dispatched calls, **pre-cap** with a sub-gas meter and/or pre-deduct a bounded allowance; reconcile post-exec to avoid negative/zero charges on error.
+        - Add tests for stack overflow, invalid jump/opcode, and success cases to verify gas is charged consistently across all error branches.
+- [ ]  **“Unset-by-empty” blocked in Validate → config can’t be removed**
+    - **Core idea:** A keeper method supports **empty string/nil** as a sentinel to **remove** a stored config (e.g., hook address), but the message `Validate()` rejects empty inputs (e.g., `StringToBytes("")` → error / `ErrEmptySender`). Result: deletes are impossible, state gets stuck.
+    - **Where to look:**
+        - Msg types that *set or update* optional targets (hooks, forwarding/fee receivers, module addresses, IBC callbacks), e.g., `MsgSetBeforeSendHook`, `MsgSet…Hook`, `MsgUpdate…Receiver`.
+        - Their `Validate()` vs keeper logic: does keeper treat `""`/`nil` as **Remove(ctx, key)** while `Validate()` forbids empty?
+        - msg server flow (`MsgServer.Set…`) to confirm `Validate()` runs **before** branching to the delete path.
+        - Error constants misused for optional fields (e.g., `ErrEmptySender`) and blanket `StringToBytes` checks.
+    - **Red flags:**
+        - Comments/state code say “empty disables/deletes”, but `Validate()` enforces **non-empty** address.
+        - Keeper has a `Remove` call guarded by `if addr == ""` or `len(bz)==0`, yet no way to pass empty due to validation.
+        - No dedicated “delete/unset” message; only a single “set” message that can’t represent deletion.
+    - **Fix pattern (tight, actionable):**
+        - Allow **empty** in `Validate()` *when* the intent is deletion (e.g., `if m.CosmwasmAddress=="" { return nil }`), keeping other checks (authz/admin).
+        - Or introduce an explicit **Delete/Unset** message/flag (`oneof` style API or `bool disable`), and route to `Remove(...)`.
+        - Prefer optional types (pointers) for fields that can be unset; document semantics; add tests: set → unset → set again.
+- [ ]  **Msg-level deployer allowlist bypassed via factory `CREATE/CREATE2` → arbitrary deployments**
+    - **Core idea:** If contract-deployer restrictions are enforced **only in message handlers** (e.g., `MsgCreate/MsgCreate2`) and **not** at EVM **opcode** level, an authorized account can deploy a **factory** that lets **anyone** create contracts via `CREATE/CREATE2`, bypassing the allowlist.
+    - **Where to look:**
+        - Keeper EVM entrypoints: `EVMCreate`, `EVMCreateWithTracer`, `EVMCall` and any precompile that can dispatch `MsgCreate/MsgCreate2`.
+        - VM wiring: how `CreateEVM(...)` configures go-ethereum `vm.EVM`—is there a **pre-hook**/guard invoked by `EVM.Create`/`EVM.Create2`?
+        - Params/feature flags: `AllowedPublishers` or “whitelist deployers” usage sites—are they referenced only in `MsgServer`/ante, or also inside the VM `CREATE` path?
+        - StateDB/host APIs: any central place where new code/accounts are created (`StateDB.CreateAccount`, code setting) without a whitelist check.
+    - **Red flags:**
+        - Allowlist checked in `MsgServer` (or ante) but **no check** in opcode execution (`CREATE/CREATE2`).
+        - Factories/system contracts can call `CREATE` freely; no concept of “authorized factory”.
+        - No tests covering **internal** contract creation under restricted deployment mode.
+        - Precompiles/routers can indirectly mint contracts (dispatching `MsgCreate`) without re-checking permissions.
+    - **Fix pattern (tight, actionable):**
+        - Enforce allowlist **inside the VM**: register a keeper-provided **CreateContract pre-hook** invoked by `EVM.Create`/`EVM.Create2` that rejects if `msg.caller` isn’t authorized.
+        - Define policy for **authorized factories** (explicit allowlist of factory addresses) or require **EOA-only** deployment when restricted.
+        - Duplicate the guard in any **precompile/dispatcher** that can create contracts (defense in depth).
+        - Add tests: (a) restricted mode blocks factory-spawned creates by non-allowed callers; (b) allowed factory path succeeds; (c) unrestricted mode unaffected.
+- [ ]  **Zero `COINBASE` in EVM context → contract incompatibility & misrouted rewards**
+    - **Core idea:** If `vm.BlockContext.Coinbase` is left as the **zero address** (or a dummy value) instead of the **current block proposer**, any Solidity that reads `block.coinbase` (MEV sharing, fee routing, allowlists, oracle filters) will behave incorrectly and may break.
+    - **Where to look:**
+        - The function that builds the EVM `BlockContext` (often `buildBlockContext` / `EVMConfig`) and sets `Coinbase`.
+        - The glue from consensus proposer → staking keeper → address conversion used for EVM (20-byte) addresses.
+        - Any custom precompile or module logic that relies on `block.coinbase`.
+        - Tests/examples that reference `block.coinbase` (or absence thereof).
+    - **Red flags:**
+        - `Coinbase` initialized to `common.Address{}` or a fixed address.
+        - No conversion from CometBFT/Tendermint proposer to an **Ethereum-style** 20-byte address.
+        - Lack of fallback behavior when a validator has no registered EVM address.
+        - No unit/integration test asserting non-zero `block.coinbase` and correct mapping at runtime.
+    - **Fix pattern (tight, actionable):**
+        - Resolve the current proposer each block (from consensus params / ABCI `proposer_address`), fetch the validator via staking keeper, and deterministically map to a **20-byte EVM address** (e.g., registered ETH addr, or hashed/operator-derived mapping). Set `vm.BlockContext.Coinbase` to that value.
+        - Provide a **sane fallback** (configurable fee-collector/treasury address) if proposer→EVM address mapping is missing, but **never** zero.
+        - Add tests: (1) `block.coinbase` is non-zero; (2) matches expected proposer mapping; (3) fallback path exercised; (4) contracts that branch on `coinbase` behave as expected.
+- [ ]  **Wrong EVM `GASLIMIT` wired to tx meter → contract incompatibility & mispricing**
+    - **Core idea:** If `vm.BlockContext.GasLimit` is derived from the **transaction’s remaining gas** (or a simulation constant) instead of the **block gas limit**, the `GASLIMIT` opcode returns the wrong value. Contracts that read `block.gaslimit` (e.g., gas oracles, dynamic fee logic, safety checks) will misbehave and simulations diverge from live execution.
+    - **Where to look:**
+        - The code that builds the EVM `BlockContext` (often `buildBlockContext` / `EVMConfig`) and sets `GasLimit`.
+        - Any helper like `computeGasLimit(...)` that reads `ctx.GasMeter()` or returns a fixed simulation cap.
+        - Access to **block** gas meter / consensus params (e.g., `ctx.BlockGasMeter()`, CometBFT `MaxGas`) vs **tx** gas meter.
+        - Tests around the `GASLIMIT` opcode and comparisons to chain block gas settings.
+    - **Red flags:**
+        - `GasLimit` computed as `ctx.GasMeter().Limit() - ctx.GasMeter().GasConsumedToLimit()` or a hardcoded simulation value.
+        - No reference to `BlockGasMeter()` or consensus `MaxGas`.
+        - Mismatch between simulation and deliver paths (sim returns fixed 3M, deliver uses tx meter).
+        - Absence of unit tests asserting `GASLIMIT` equals the configured **block** gas cap.
+    - **Fix pattern (tight, actionable):**
+        - Set `vm.BlockContext.GasLimit` from the **block-wide cap** (prefer `ctx.BlockGasMeter().Limit()` or consensus `MaxGas`), **not** per-tx remaining gas. Do not subtract consumed gas.
+        - For simulations, mirror the same source (or a configurable “simulated block gas limit”) so `GASLIMIT` is consistent.
+        - Handle “infinite” block gas (disabled cap) with a sane high value or configuration; document behavior.
+        - Add tests: (1) `GASLIMIT` equals block cap during DeliverTx; (2) same in simulation; (3) no dependence on tx gas; (4) contracts using `block.gaslimit` behave identically in sim vs live.
+- [ ]  **CREATE2 salt width mismatch → unreachable addresses & tool incompatibility**
+    - **Core idea:** EIP-1014 requires a **32-byte salt** for CREATE2. If your API/Msg type uses a narrower type (e.g., `uint64`) or parses salt as decimal, you silently truncate/pad wrong and make most CREATE2 target addresses **unreachable** via CLI/gRPC. This breaks determinism, external tooling, and any off-chain precomputed addresses.
+    - **Where to look:**
+        - Protobuf/Msg definitions for `MsgCreate2` (is `salt` a `uint64` or string/bytes?).
+        - CLI command and gRPC handlers that parse `salt` (decimal `ParseUint` vs hex → bytes).
+        - EVM call path where CREATE2 is invoked (how salt is converted to `[32]byte` for `keccak256(0xff || sender || salt || keccak256(init_code))`).
+        - Tests/examples that precompute CREATE2 addresses (do they assume 32-byte salt?).
+    - **Red flags:**
+        - `salt` typed as `uint64`/`int` in proto/messages or parsed via `strconv.ParseUint`.
+        - Accepting arbitrary-length strings without enforcing **exactly 32 bytes** (or left-padding ambiguously).
+        - Derivation code that casts numeric salt to bytes without big-endian 32-byte padding.
+        - No test vector comparing derived address against known EIP-1014 vectors.
+    - **Fix pattern (tight, actionable):**
+        - **API change:** Deprecate numeric `salt`; add `salt_bytes` (`bytes` length=32) or `salt_hex` (0x-prefixed) and **enforce 32 bytes** (left-pad big-endian if supporting shorter hex, but normalize to 32).
+        - **CLI:** Accept `-salt 0x…` (64 hex chars). Validate length and hex; refuse decimal input.
+        - **Keeper/Handler:** Convert to `[32]byte` with explicit big-endian padding before passing to `CREATE2`.
+        - **Back-compat:** If legacy `uint64` must be supported, map it to big-endian 32-byte left-padded salt and **emit deprecation warnings**.
+        - **Tests:** Add EIP-1014 vectors to assert your derived address matches reference for various salts (all-zeros, `0x01`, max 32-byte, random).
+- [ ]  **Non-truncating division in reward splits → over-allocation / hidden inflation**
+    - **Core idea:** Pro-rata calculations that use **rounded division** (e.g., `Dec.Quo`) to derive a pool/share fraction can round **up**, so `Σ shares > 1.0`. When applied to rewards/emissions, this overpays recipients and slowly drains the pool (or inflates supply). Use **truncating** math (`QuoTruncate`) or integer arithmetic to ensure allocations never exceed the source amount.
+    - **Where to look:**
+        - Reward/fee distribution paths that compute `fraction = weight / weightSum` or `power / totalPower`, then multiply by a pool amount (e.g., `AllocateTokens`, staking/distribution modules, any “weights”-based split).
+        - Math helpers wrapping `sdk/math.Dec` or legacy decs used in pro-rata splits across validators, operators, pools, or denoms.
+        - Any module that prorates an **amount** by **normalized weights** (airdrop vesting, incentives, revenue splits, IBC fee splits).
+    - **Red flags:**
+        - `Quo`/`QuoMut` (rounding) used to compute a fraction; later `amount.MulDec(fraction)` + `RoundInt()`.
+        - No explicit **remainder** handling (dust reconciliation) after distributing to all recipients.
+        - Lack of invariant checks that `sum(allocations) ≤ totalPool`.
+        - Tests only check individual recipient math, not **sum vs. pool** or adversarial weight distributions.
+    - **Fix pattern (tight, actionable):**
+        - Replace `Quo` with **`QuoTruncate`** (or equivalent) when deriving fractions; prefer integer math: `alloc = (total * weight) / weightSum` using big-int and truncation.
+        - After looping allocations, compute `remainder = total - sum(allocs)` and route it **deterministically** (e.g., community pool, first recipient, or separate “dust” sink) to keep totals exact and consensus-stable.
+        - Add invariants/property tests: for random weights and totals, **sum(allocs) ≤ total**, remainder bounded `< n`, and distribution deterministic across nodes.
+- [ ]  **IBC version negotiation dropped by middleware → mismatched channels / bypassed checks**
+    - **Core idea:** In IBC channel handshakes, apps/middleware must **return the negotiated version** from the underlying app. If a middleware mistakenly returns the **input `version`** instead of the app’s **`finalVersion`**, it can bypass negotiation logic, confuse after-hooks, and leave endpoints with **inconsistent versions** (or fail handshakes non-deterministically).
+    - **Where to look (and grep):**
+        - ICS4 middleware wrappers (e.g., ibc-hooks) for **`OnChanOpenInit/Try/Ack/Confirm`** return paths.
+        - Calls like `finalVersion, err := App.OnChanOpenInit(...); return <something>, err` — ensure the returned value is **`finalVersion`**.
+        - Hook interfaces (`OverrideHooks`, `BeforeHooks`, `AfterHooks`) to confirm **after-hooks receive both input and final versions** and that overrides can **replace** versions.
+        - Similar patterns in **`OnChanOpenTry`** (negotiation on counterparty open), where the same mistake is easy to repeat.
+    - **Red flags:**
+        - `return version, err` after computing `finalVersion`.
+        - After-hook signatures include `finalVersion` but the implementation passes the **original** version in both positions or ignores `finalVersion`.
+        - Lack of tests where the underlying app **alters** the proposed version (e.g., upgrades to “ics20-1” → “ics20-2”) and the middleware correctly **propagates** it.
+    - **Fix pattern (tight, actionable):**
+        - Always **propagate the negotiated version**: `finalVersion, err := App.OnChanOpenInit(...); return finalVersion, err`.
+        - Do the same for **`OnChanOpenTry`** and ensure Ack/Confirm paths **use and persist** the negotiated version.
+        - In after-hooks, pass both `version` and `finalVersion` correctly; in override-hooks, return the **override** value.
+        - Add handshake tests: (1) app modifies proposed version; (2) middleware returns `finalVersion`; (3) counterparty accepts; (4) channel stores negotiated version on both ends.
+- [ ]  **EVM↔Cosmos state desync before precompile → double-spend/overwrites**
+    - **Core idea:** If an EVM tx mutates balances/state and a precompile then triggers Cosmos-SDK actions **without first committing the EVM “dirty” state to SDK state**, the SDK logic runs on **stale balances**. After the precompile, the EVM commit overwrites SDK updates. This enables **double-spend of native tokens** or **loss** of rewards/transfers written by SDK modules.
+    - **Where to look (and grep):**
+        - Precompile entrypoints: `Run`, `ExtendedRun`, and any `dispatchMessages`/`dispatch...` helpers that call SDK keepers **during** an EVM execution.
+        - EVM bridge paths: `EVMCall/EVMCreate` wrappers and the state adapter (`ExtStateDB`) for when/how `StateDB.Commit` (or `CommitWithCacheCtx`) is invoked relative to precompile keeper calls.
+        - Token-spending precompiles (staking/bank/distribution): points that do balance math (e.g., `SubBalance`) before delegations/claims/transfers.
+        - Reward/claim flows invoked from precompiles; verify post-claim SDK writes aren’t later clobbered by an EVM commit.
+    - **Red flags:**
+        - Precompile executes SDK keeper calls **without** a preceding EVM state flush/commit or cache-ctx sync.
+        - Manual `SubBalance` with **no underflow check** / no prior balance sync with SDK Bank.
+        - Comments acknowledging “dirty state” but no commit barrier; or reliance on SDK reading balances that the EVM just changed.
+        - Post-precompile, EVM `Commit` happens unconditionally and **can overwrite** SDK module writes from the same tx.
+    - **Fix pattern (tight, actionable):**
+        - **Commit or flush EVM state before SDK actions:** introduce a barrier (e.g., `stateDB.CommitWithCacheCtx()` / explicit flush) right before invoking Cosmos keepers from precompiles so SDK sees up-to-date balances.
+        - **Validate spend after sync:** re-read balances from SDK Bank and enforce underflow/insufficient-funds checks before delegations/transfers.
+        - **Post-SDK reconciliation:** ensure EVM state reflects SDK deltas (or avoid later overwrites) — either by preventing further EVM writes to those accounts or by mirroring SDK balance changes back into `StateDB` before the final commit.
+        - **Tests:** (1) “transfer-then-delegate” within one EVM tx must not double-spend; (2) “claim-rewards-then-commit” must persist claimed balance; (3) fuzz precompile sequences mixing EVM transfers and SDK keeper calls.
+- [ ]  **Outbound tracker nonce mismatch → false-failure refund / double-spend**
+    - **Core idea:** If a bridge’s outbound tracker accepts an external tx hash as evidence **without binding it to the originating CCTX/request nonce (and other invariants)**, a malicious observer can attach a **different, failed** withdrawal tx to a **successful** CCTX. Consensus then marks the outbound as failed and triggers a **refund**, letting the attacker withdraw once on the destination chain and **refund again** on the source chain.
+    - **Where to look:**
+        - Outbound tracking/attestation paths that map `CCTX → externalTxHash` (e.g., `processOutboundTracker`, “observer” ingestion, vote/consensus code).
+        - The validation step that should match **CCTX nonce/sequence** to the external chain’s **call nonce/seqno** and confirm **success status**.
+        - State transitions that set `receiveStatus = failed` and the **refund** handler; ensure they’re gated by a **one-to-one** CCTX↔tx binding.
+        - Chain-specific decoders (e.g., TON): extraction of **wallet seq/nonce**, sender, recipient, amount, memo/opcode from the outbound tx.
+    - **Red flags:**
+        - Tracker only checks “tx exists” (hash present) or “tx included” but **not** that tx parameters match the **expected CCTX** (nonce, from/to, amount).
+        - No assertion that the destination wallet’s **nonce/seq** advanced **exactly once** from the expected value for this CCTX.
+        - Ability to submit tracker entries **before** outbound voting starts, or overwrite/attach multiple hashes to one CCTX.
+        - Failure voting/consensus based solely on an attached **failed** tx, with no check that it belongs to the same CCTX.
+    - **Fix pattern (tight, actionable):**
+        - **Bind evidence to the CCTX:** store expected `(chainId, program/wallet, nonce/seq, to, amount, memo)` when creating the outbound; require tracker updates to **prove** these fields match the decoded external tx.
+        - **Enforce monotonicity/idempotency:** verify the destination wallet/contract **nonce progressed by 1** from the prior state and hasn’t been used by another CCTX; keep a `(chain, wallet, nonce)` uniqueness index.
+        - **Require success proof for completion / structured failure for refunds:** only mark `failed` if the tx **for this CCTX** is finalized with a failure code; ignore unrelated failed txs.
+        - **Consensus input hardening:** have observers submit **parsed fields** (nonce, to, amount, status) and recompute them independently; quorum compares fields, not just hashes.
+        - **Tests:** (1) attach failed tx with different nonce → must be rejected; (2) attach successful tx with matching nonce but different amount/to → rejected; (3) double-submit same nonce for two CCTXs → second rejected.
+- [ ]  **Last-write-wins outbound evidence → forged failure/refund**
+    - **Core idea:** If the observer processes multiple hashes for one outbound and **persists only the last successfully parsed result**, an attacker can append a crafted/failing tx hash late and flip a **successful withdrawal** into a **failed observation**. Without binding to a single canonical tx (and without nonce/seq increment checks), consensus will vote “failed” and trigger a **refund**, enabling double-spend.
+    - **Where to look:**
+        - Outbound tracker processing loop (TON): iteration over tracker hashes, status derivation, and the final call that **stores** the result (e.g., `setOutboundByNonce(...)`).
+        - Voting path that turns the observer’s last processed result into an outbound **vote** (receive status).
+        - Presence/absence of **nonce/seq** increment checks and matching of `(nonce, from/to, amount, memo)` to the outbound CCTX.
+        - Overwrite behavior: does storing by **nonce** clobber earlier (correct) results? Is there any “first valid wins” or “success outranks failure” logic?
+        - Contrast with other chain observers (e.g., BTC) that try to find the **unique included** tx and stop.
+    - **Red flags:**
+        - A `for` loop over hashes that keeps updating a single “result” variable and **does not break** after the first valid/successful match.
+        - No canonical selection rule when multiple candidate hashes exist (e.g., picks the **last** processed).
+        - Missing checks that the destination account **nonce/seq advanced by exactly 1** for this CCTX.
+        - Ability for anyone to append hashes to the tracker **right before voting**; no dedup/immutability after a match is found.
+        - State machine allows flipping from **success → failed** based on later evidence.
+    - **Fix pattern (tight, actionable):**
+        - **Canonical match & stop:** For each outbound, accept only a tx that matches `(chain, wallet/program, nonce/seq, to, amount, memo)` and is **successful**; once found, **stop** iterating and persist immutably.
+        - **Nonce/seq enforcement:** Require the destination wallet/contract **nonce increment = 1** for this outbound; index `(chain, wallet, nonce)` as unique across CCTXs.
+        - **Deterministic tie-break:** If multiple candidates exist with same nonce, choose a deterministic **success-first** rule (e.g., finalized success outranks failure; highest finality/lt) and reject conflicting failures.
+        - **Monotonic state:** Disallow transitions that downgrade **success → failed** once a valid success is recorded; gate refunds on canonical match only.
+        - **Richer votes:** Observers must submit parsed fields (nonce, to, amount, status); quorum compares **fields**, not just a hash.
+- [ ]  **Observer eligibility gap → jailed validators can still vote**
+    - **Core idea:** Voting paths validate “observer” membership (e.g., non-tombstoned) but **omit jailed/bonded checks**, so slashed or jailed validators remain eligible to cast votes (on inbound/outbound ballots), undermining fault tolerance and enabling misbehavior to influence consensus.
+    - **Where to look:**
+        - Vote entry points for observations/ballots (inbound/outbound) and their **eligibility predicate** (e.g., `IsNonTombstonedObserver` vs a stricter `IsValidator`).
+        - Staking/slashing integration: how vote-time checks consult **jailed** and **bonded** status compared to observer-set updates.
+        - Any divergence between **observer set update** logic (strict) and **vote acceptance** logic (lenient).
+    - **Red flags:**
+        - Vote handlers only check “is observer” or “not tombstoned,” **without** `validator.Jailed == false` and `validator.IsBonded() == true`.
+        - Multiple helper funcs with overlapping names/semantics used inconsistently across code paths.
+        - No automatic suspension of observers on **jailed** events; votes continue to pass authorization.
+    - **Fix pattern (tight, actionable):**
+        - At **every** vote endpoint, enforce a single shared predicate: “observer is registered **and** validator is **bonded** & **not jailed** & **not tombstoned**,” querying staking for live status.
+        - Replace lenient helpers with a canonical `IsActiveObserverValidator(ctx, addr)` used by both **observer updates** and **vote** paths.
+        - Add event-driven suspension: on jail/tombstone/unbond, mark observer **inactive** until rehabilitated.
+        - Unit tests: jailed/bonded transitions block votes; regression tests for inbound/outbound ballots.
+- [ ]  **Newest-first pagination + cap → lost inbound TON txs**
+    - **Core idea:** If the TON API returns transactions **newest→oldest** and the observer (a) **early-exits** once it finds the last scanned tx, (b) **doesn’t reverse** into chronological order, and (c) **caps** processing to `maxTransactionsPerTick`, then older-but-unseen txs can be **skipped forever**: the cursor advances past them and they’re never processed, risking lost user funds.
+    - **Where to look:**
+        - Inbound observer fetch path and pagination: the function that calls `GetTransactionsSince(...)` and how it builds the working slice when it finds the last scanned tx.
+        - Ordering assumptions: whether arrays are reversed to **oldest→newest** before slicing/limiting.
+        - Rate limiting/capping: logic that takes the “first N” txs and the **cursor update** (`setLastScannedTx`) that follows.
+        - Cursor semantics: how `(lt, hash)` bookmarks are chosen when **not all** fetched txs are processed.
+    - **Red flags:**
+        - Using “**first N**” items from a **newest-first** list.
+        - Early return with `txs[:i]` (or equivalent) **without reversing** to chronological before processing.
+        - `pageSize` > `maxTransactionsPerTick`, with the cursor updated to a **newer** tx than some unprocessed older txs.
+        - Cursor updated to the **last processed** element of the truncated slice instead of the **oldest processed** (chronological) or the **oldest unprocessed**.
+    - **Fix pattern (tight, actionable):**
+        - **Always reorder to chronological (oldest→newest)** immediately after fetching and before any slicing/limits.
+        - When limiting to `maxTransactionsPerTick`, **set the next cursor to the oldest unprocessed tx** (so the next tick resumes correctly).
+        - Make cursor updates **monotonic in time**: only advance after successful processing of a batch, based on the **last chronologically processed** tx.
+        - Add boundary tests: (i) last-scanned index beyond the per-tick cap, (ii) exact cap, (iii) empty gap; verify no drops or duplicates.
+        - Optionally align `pageSize <= maxTransactionsPerTick` or implement **carry-over buffering** of unprocessed txs in durable state.
+- [ ]  **Hot-reload blacklist uses stale config → access-control bypass**
+    - **Core idea:** A file-watcher loads new restricted addresses but the reload path **reapplies the old in-memory config** (e.g., loops over `cfg.RestrictedAddresses`) instead of the freshly parsed `addresses`, leaving the blacklist unchanged. Attackers newly added to the file remain unrestricted.
+    - **Where to look:**
+        - Config reload/watch handlers that read JSON/YAML into locals (e.g., `addresses`) and then **update the global map/set**.
+        - Code that **clears and repopulates** the restriction map: verify it uses the **newly parsed list**, not the original `cfg`.
+        - Locking/atomicity around the global book (mutex/atomic swap) and **case-normalization** before insert.
+        - Tests or logs that confirm **count/checksum** of restricted entries changes after a file update.
+    - **Red flags:**
+        - Parsed list variable is **unused**; loop still iterates over `cfg...RestrictedAddresses`.
+        - Comments say “load from file” but implementation repopulates from **main config**.
+        - Mixing two sources (base config + file) without explicit **merge policy**; silent fallbacks.
+        - No unit/integration test that simulates a watcher event and asserts the **runtime set differs** post-update.
+    - **Fix pattern (tight, actionable):**
+        - Under lock, **rebuild a new map from the freshly parsed `addresses`** (and, if desired, explicitly merge with base config), then **atomically swap** the global reference (or clear+assign).
+        - Normalize (e.g., `strings.ToLower`) and validate addresses; **log size and diff** on each reload.
+        - Add a regression test: start with A, update file to B, trigger watcher, assert runtime set == B (not A).
+- [ ]  **Pre-commit cached gas price before consensus → divergent fee calc / slashable votes**
+    - **Core idea:** If an observer updates its in-memory gas price **before** posting/validating it (e.g., `PostVoteGasPrice(...)`), a failed post leaves an **invalid “latest” price** in cache. Later flows (e.g., `VoteOutbound(...)`) then use that uncommitted price, causing fee mismatches, non-determinism across observers, and potentially **slashable** or fund-losing behavior.
+    - **Where to look:**
+        - Chain observers’ `PostGasPrice(...)` implementations: the order of `setLatestGasPrice(...)` vs the network post/consensus call.
+        - The getters used by outbound voting/fee logic (`getLatestGasPrice`, `priorityFee`) and whether they read **committed** or merely **cached** values.
+        - Error paths where `PostVoteGasPrice(...)` fails: does the code roll back or skip cache updates?
+        - Call sites like `VoteOutbound(...)` that assume the cached gas price is already **agreed** for the current epoch/height.
+    - **Red flags:**
+        - Cache write (`setLatestGasPrice`) occurs **prior** to `PostVoteGasPrice` success.
+        - No **epoch/height tagging** on cached values; single global cache across epochs.
+        - Outbound vote/fee computation uses cache without checking an **“isCommitted/isVoted”** flag.
+        - Inconsistent patterns across chains (one correct, another pre-committing).
+    - **Fix pattern (tight, actionable):**
+        - Move cache update **after** successful `PostVoteGasPrice` (keep prior committed on failure).
+        - Introduce **two-phase state**: `candidate{price, epoch}` and `committed{price, epoch}`; only `committed` is consumed by outbound voting/fees.
+        - Gate by epoch/height: if `committed.epoch != current`, either block voting or fallback to last committed value; never use a candidate.
+        - Add tests: simulate post failure → assert cache remains old committed value and `VoteOutbound` stays deterministic and non-slashable.
+- [ ]  **Unregistered Msg types → txs can’t decode/route (dead handlers)**
+    - **Core idea:** Cosmos SDK modules must register every `sdk.Msg` type with both the **protobuf interface registry** (`RegisterInterfaces`) and (if used) **Amino** (`RegisterCodec`). If a Msg is implemented in `MsgServer` but **not registered**, any tx using it will fail to decode/unpack (e.g., “unknown type URL” / “failed to unpack Any”), making the feature unusable via CLI/gRPC.
+    - **Where to look:**
+        - Module type wiring files: `x/<module>/types/codec.go`
+            - `func RegisterInterfaces(...)` and `func RegisterCodec(...)`
+            - `msgservice.RegisterMsgServiceDesc(registry, &_Msg_serviceDesc)`
+        - Server vs. registration parity:
+            - `x/<module>/keeper/msg_server.go` → list of Msg handlers; ensure **1:1** with registered types.
+            - Proto service: `proto/<module>/tx.proto` (methods under `service Msg { ... }`)
+        - App wiring:
+            - `app/app.go` (or module `module.go`): `ModuleBasics.RegisterInterfaces(registry)` and Amino registration.
+        - Common runtime errors in logs/tests indicating the bug: “unknown type url”, “failed to unpack Any”, “no route found”, “not registered”.
+    - **Red flags:**
+        - New Msg handlers added in `msg_server.go` **without** corresponding entries in `RegisterInterfaces` (and Amino if legacy paths/REST are used).
+        - Multiple codecs (`ModuleCdc` vs app codec) and **only one** gets registrations.
+        - `RegisterInterfaces` exists but `ModuleBasics.RegisterInterfaces(...)` is **not** called in app initialization.
+        - Proto methods present in `tx.proto` but **no Go type** is registered; or TypeURLs mismatch (package/name drift).
+    - **Fix pattern (tight, actionable):**
+        - Add missing Msgs to:
+            - `RegisterInterfaces`: `registry.RegisterImplementations((*sdk.Msg)(nil), &MsgFoo{}, &MsgBar{}, ...)`
+            - `RegisterCodec` (if legacy Amino JSON paths are in use): `cdc.RegisterConcrete(&MsgFoo{}, "module/Foo", nil)`
+        - Ensure `ModuleBasics.RegisterInterfaces(registry)` and (if needed) `RegisterLegacyAminoCodec(cdc)` are invoked during app startup.
+        - Verify TypeURLs match proto (`/<pkg>.MsgName`) and **regenerate** code (`buf generate` / `make proto-gen`).
+        - Add an integration test that builds/signs a tx for each Msg and asserts ante/route reach the `MsgServer` (catches future regressions).
+- [ ]  **Panic-on-parse in background trackers → permanent task stop / stuck funds**
+    - **Core idea:** Background tasks (inbound/outbound “tracker” processors, observers) parse *untrusted* tx hashes/signatures. Using `Must*` decoders or missing strict validation (length/charset) can **panic**, and if the loop’s panic handling flips a stop flag or exits, the processor halts indefinitely. A single bad tracker entry (from a byzantine observer) can block all future processing.
+    - **Where to look:**
+        - Tracker/observer pipelines: functions like `processInboundTrackers`, `ObserveInbound/Outbound`, per-chain handlers (e.g., Solana base58, TON/Bitcoin hash parsing).
+        - Message validation paths: `MsgAddInboundTracker.ValidateBasic` (and similar msgs adding hashes/txids) — ensure exact length/encoding checks.
+        - Unsafe decoders: `MustSignatureFromBase58`, `MustHexDecode`, `log.Fatal`, direct `panic` on parse errors.
+        - Task lifecycle: ticker/worker loops with `defer t.setStopState()` / `stopCh` toggles that execute on panic and **don’t restart**.
+        - Error handling inside per-item loops: does one bad item abort the whole batch vs. skip-and-continue?
+    - **Red flags:**
+        - Any `Must*` decode for user/observer-supplied identifiers.
+        - No exact-length checks (e.g., Solana sig **64 bytes**), no charset enforcement (base58 alphabet), or acceptance of arbitrarily long strings.
+        - Panic recovery that sets a permanent “stopped” state; no auto-retry/backoff; no isolation per entry.
+        - Processing only the “first N” newest items after an early-exit slice, risking **skips** on earlier items if a panic occurs mid-batch.
+    - **Fix pattern (tight, actionable):**
+        - Replace `Must*` decoders with safe versions; return errors and **skip** bad entries, logging chain/nonce/idx.
+        - Enforce strict `ValidateBasic`: exact length per chain, allowed alphabet, and reasonable max size; reject at message admission.
+        - Wrap tracker loops with `recover` that **keeps the loop alive** (don’t toggle permanent stop on panic); consider supervision/restart.
+        - Process entries individually with fail-open continuation; add metrics for dropped/invalid tracker items.
+- [ ]  **Observer-set membership bypass via stale node-account presence → unauthorized voting**
+    - **Core idea:** Voting endpoints that authorize by checking **node-account existence** (e.g., `GetNodeAccount(...)`) can be bypassed if observers are **removed from the set** by other flows (threshold/cleanup hooks) without removing their node accounts. The removed observer still passes the “has node account” gate and can keep voting (e.g., `VoteTSS`) despite not being in the active observer set.
+    - **Where to look:**
+        - All vote entry points (e.g., `VoteTSS`, `VoteInbound`, `VoteOutbound`, `VoteBlame`) to confirm they **all** call the same **membership + status** gate (e.g., `IsNonTombstonedObserver(...)` or equivalent).
+        - Account/state stores: observer-set mapping vs. node-account store; ensure **removal flows** (e.g., `RemoveObserverFromSet`, stake-threshold pruners) also **delete node accounts**.
+        - Update paths: `UpdateObserver` (tombstone/replacement) vs. non-Update based removals; check for **asymmetry** where one path removes node accounts and others don’t.
+        - Status gates: ensure jailed/tombstoned/bonded checks are consistently applied across all vote handlers.
+    - **Red flags:**
+        - Any vote handler that **doesn’t** call the canonical observer eligibility check and instead uses **only** “node account exists” as authorization.
+        - Hooks that remove an observer from the set (e.g., not meeting min stake) but **don’t** remove the node account.
+        - Divergent logic between different vote handlers (one uses `IsNonTombstonedObserver`, another uses only `GetNodeAccount`).
+        - No reconciliation job/invariant ensuring node-account store is a **subset** of the current observer set.
+    - **Fix pattern (tight, actionable):**
+        - Introduce a single `IsEligibleObserver(ctx, addr)` used by **all** vote endpoints; it must verify **(a)** membership in observer set, **(b)** non-jailed / non-tombstoned / bonded status, and **(c)** node-account presence (optional if (a) suffices).
+        - Make **all removal flows** (threshold cleanup, slashing, manual removal) call a shared `RemoveObserver(addr)` that **atomically** updates observer-set mapping **and** removes node account.
+        - Add an end-block reconciliation that prunes **orphaned node accounts** not present in the current observer set (and emit alerts/metrics).
+        - Add tests: (1) removed observer cannot vote any ballot type, (2) partial removals (set-only / account-only) are reconciled, (3) all vote handlers use the unified gate.
+- [ ]  **Observer-set membership bypass via stale node-account presence → unauthorized voting**
+    - **Core idea:** Voting endpoints that authorize by checking **node-account existence** (e.g., `GetNodeAccount(...)`) can be bypassed if observers are **removed from the set** by other flows (threshold/cleanup hooks) without removing their node accounts. The removed observer still passes the “has node account” gate and can keep voting (e.g., `VoteTSS`) despite not being in the active observer set.
+    - **Where to look:**
+        - All vote entry points (e.g., `VoteTSS`, `VoteInbound`, `VoteOutbound`, `VoteBlame`) to confirm they **all** call the same **membership + status** gate (e.g., `IsNonTombstonedObserver(...)` or equivalent).
+        - Account/state stores: observer-set mapping vs. node-account store; ensure **removal flows** (e.g., `RemoveObserverFromSet`, stake-threshold pruners) also **delete node accounts**.
+        - Update paths: `UpdateObserver` (tombstone/replacement) vs. non-Update based removals; check for **asymmetry** where one path removes node accounts and others don’t.
+        - Status gates: ensure jailed/tombstoned/bonded checks are consistently applied across all vote handlers.
+    - **Red flags:**
+        - Any vote handler that **doesn’t** call the canonical observer eligibility check and instead uses **only** “node account exists” as authorization.
+        - Hooks that remove an observer from the set (e.g., not meeting min stake) but **don’t** remove the node account.
+        - Divergent logic between different vote handlers (one uses `IsNonTombstonedObserver`, another uses only `GetNodeAccount`).
+        - No reconciliation job/invariant ensuring node-account store is a **subset** of the current observer set.
+    - **Fix pattern (tight, actionable):**
+        - Introduce a single `IsEligibleObserver(ctx, addr)` used by **all** vote endpoints; it must verify **(a)** membership in observer set, **(b)** non-jailed / non-tombstoned / bonded status, and **(c)** node-account presence (optional if (a) suffices).
+        - Make **all removal flows** (threshold cleanup, slashing, manual removal) call a shared `RemoveObserver(addr)` that **atomically** updates observer-set mapping **and** removes node account.
+        - Add an end-block reconciliation that prunes **orphaned node accounts** not present in the current observer set (and emit alerts/metrics).
+        - Add tests: (1) removed observer cannot vote any ballot type, (2) partial removals (set-only / account-only) are reconciled, (3) all vote handlers use the unified gate.
+- [ ]  **Unvalidated cross-chain receiver → outbound queue deadlock & slashing risk**
+    - **Core idea:** If a receiver address for a foreign chain (e.g., SUI) is merely **encoded** (e.g., `"0x"+hex.EncodeToString(b)`) but **not validated** (length/prefix/checksum), bad inputs enter the CCTX. When the zetaclient tries to **build the withdrawal tx**, it fails deterministically, the **nonce doesn’t advance**, and subsequent withdrawals get **stuck**—risking DoS and validator reward loss/slashing.
+    - **Where to look:**
+        - Chain-agnostic address formatting helpers (e.g., `pkg/chains/chain.go`, per-chain `address.go`/`EncodeReceiver(...)`) to see if they only normalize/encode without **schema checks**.
+        - Ingress points that accept `receiver` (gateway contracts, precompiles, `Msg*Withdraw`, CCTX creation) for **ValidateBasic** or equivalent address validation.
+        - Zetaclient outbound builders for each chain (e.g., `sui/signer/buildWithdrawTx(...)`) to see how **builder errors** affect **nonce/queue progression** (does it retry forever vs. mark failed?).
+        - Outbound processing loop & **nonce management**: confirm a single bad CCTX can’t block the **whole queue**.
+    - **Red flags:**
+        - Address is a raw `[]byte`/`string` with **no fixed-length** enforcement (e.g., SUI must be 32 bytes) or missing prefix/checksum validation.
+        - Helpers that **only** do `hex.EncodeToString`/`"0x"+...` without checks.
+        - Builder returns “unable to create withdrawal tx” and caller **retries indefinitely** instead of **failing fast** and advancing.
+        - No unit/e2e tests for **malformed receiver** causing deterministic builder failure but **non-advancing nonce**.
+    - **Fix pattern (tight, actionable):**
+        - Add chain-specific `ValidateReceiver(chain, receiver)` used at **ingress** (gateway contract + zetacore `ValidateBasic`) and **before enqueue**; enforce **exact length** (e.g., SUI 32 bytes), allowed charset/prefix, checksum if applicable.
+        - In zetaclient outbound processing, classify builder errors: if **deterministic validation error**, mark CCTX **failed/reverted** (dead-letter or refund), **advance nonce**, and emit metrics; only **transient** errors should be retried.
+        - Add e2e tests: malformed receiver → request rejected at ingress; and if it slips through, builder marks **failed** without blocking subsequent withdrawals.
+- [ ]  **Static voter snapshot in dynamic committees → quorum unreachable & ballot deadlocks**
+    - **Core idea:** If a ballot captures a **fixed VoterList** and computes quorum as a % of that original set, later **membership changes** (slashing, undelegation, observer updates) can make the required votes **mathematically unreachable**, leaving ballots permanently **InProgress** (deadlocked). TSS ballots that require 100% are especially brittle.
+    - **Where to look:**
+        - Ballot creation: code that snapshots `ObserverSet.ObserverList` into `Ballot.VoterList` and pre-allocates `Votes`/`BallotThreshold`.
+        - Hooks that mutate membership (slashing, undelegation, observer removal/update) and whether they **also update active ballots**.
+        - Vote admission (`AddVote`/`Vote*` handlers): rejection path for voters not in `VoterList` and lack of dynamic reconciliation.
+        - Finalization logic: how quorum is computed (fixed denominator vs. current active observers) and any special cases (TSS requiring 100%).
+        - Lifecycle controls: absence of ballot **reconfiguration**, **timeouts**, or **cancellation** when membership changes mid-flight.
+    - **Red flags:**
+        - Comments or code explicitly “snapshotting” voters with no subsequent update path.
+        - Quorum checked as `yesVotes >= threshold * len(originalVoterList)` while removals only touch the global observer set.
+        - Hooks that call `RemoveObserverFromSet` but never touch `Ballot.VoterList` or recompute thresholds.
+        - TSS ballots enforcing unanimity of a **stale** node-account set.
+    - **Fix pattern (tight, actionable):**
+        - On any membership change, **reconcile active ballots**: remove departed voters from `VoterList`, nullify their pending vote, and **recompute quorum denominator** (and numerator if stored).
+        - Represent `BallotThreshold` as a **fraction** and evaluate against the **current active voter count** at finalization time.
+        - For TSS ballots, either (a) freeze membership but auto-mark removed voters as **excluded** (not required), or (b) base unanimity on the **current** node-account set.
+        - Add **timeouts/cancellation** for ballots that can’t reach quorum after N blocks and auto-resubmit with the updated committee if appropriate.
+        - Emit metrics/alerts when voter removal **shrinks quorum** or when a ballot is **reconfigured**, to aid ops visibility.
+- [ ]  **Non-advancing nonce on failure → outbound pipeline jam & replay risk**
+    - **Core idea:** If cross-chain withdraws rely on a **monotonic on-chain nonce/sequence**, but the client/signer only bumps it on the **happy path** (or never includes a bump instruction), any failed tx leaves the nonce **unchanged**. Subsequent attempts keep reusing the stale nonce, causing **stuck outbounds**, mis-votes, or replay rejection.
+    - **Where to look:**
+        - Chain client “signer” paths that build withdrawals/transfers (e.g., `prepareWithdraw*`, `createWithdrawInstruction`, `signTx`).
+        - Program/account state holding the **nonce/sequence** and the instruction set that is supposed to **increment** it.
+        - Retry logic after broadcast errors: does it **re-read** chain state and bump/refresh the nonce?
+        - Outbound consensus/tracker code that expects strictly **increasing CCTX nonces** vs program nonce.
+        - Tests for **failed withdraws**: verify nonce advancement or recovery behavior.
+    - **Red flags:**
+        - No explicit **increment/bump** instruction included with withdraws.
+        - Nonce bump happens **only** when the tx succeeds (no alternate path on failure).
+        - Retries reuse the **same** locally cached nonce without re-querying chain state.
+        - Mismatch between **CCTX nonce** and program nonce not handled (no resync or “skip ahead”).
+        - Absence of unit/e2e tests for **failure** scenarios (insufficient funds, invalid receiver, simulation failure).
+    - **Fix pattern (tight, actionable):**
+        - Always **read current nonce** from chain at build time and **advance** it deterministically for the next attempt.
+        - Include a nonce/sequence **increment instruction** in the withdrawal flow; if atomic failure rolls back increments, add a **separate fencing tx** (or pre-flight “advance”) to guarantee progress on retries.
+        - On broadcast/simulation error, **refresh state** and rebuild with the latest nonce; never reuse stale local values.
+        - Add invariants in outbound voting/tracking to **reject** stale nonces and trigger **resync**.
+        - Ship e2e tests: (a) withdraw success increments nonce, (b) withdraw failure still leads to a **recoverable** next attempt with a fresh nonce.
+- [ ]  **Protocol fee minted but never disbursed → stranded funds in module**
+    - **Core idea:** A function mints the **sum** of (swap cost in ZETA + protocol fee), uses only the **swap portion** for a router swap/burn, and **never transfers** the protocol-fee remainder out of the module account. Over time the module accrues a stuck balance (unclaimable revenue / silent leakage).
+    - **Where to look:**
+        - Gas-payment paths that **mint** to the module and then **swap** (e.g., `PayGasInZeta*`, `Query…AmountsIn`, `SwapExact…`, `…Burn`).
+        - Fee assembly lines where `fee = protocolFee + swapIn` is computed; verify both components have explicit sinks (treasury transfer vs swap/burn).
+        - Module account flows: any `MintCoins` without a matching **SendCoins**/**SendCoinsFromModuleToModule**/**BurnCoins** for the protocol fee.
+        - Treasury/fee-collector wiring: presence of `FeeCollectorName` or a dedicated **protocol treasury** module and whether it’s ever credited.
+        - Invariants/telemetry: checks that module balances trend to zero (apart from float) and events “protocol\_fee\_collected”.
+    - **Red flags:**
+        - Protocol fee defined as a **constant** (e.g., `ProtocolFee = …`) added to the swap input, but only the swap path calls router/burn.
+        - No call that transfers the fee to **treasury/collector** (`bankKeeper.SendCoinsFromModuleToModule` / to an on-chain treasury addr).
+        - Comments/TODOs like “FIXME: investigate mismatch” around swap amounts; no explicit handling of the **fee remainder**.
+        - Absence of tests asserting **zero residual** in the crosschain module after processing.
+    - **Fix pattern (tight, actionable):**
+        - Split accounting: `swapInZeta` and `protocolFeeZeta` as separate variables; mint the **exact total**, then:
+            1. perform swap/burn using **only** `swapInZeta`;
+            2. immediately **transfer protocolFeeZeta** from `crosschain` module to **fee collector/treasury** (`SendCoinsFromModuleToModule` or `SendCoinsFromModuleToAccount`).
+        - Emit `ProtocolFeeCollected(index, amount)` and add an invariant that the crosschain module’s **surplus** stays below a small threshold.
+        - Add e2e/unit tests: after N payments, crosschain module balance ≈ 0 except pending dust; treasury balance increases by **sum(protocol fees)**.
+        - If fees must accrue, add an explicit, permissioned **sweep** method with auth checks and clear events; document operational cadence.
+- [ ]  **Reward-unit denominator ignores penalties → diluted payouts**
+    - **Core idea:** When rewarding voters/observers across ballots, negative per-voter adjustments (penalties for voting against majority) reduce an address’s reward, but the **global `totalRewardUnits` denominator isn’t reduced accordingly**. This inflates `totalRewardUnits`, shrinks `rewardPerUnit`, and underpays honest participants.
+    - **Where to look:**
+        - Reward aggregation functions that build a **per-address rewards map** and return a **total units** count (e.g., `BuildRewardsDistribution`, per-block reward builders, “matured ballots” rollups).
+        - Loops over voters that **increment** per-address units on majority votes and **decrement** on minority votes; verify how the **denominator** is updated in both branches.
+        - Cross-ballot accumulation in the same block/height: confirm that **sum of positive units in the rewards map equals `totalRewardUnits`**.
+        - Any downstream calculation of `rewardPerUnit = totalRewards / totalRewardUnits`—ensure it’s based on **positive** units only or a separately tracked penalty bucket.
+    - **Red flags:**
+        - Code decrements `rewardsMap[addr]--` for minority votes but **does not** adjust `totalRewardUnits` in that branch.
+        - `totalRewardUnits` is computed as a count of successes only, while **negative entries** remain in the map.
+        - No invariant/test asserting `totalRewardUnits == Σ max(rewardsMap[addr], 0)` across ballots in a block.
+        - Mixed semantics: “penalty” applied directly to the same map that drives payouts without a separate **penalty pool** or normalization step.
+    - **Fix pattern (tight, actionable):**
+        - **Separate concerns:** track `positiveUnits` and `penaltyUnits` independently. Set `totalRewardUnits = Σ positiveUnits` only; penalties should not inflate the denominator.
+        - Or, if penalties should reduce available units, **decrement the denominator** in the penalty branch (`totalRewardUnits--`) and **never allow it to go negative** for a ballot.
+        - Normalize at the end of aggregation: `totalRewardUnits = Σ max(rewardsMap[addr], 0)` before computing `rewardPerUnit`.
+        - Add unit tests spanning **multiple ballots in one block** with at least one minority voter; assert equality between the computed `totalRewardUnits` and the sum of positive per-address units, and validate exact payouts.
+- [ ]  **Unchecked uint256→uint64 downcast in consensus paths → panic & stuck ballots**
+    - **Core idea:** Values sourced from EVM/Solidity as **uint256** (e.g., revert gas limits, timeouts, fees) are later cast to **uint64** in Cosmos code using `Uint64()` on `cosmossdk.io/math.Uint` (or `big.Int`). If the value doesn’t fit in 64 bits, `Uint64()` **panics**, aborting Msg handlers (e.g., inbound finalize), leaving ballots **unfinalizable** and rewards unpaid.
+    - **Where to look:**
+        - Any keeper/Msg handler reading **contract-configured** numbers (gas limits, fees, nonces, expiries) and converting with `SomeUint.Uint64()` or `big.Int.Uint64()`.
+        - Cross-chain execution/revert helpers (e.g., “GetRevertGasLimit”, on-revert options) called during **vote finalization** or **EndBlock**.
+        - Code that stores EVM parameters as `math.Uint` then narrows to Go primitives for SDK calls.
+    - **Red flags:**
+        - Direct calls to `math.Uint.Uint64()` without prior `IsUint64()` check.
+        - Solidity types set as `uint256` for values that are later narrowed to 64-bit on the Cosmos side.
+        - No bounds check / clamping on user- or contract-supplied config before use in consensus-critical logic.
+        - Panics observed in logs tied to `Uint64() out of bound`.
+    - **Fix pattern (tight, actionable):**
+        - **Enforce bounds at source:** change Solidity fields that must fit in Go/Cosmos to `uint64`, or add `require(x <= type(uint64).max)`.
+        - **Validate before cast:** in Go, gate with `if !u.i.IsUint64() { /* handle */ }`; return a typed error, clamp to `math.MaxUint64`, or fall back to a safe default (never panic).
+        - **Defensive conversions:** prefer explicit range checks over silent truncation; if using `BigInt().Uint64()`, precede with a `BitLen()` check and log/metric on overflow.
+        - **Resilience tests:** add property tests with boundary/overflow values to ensure Msg handlers **never panic** and ballots still finalize deterministically.
+- [ ]  **Precompile reward credits not mirrored in EVM state → silent reward loss on commit**
+    - **Core idea:** If a precompile (e.g., staking/distribution) **credits ZETA in Cosmos bank** (via `WithdrawDelegationRewards` or implicit reward withdraws) but **does not reflect that credit in the EVM statedb**, the end-of-call EVM→Cosmos writeback will **overwrite** the bank balance with the older cached EVM balance—effectively **dropping** the reward.
+    - **Where to look:**
+        - Staking/Distribution precompiles: functions that call `distributionKeeper.WithdrawDelegationRewards`, implicit reward withdrawals in `stake/unstake`.
+        - EVM state sync points: usage of `ExtStateDB` (`AddBalance`/`SubBalance`) or balance change aggregators (e.g., `SetBalanceChangeEntries(...)`).
+        - Execution ordering: whether EVM changes are committed before/after Cosmos keeper calls; any cache-context writebacks.
+    - **Red flags:**
+        - Cosmos coin credits (ZETA) with **no** subsequent EVM balance bump for the **same** account (e.g., withdrawer address).
+        - Comments like “skip ZRC20 unlocking for ZETA” without a compensating `AddBalance` in EVM state.
+        - Balance-dependent storage writes **before** reward claim (causing an older EVM balance snapshot).
+        - Tests missing for “claim rewards via precompile while state changes occurred earlier in the same tx”.
+    - **Fix pattern (tight, actionable):**
+        - After rewards are credited in bank, **also credit EVM statedb** for the withdrawer (`SetBalanceChangeEntries(addr, convertedZetaAmount, Add)` or `ExtStateDB.AddBalance`), using the chain’s 18-dec conversion where applicable.
+        - Mirror this for **implicit** reward withdrawals inside `stake/unstake`.
+        - Alternatively (or additionally), **commit EVM state** before invoking Cosmos keepers to avoid stale overwrites.
+        - Add integration tests where a contract mutates state, then claims rewards in the same call; assert final bank==EVM balances.
+- [ ]  **Mis-attributed CCTX sender from ZEVM logs → wrong refunds & broken auth**
+    - **Core idea:** Log processors that treat the **emitting contract** (log address / `msg.To`) as the **CCTX sender** will misidentify the initiator when calls are **nested** (proxy/router patterns). This misattribution can (a) send **revert refunds to the wrong address**, and (b) break **access checks** on receivers that rely on the reported `zetaTxSenderAddress`.
+    - **Where to look:**
+        - Log ingestion pipelines that transform ZEVM events into `MsgVoteInbound` or equivalent (e.g., `ProcessZRC20WithdrawalEvent`, `ProcessZetaSentEvent`).
+        - Address derivation rules for “sender” in V1 vs V2 pipelines: are they using **log emitter / `msg.To`** vs an explicit **`from`/`sender` field** in the event or a propagated **tx-origin** field?
+        - Special paths: deposits, in-bound handlers, and failed outbound reverts where the **emitting contract is a gateway/connector**, not the real initiator.
+        - Any auth on the destination chain that compares provided sender with its **expected app address**.
+    - **Red flags:**
+        - Sender set to the **log’s emitting contract** or the **first call target** instead of an explicit event parameter.
+        - Comments like “use emitting contract as sender” in V1 compatibility code.
+        - Gateways/routers that can emit events on behalf of other contracts without passing through a verified **`from`** in event args.
+        - Refund logic that keys revert recipient off the same misattributed field.
+    - **Fix pattern (tight, actionable):**
+        - **Parse and use explicit event sender fields** (e.g., `ZRC20Withdrawal.From`, `zetaTxSenderAddress`) rather than the emitting contract.
+        - Where not present, **plumb the true initiator** through call data or event args; avoid inferring from `msg.To`/log address.
+        - Normalize and **persist the canonical sender** in the CCTX once, then reuse it for reverts and receiver auth.
+        - Add tests with **nested proxy → target** flows ensuring refunds/auth resolve to the proxy’s caller (true initiator), not the proxy itself.
+- [ ]  **Premature refund-flag on abort → stuck funds & blocked recovery**
+    - **Core idea:** Abort paths mark a CCTX as **refunded** (e.g., `IsAbortRefunded = true`) **before/without** verifying the refund actually succeeded. If downstream refunding fails (paused token, liquidity cap, etc.), the state machine records “refunded” while no assets moved, and **admin/manual refund flows are blocked** by the same flag.
+    - **Where to look:**
+        - Abort orchestration entrypoints (e.g., `ProcessAbort(...)`) that set refund flags and call refund helpers.
+        - Refund helpers that can fail due to **token paused**, **liquidity cap**, **insufficient module balance**, or **bridge call failure** (`getAndCheckZRC20(...)`, swap/mint/burn paths).
+        - Admin/manual refund messages (e.g., `MsgRefundAbort`) that **gate** execution on the same boolean flag instead of real refund state.
+        - Event/log emissions vs. store mutations: is the **flag set** even when an **error path** returns?
+    - **Red flags:**
+        - `cctx.CctxStatus.IsAbortRefunded = true` (or similar) set **unconditionally** or in a `defer` regardless of refund result.
+        - Error from refund path is **returned** or **logged** but **flag remains true**.
+        - Admin refund handler returns early if `IsAbortRefunded` is true, with **no secondary verification** (balances, receipts).
+        - No “pending/failed refund” state; only a binary **refunded/not** flag.
+        - Retry/backoff/queue missing when failure reason is **transient** (pause toggles, cap resets).
+    - **Fix pattern (tight, actionable):**
+        - Make refund helper return `(ok bool, err error)`; set `IsAbortRefunded = true` **only if** `ok == true`.
+        - Introduce explicit states: `AbortRefund{Pending, Failed(reason), Succeeded}` and gate admin/manual refunds on **state**, not a single boolean.
+        - Allow `MsgRefundAbort` to proceed when `AbortRefund != Succeeded`, or verify via **receipts/balances** rather than trusting the flag.
+        - When failure reason is transient (paused/cap), **enqueue** for retry (with jitter/backoff) and emit telemetry/alerts.
+        - Add tests for: paused token, liquidity cap exceeded, downstream call revert, and ensure **no flag flip** on failure and **manual refund** remains possible.
+- [ ]  **Zero-address sentinel mismatch → unsupported-chain outbounds & queue DoS**
+    - **Core idea:** Capability checks treat “no ZETA token on chain” as **empty string `""`**, but production config encodes “unset” as **`0x0000000000000000000000000000000000000000`**. The mismatch lets ZETA coin-type CCTXs pass validation to chains that **don’t support ZETA** (BTC/SOL/SUI), where clients reject them. Since the outbound nonce doesn’t advance on failure, a single bad CCTX can **block the whole outbound queue**.
+    - **Where to look:**
+        - Chain params: fields like `ZetaTokenContractAddress`, `ConnectorAddress`, capability flags (`IsSupported`, per-coin support).
+        - Validation gates on inbound→outbound conversion (e.g., `VoteOnInboundBallot`, ZEVM→external routing) that decide if ZETA is allowed by checking **string emptiness**.
+        - Client signers/processors for non-EVM chains (BTC/SOL/SUI/TON) that **assume** `CoinType_Gas` and error on `CoinType_Zeta`.
+        - Nonce/queue progression logic: when an outbound errors, does the **nonce remain** and block subsequent CCTXs?
+        - Test fixtures expecting `""` instead of the **zero address**; config loaders that store addresses as `string` vs typed `common.Address`.
+    - **Red flags:**
+        - Equality checks like `if address == ""` to detect “unset”, while configs use `"0x000…0000"`.
+        - Address fields stored as **strings** instead of typed address and normalized on load.
+        - No shared helper (e.g., `IsEmptyAddress`) used consistently across modules.
+        - Outbound pipeline where **any** failed CCTX at nonce **N** blocks N+1, with no skip/abort fast-path.
+        - Unit tests pass because they set `""`, but production sets the **zero address**, masking the bug.
+    - **Fix pattern (tight, actionable):**
+        - Store contract addresses as typed **`common.Address`** (or equivalent) in params; on load, **normalize** both `""` and `0x000…0000` to a common zero value.
+        - Replace string checks with a single helper (e.g., `IsEmptyAddress(addr)`), and use it **everywhere** the capability is inferred.
+        - Add an explicit boolean `SupportsZETA` per chain; gate ZETA outbounds on that flag rather than address emptiness.
+        - Harden outbound queueing: if chain doesn’t support the coin type, **reject early** (before enqueue) or **auto-abort/skip** with nonce advancement semantics that don’t deadlock the queue.
+        - Add tests: config with `0x000…0000`, `""`, and valid address; ensure ZETA outbounds **reject** for unsupported chains and queue continues processing.
+- [ ]  **Missing per-chain outbound preflight → nonces stuck & outbound queue deadlock**
+    - **Core idea:** Outbound CCTXs are accepted without chain-specific validation (coin type allowed, receiver format, payload decodability, protocol version path). Signers then reject them at send time, **nonce doesn’t advance**, and the external chain’s outbound queue **deadlocks** (all subsequent CCTXs blocked).
+    - **Where to look:**
+        - Central outbound validators (e.g., `validateZRC20Withdrawal`, ZEVM → external routing, `VoteOnInboundBallot` post-inbound path). Ensure **all chains** (BTC/SOL/SUI/TON/EVM) are validated, not just a subset.
+        - Chain signers/processors: `TryProcessOutbound` / `ProcessOutbound` / `prepare*Tx` for SOL/SUI/TON/BTC where errors are thrown for bad **coin types**, **invalid receiver encodings**, **zero amounts**, **unsupported v1/v2 flows**, **workchain** constraints, or **gateway self-recipient**.
+        - Message decoding paths (e.g., `DecodeExecuteMsg`) to see if malformed payloads are only caught at signer time.
+        - Nonce/queue semantics: what happens on **validation failure at signer**—is there a **cancel/fallback** that progresses nonce or is the item left blocking?
+        - ZEVM call surfaces: `GatewayZEVM.call()` and ZRC20 `withdraw()` mapping to `CoinType_*` and protocol versions per destination chain.
+    - **Red flags:**
+        - Validators only check EVM/BTC but **omit SOL/SUI/TON** rules.
+        - Allowing `CoinType_NoAssetCall` or `CoinType_Zeta` for chains that support **gas only**.
+        - No receiver format checks (e.g., SUI/TON base encodings, TON **workchain != 0**, “not gateway address” rule).
+        - Permitting **zero-amount** withdrawals or **v1 ZRC20 withdraw** to non-EVM chains.
+        - Signer returns error without **emitting a compensating cancel/skip** that frees the nonce.
+        - Lack of integration tests where an invalid outbound is queued and the **next one** still executes.
+    - **Fix pattern (tight, actionable):**
+        - Build a **capability matrix** (per chain: supported `CoinType`, protocol versions, receiver constraints, zero-amount policy, reserved addresses). Enforce it in a **single preflight** validator executed **before** queuing the outbound.
+        - Add **strict receiver validators** using chain SDKs (SUI/TON/SOL) and enforce TON **workchain=0**, “receiver != gateway”.
+        - Disallow **v1** withdrawal paths to non-EVM chains; require `CoinType_Gas` for TON/BTC/SOL/SUI as applicable.
+        - Reject **zero amounts** early.
+        - On any unexpected signer-time failure, **auto-abort or emit a cancel/skip** that **advances nonce** (with audit trail) so the queue cannot deadlock.
+        - Add table-driven tests covering each chain’s invalid cases and asserting: (1) preflight rejects; or (2) cancel path advances nonce and subsequent CCTXs proceed. Add metrics/alerts for preflight rejects and nonce-stuck detection.
+- [ ]  **Non-atomic mint-before-call → phantom supply & deposit DoS**
+    - **Core idea:** If a module **mints** native tokens to fund an EVM/precompile call and the subsequent **onReceive/onRevert** execution **reverts**, the mint can still be **committed** while the CCTX later **refunds** externally—creating **unbacked supply** that accrues in a module account. With a hard **supply cap**, repeated failures can eventually **halt deposits** (cap reached) and DoS flows.
+    - **Where to look:**
+        - Precompile pathways that **mint ZETA/WZETA** (or native coins) to a **module account** prior to the EVM call (e.g., `CallOnReceive...`, `CallOnRevert...`).
+        - Use of **temporary/cache contexts** around outbound/inbound processing (e.g., `InitiateOutbound → HandleEVMDeposit → DepositAndCall → CallOnReceive...`) and **when** those contexts are **committed**.
+        - Error branches where EVM call **reverts** but the earlier **mint** is not rolled back (look for missing burn/rollback in `defer`/`if err != nil` blocks).
+        - Global **supply-cap** checks (e.g., `validate...Supply`) that would reject future mints once the phantom balance grows.
+    - **Red flags:**
+        - Mint performed **outside** a cache context, or **inside** a cache context that is **committed** on states like “PendingRevert”.
+        - Commit conditions based on **outbound mined / pending revert**, not on **EVM success** of `onReceive`.
+        - No **compensating burn** when the EVM call fails; comments like “mint to fund call” without symmetric cleanup.
+        - Module account balances increasing while the related CCTX is **refunded externally**.
+    - **Fix pattern (tight, actionable):**
+        - Wrap **mint + EVM call** in a **single cache context** and only **commit** on **success**; otherwise **discard**.
+        - If architectural constraints require early mint, add a **compensating burn** on all **error/revert** paths before any commit.
+        - Add invariant/ante checks: after a failed `onReceive/onRevert`, module’s minted amount must be **zero net**.
+        - Add unit/E2E tests for: revert during `onReceive`, `onRevert`, repeated failure loop until near cap, and verify **supply & module balances** remain unchanged.
+- [ ]  **EVM outbound gas floor bypass → nonce-stall chainwide DoS**
+    - **Core idea:** If outbound EVM tx gas is taken from user/CCTX params and only a **max cap** (or a special-case 21k→100k) is enforced, callers can set **gas < intrinsic** (≈21k+calldata/access-list). The RPC returns “intrinsic gas too low,” the tx is never broadcast, the **TSS nonce isn’t incremented**, and the outbound queue for that chain **deadlocks** (all subsequent outbounds block on the stuck nonce).
+    - **Where to look:**
+        - Gas derivation path (e.g., `gasFromCCTX(...)`) and any **min-gas enforcement**/special-cases (21k vs contract calls).
+        - EVM signer/tx builder that **sets `Gas`** on the transaction and the **broadcast loop** handling RPC errors.
+        - Abort/unblocking logic: whether a **stuck nonce** can be **skipped/canceled** or quarantined.
+        - Validation at **CCTX admission/finalization** that rejects **gas below intrinsic** (incl. calldata/access-list).
+    - **Red flags:**
+        - Removed/disabled **minimum gas limit** checks; only a **maximum** enforced.
+        - Magic upgrade path that only fixes `Gas==21k` but allows **other sub-intrinsic values** (e.g., 1337).
+        - Broadcast retry loops that **don’t adjust gas** on “intrinsic gas too low.”
+        - No “cancel/replace” strategy to **free the nonce**; aborts don’t consume nonce.
+    - **Fix pattern (tight, actionable):**
+        - Compute **intrinsic gas** (EOA→EOA, contract `CALL`/`CREATE`, calldata bytes, access list) and set
+        `limit = max(userLimit, intrinsic, policyMin)`; add a **safety margin** for contract calls.
+        - On RPC “intrinsic gas too low,” **recompute & bump** to `intrinsic+margin` and retry once; if still failing, **quarantine** the CCTX and **send a cancellable noop** (or designed cancel-tx) to **advance nonce**.
+        - At CCTX creation/finalization, **normalize or reject** gas limits **below intrinsic** for the target chain/type.
+        - Add metrics/alerts on **stuck nonce**; unit/E2E tests for tiny gas limits, access-list inflation, and recovery path.
+- [ ]  **Precompile empty-calldata panic → stuck ballots / outbound-finalization DoS**
+    - **Core idea:** Stateful precompiles that assume `len(input) ≥ 4` (for the function selector) and do `input[:4]` or `abi.MethodById(input)` will **panic** on empty/short calldata. In Cosmos-integrated EVMs, that panic bubbles into the ABCI msg (e.g., `MsgVoteOutbound` / revert path), causing the **finalizing vote to fail**. Attackers can force many outbounds into a state that **never finalizes**, filling pending queues and blocking new processing.
+    - **Where to look:**
+        - Precompile entry points: `RequiredGas(input)`, `Run(...)`, `ExtendedRun(...)` — any direct `copy(methodID[:], input[:4])`, `input[4:]`, or ABI decode without length checks.
+        - ABI helpers: `MethodById(input)` calls and `method.Inputs.Unpack(input[4:])` without guarding `len(input)`.
+        - EVM↔Cosmos bridges that invoke precompiles during **finalization/revert paths** (e.g., `MsgVoteOutbound`, `onRevert`/`onReceive` callbacks).
+        - Panic handling: whether precompile code uses `defer recover()` to **convert panics into EVM reverts** rather than crashing the Cosmos msg.
+    - **Red flags:**
+        - Any slice of `input[:4]` or `input[4:]` with **no** `if len(input) < 4` guard.
+        - ABI decoding performed **before** charging base/input gas or without early validation/return.
+        - Try/catch in Solidity around a precompile call relied on as safety (it won’t catch Go panics).
+        - Finalization logic that treats **any precompile failure as fatal** to the ballot/CCTX rather than isolating it.
+    - **Fix pattern (tight, actionable):**
+        - At every precompile entry:
+            
+            ```go
+            if len(input) < 4 { chargeBaseGas(ctx); return nil, usedGas, vm.ErrExecutionReverted }
+            
+            ```
+            
+            then safely parse selector and arguments; on decode error, **return revert**, not panic.
+            
+        - Wrap precompile execution with `defer func(){ if r := recover(); err==nil { err = vm.ErrExecutionReverted } }()` so panics degrade to **revert**.
+        - Validate calldata in `RequiredGas` too (guard `len(input)`), and **charge minimal gas before erroring** to avoid free DoS.
+        - In outbound finalization/revert handlers, **quarantine** malformed precompile calls: mark CCTX finalized (or reverted) with an internal error and avoid re-enqueuing; do not let one failing precompile **block the queue**.
+        - Add fuzz/negative tests: empty/short input, random bytes, wrong selectors; add metrics for precompile panics-to-reverts.
+- [ ]  **Under-provisioned RPC broadcast timeouts → nonce desync & missing trackers**
+    - **Core idea:** Using a **too-short, hardcoded timeout** (e.g., 1s) for `SendTransaction` can time out even though the remote node **accepted** the tx. Retries then hit **“nonce too low / already known”**, and higher-level logic treats the broadcast as failed—skipping **outbound tracker** updates and diverging cross-chain state.
+    - **Where to look:**
+        - EVM signer/broadcaster: the function that wraps `client.SendTransaction(ctx, tx)` and sets `context.WithTimeout`.
+        - Retry policy & backoff constants; handling of errors like **`nonce too low`**, **`already known`**, **`replacement underpriced`**.
+        - Code paths that **gate posting trackers / state updates** on a successful broadcast return instead of confirming mempool/receipt status.
+        - Chain-specific latency characteristics (Arbitrum/Optimistic rollups) vs **one-size** timeouts.
+    - **Red flags:**
+        - Magic timeouts (e.g., `1 * time.Second`) and fixed retry intervals not tied to chain latency.
+        - Treating **timeout** the same as a definitive **broadcast failure**.
+        - On retry, seeing `nonce too low` and **aborting** without checking if the tx is pending or included.
+        - No follow-up `GetTransactionByHash` / `GetTransactionCount` reconciliation after a timeout.
+        - Trackers only posted when the **initial** `SendTransaction` returns `nil`.
+    - **Fix pattern (tight, actionable):**
+        - Make **broadcast timeout & backoff configurable per chain**; default to **10–15s** timeout with **exponential backoff**.
+        - On timeout or `already known`/`nonce too low`, **probe**: `eth_getTransactionByHash` and/or compare `pendingNonce` to detect that the tx is already accepted; if so, **proceed** with tracker posting.
+        - Distinguish failure classes:
+            - *Timeout/AlreadyKnown/NonceTooLow* → reconcile & continue.
+            - *ReplacementUnderpriced* → **bump fee** (EIP-1559) and rebroadcast.
+            - *Other RPC errs* → retry with backoff.
+        - Add a **receipt waiter** (bounded) after broadcast; if receipt not yet available, record **pending tracker** and reconcile later in a background task.
+        - Emit metrics/alerts for timeout frequency per chain; auto-adjust timeouts if persistent.
+- [ ]  **Assuming present sub-structures in chain receipts → nil deref panic & observer halt**
+    - **Core idea:** Parsers for external chain receipts (e.g., TON) often treat **optional/sum-type fields** (compute phase, status, effects) as always present. If a tx **skips** that phase (e.g., low gas → `compute.skipped`), code that directly dereferences the “VM compute” branch will **panic**, killing observer goroutines and halting inbound/outbound processing.
+    - **Where to look:**
+        - Receipt/transaction parsing in observers (TON/EVM/Solana/Sui): functions that extract **exit code**, **status**, or **effects** (e.g., `exitCodeFromTx`, `decodeEffects`, `parseComputePhase`).
+        - Sum-type/union structs from SDKs (e.g., TON `TrComputePhase` with `TrPhaseComputeSkipped` vs `TrPhaseComputeVm`) and any code that assumes one variant.
+        - Any place that converts “compute result” into boolean success/failure without checking the **variant** first.
+        - Goroutines that run continuous tasks (ObserveInbound / ProcessInboundTrackers): verify they **recover** and **continue** on parse errors.
+    - **Red flags:**
+        - Direct field access like `tx.Description.Compute.TrPhaseComputeVm.ExitCode` without checking `ComputeSkipped`.
+        - Comments implying “always present” for chain phases that are actually **optional**.
+        - Panics seen as “should never happen” instead of handled errors.
+        - No unit tests for **minimal gas / skipped compute** paths.
+        - Single goroutine + `defer stop()` patterns that **permanently stop** the loop after panic.
+    - **Fix pattern (tight, actionable):**
+        - **Pattern-match/switch** on the sum-type first; handle `Skipped` as a valid outcome (treat as failure with a clear error) and **never deref** the VM branch when absent.
+        - Return a **typed error** instead of panicking; callers should mark the observation as failed but keep the pipeline alive.
+        - Wrap observer loops with **`recover` + restart** logic so a single malformed tx cannot halt processing.
+        - Add tests/vectors for **low-gas / skipped compute** and other non-VM variants; include fuzzing where feasible.
+        - Emit metrics for skipped-compute frequency to surface upstream fee/gas misconfigurations.
+- [ ]  **Dual-signed primary & fallback txs → nonce-sniping cancel/DoS**
+    - **Core idea:** If observers/TSS **sign both** the “execute” and the “fallback/cancel (increment-nonce)” transactions up front, any single observer can broadcast the **cancel** first, consuming the nonce and effectively **voiding the execute**—repeatable to indefinitely prevent outbound execution.
+    - **Where to look:**
+        - Tx preparation for outbounds (e.g., `prepareExecuteTx`, `prepareExecuteSPLTx`) that build **both** `inst` (execute) and `fallbackInst` (cancel/increment nonce).
+        - Signing flow (`signTx`) that returns **two ready-to-broadcast** signed txs.
+        - Broadcast logic paths that let any observer choose **which** signed tx to send; absence of leader election or gating.
+        - Chain program/contract rules that accept **nonce increment** unconditionally (no “cancel authorized” state).
+        - Keeper/state that lacks a **single, committed “intended action”** (execute vs cancel) and no check that the broadcasted tx hash matches that intent.
+    - **Red flags:**
+        - Fallback tx is constructed and TSS-signed **before** any observed failure/timeout of execute.
+        - Same TSS key/domain used for execute and cancel; no action-type separation in the signature domain.
+        - No on-chain precondition (e.g., quorum flag) required for cancel/increment-nonce to be valid.
+        - No slashing/penalty for broadcasting a cancel when the system intent is execute.
+        - “Race to mempool” design: correctness depends on **who sends first** rather than on stateful authorization.
+    - **Fix pattern (tight, actionable):**
+        - **Gate signing**: only request TSS signature for **one** action after consensus: execute by default; sign cancel **only after** a quorum vote/timeout marks the outbound as cancelable.
+        - **Stateful authorization**: store the decided action and **expected tx hash** (or deterministic encoding) in the core state; programs/observers must reject/bail if a mismatched tx is attempted.
+        - **Domain separation / keys:** include an `ACTION` tag (`EXECUTE` vs `CANCEL`) in the signed message domain (or use distinct TSS keys) so signatures aren’t replayable across actions.
+        - **Broadcast discipline:** use rotating **leader election** (others back off) and require a receipt window before any fallback can be attempted.
+        - **Chain-side guardrails:** gateway should only accept `increment_nonce` if a **quorum-authorized cancel flag** for that (cctx, nonce) is present.
+        - **Enforcement:** add telemetry + **slashing** for unauthorized cancel broadcasts; record offending observer from RPC/mempool trace.
+- [ ]  **Rigid Solana tx shape assumptions → instruction-stuffing finality DoS**
+    - **Core idea:** If your Solana outbound tracker/finality checker assumes a **fixed instruction count/order** (e.g., “must be 1–2 instructions, last is Gateway”), an attacker can **stuff extra valid instructions** so your parser rejects the tx. Observers then never mark the outbound as finalized, **blocking refunds/execution** even though a nonce was consumed.
+    - **Where to look:**
+        - Tx parsing in observers: functions like `CheckFinalizedTx`, `exitCodeFromTx`, or any “gateway instruction” extractor that indexes by **position** instead of **program id + discriminator**.
+        - Outbound tracker ingestion that fails early on **len(instructions) ≠ expected** or assumes **last instruction** is the Gateway call.
+        - Any code that does not tolerate **compute-budget**, **memo**, or **additional program** instructions preceding/following the Gateway call.
+        - Finality paths where **SetTxResult** (or equivalent) is only reached if parsing passes those brittle checks.
+    - **Red flags:**
+        - `if count < 1 || count > 2 { return err "unexpected number of instructions" }`
+        - Selecting `instructions[len-1]` as the gateway instruction without checking **program id**.
+        - Rejecting transactions that contain **extra, harmless** instructions (priority fees, memos, CPI setup).
+        - No fallback to **scan** for the correct instruction by program id + expected ABI/layout.
+        - Finality/nonce advancement hinges on **single parsing success path** with no manual recovery hook.
+    - **Fix pattern (tight, actionable):**
+        - **Program-ID anchored parsing:** scan all instructions and select the one(s) with the expected **Gateway program id** and **valid discriminator/ABI**; ignore unrelated instructions.
+        - **Order/length agnostic:** remove hard constraints on instruction count/order; allow compute-budget/memo/ancillary instructions.
+        - **Strict data validation:** after locating candidate instructions, validate **accounts/meta layout** and **payload schema**, not position.
+        - **Resilience in trackers:** if multiple candidate instructions exist, pick the one that matches the **expected nonce/cctx id** encoded in data; otherwise mark as **Invalid** with a recoverable status and do not block the queue.
+        - **Observability & ops:** emit metrics/logs for “extra-instruction” cases and add an **admin override** to finalize/mark-failed if parsing ambiguities persist.
+- [ ]  **Bad Bitcoin sighash context → all signed withdrawals rejected**
+    - **Core idea:** If a Bitcoin signer computes input sighashes without the **actual prevout data** (amount + scriptPubKey), SegWit (BIP-143/341) signatures won’t verify. Using empty scripts/zero amounts (or legacy preimage rules) yields signatures the network rejects—**every outbound BTC tx fails**, halting withdrawals.
+    - **Where to look:**
+        - Signer code that builds **`txscript.NewTxSigHashes(...)`** and the **PrevOutFetcher** (`NewCannedPrevOutputFetcher` vs `NewMultiPrevOutFetcher`).
+        - The UTXO-selection → tx-input mapping: ensuring each `TxIn`’s **PreviousOutPoint** matches a provided **`wire.TxOut{Value, PkScript}`**.
+        - Sighash paths per script type: P2WPKH/P2WSH (**BIP-143**), Taproot key/script path (**BIP-341/342**), and selected **SIGHASH type**.
+        - Unit tests/integration checks that locally **verify** signatures before broadcast (`txscript.Engine` or `VerifyWitnessProgram` with **StandardVerifyFlags**).
+    - **Red flags:**
+        - `NewCannedPrevOutputFetcher([]byte{}, 0)` or otherwise passing **empty script / zero amount** to `NewTxSigHashes`.
+        - Using **float BTC** amounts then converting to satoshis (rounding bugs); not using **int64 satoshis**.
+        - One prevout fed for all inputs or index mismatches between selected UTXOs and `TxIn`s.
+        - Single sighash routine used for all inputs without branching for **Taproot** vs **SegWit v0** vs **legacy**.
+        - No local verification prior to broadcast (blindly sending to RPC).
+    - **Fix pattern (tight, actionable):**
+        - Build a **`txscript.NewMultiPrevOutFetcher(nil)`**; for each input, add the matching prevout:
+            - `prevOutFetcher.AddPrevOut(txIn.PreviousOutPoint, &wire.TxOut{Value: satoshis, PkScript: scriptPubKey})`.
+        - Create `sigHashes := txscript.NewTxSigHashes(tx, prevOutFetcher)` and compute per-input preimages with the **correct** rules:
+            - P2WPKH/P2WSH: BIP-143 (`txscript.CalcWitnessSigHash`) with the **scriptCode** and amount.
+            - Taproot: BIP-341 (`txscript.CalcTaprootSignatureHash`) with spent outputs + chosen `SigHashType`.
+        - Ensure 1:1 mapping between selected UTXOs and `TxIn`s; amounts in **satoshis**; `PkScript` from the selected UTXO (hex-decoded).
+        - After assembling witnesses, **verify locally** using `txscript.NewEngine(..., txscript.StandardVerifyFlags)` (or `VerifyWitnessProgram`) before broadcast.
+        - Consider PSBT: populate **witnessUtxo** per input, sign via TSS, **finalize**, then extract raw tx—reduces sighash footguns.
+
+## Low Severity
+
+- [ ]  **Tx-hash–bound ABI decode for cross-chain submission → MEV/front-run desync**
+    - **Core idea:** Off-chain helpers that fetch a submission by **tx hash** and then **ABI-decode a specific selector** (e.g., `xsubmit`) can silently **miss the canonical submission** if the payload is **front-run/replayed via another tx/contract**, routed through a proxy/multicall, or otherwise not directly encoded. Result: explorers/indexers report “not found / pending forever” despite execution succeeding.
+    - **Where to look (and grep):**
+        - Provider fetchers that do `TransactionByHash` → `tx.Data()` → decode **one method** (e.g., `DecodeXSubmit`) with **no logs/receipt fallback**.
+        - Assumptions that the call is **direct to the portal** (no proxy/multicall) and that **method ID must match** or it’s treated as an error.
+        - Code paths that do **not parse receipt logs** (topics/events) and don’t verify the **portal address** in receipts.
+    - **Red flags:**
+        - Errors like “tx data not prefixed with method ID” short-circuit the lookup.
+        - No use of `GetTransactionReceipt` / log scanning for an `XSubmitted`style event.
+        - Keys submissions by **tx hash** only (no content-hash/submissionId), and no dedup across **multiple txs** carrying the same submission.
+        - Accepts any `to` address (or ignores it), or fails when called via **router/meta-tx/multicall**.
+    - **Fix pattern (tight, actionable):**
+        - Prefer **event-driven indexing**: parse receipt logs for the canonical portal **event** (topic filter) and validate the **portal address**.
+        - Key records by a **content identifier** (submissionId/message hash/nonce) rather than tx hash; **deduplicate** across multiple txs.
+        - Fallback: if ABI decode fails, **scan receipt logs** for the event; support **proxy/multicall** by walking logs rather than calldata.
+        - Add explicit checks that the call **hit the expected portal contract**; return structured “not canonical / front-run” statuses instead of silent failure.
+- [ ]  **Header-scoped dedupe only → cross-block vote replay**
+    - **Core idea:** If duplicate detection keys on `AttestHeader` only **within a single block** (or on an `attestationRoot` that embeds block-specific fields), a validator can re-vote the **same logical offset** (`{sourceChainId, confLevel, attestOffset}`) in later blocks. Because the new `attestationRoot` differs (new block hash/height/messages), uniqueness checks pass and multiple votes for the same offset are accepted.
+    - **Where to look:**
+        - Vote extension validation that de-dupes only per block/extension, not across blocks.
+        - Keeper insertion path that resolves/creates attestations by **attestation root** and then inserts signatures.
+        - ORM unique keys for signatures/attestations and whether they include `{validator, sourceChainId, confLevel, attestOffset}`.
+        - Any “skip previously voted” watermarks that are **in-memory only** or only applied at startup.
+    - **Red flags:**
+        - Signature uniqueness keyed by `{validator, attestationID}` while `attestationID` is derived from a **block-dependent** root.
+        - No durable index on `{validator, sourceChainId, confLevel, attestOffset}`.
+        - Duplicate maps declared per request (cleared each block) and no stateful guard in the keeper.
+        - Re-votes are merely ignored in mem, not recorded to prevent future acceptance.
+    - **Fix pattern (tight, actionable):**
+        - Enforce a **durable uniqueness/guard** in the keeper on `{validator, sourceChainId, confLevel, attestOffset}` (DB unique index + check in `addOne`/insert path).
+        - Persist a per-validator **watermark** (highest finalized/approved offset per `{chainId, confLevel}`) and reject `< watermark` and **exact-offset repeats**.
+        - Decide policy: treat same-header re-votes with different roots as **slashable** or **idempotent ignore**; implement accordingly in the keeper (not only in vote extensions).
+        - Add tests: (a) same header across two blocks must be rejected; (b) different header same block rejected; (c) upgrades/restarts preserve the guard.
